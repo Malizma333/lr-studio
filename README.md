@@ -50,9 +50,9 @@ This project is licensed under [GPL v3.0](LICENSE).
 
 ## Acknowledgments
 
-- [Linerider.com](https://www.linerider.com/) for allowing me to learn many things about developing software for a community
-- [Line Rider Advanced](https://github.com/jealouscloud/linerider-advanced) and its forks for starting my Line Rider development journey
-- The [Line Rider community](https://discord.gg/KqsTrwqjxV) for being awesome
+- [Linerider.com](https://www.linerider.com/)
+- [Line Rider Advanced](https://github.com/jealouscloud/linerider-advanced)
+- [The Line Rider community](https://discord.gg/KqsTrwqjxV)
 
 ##
 
