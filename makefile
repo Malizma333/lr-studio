@@ -12,7 +12,6 @@ new-lib: ## Create a new library to use throughout the project
 		echo "Usage: make new-lib NAME=[name]"; \
 	fi
 
-
 .PHONY: install
 install: ## Install dependencies
 
