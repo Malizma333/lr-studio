@@ -3,8 +3,19 @@
 version = 4
 
 [[package]]
+name = "geometry"
+version = "0.1.0"
+dependencies = [
+ "vector2d",
+]
+
+[[package]]
 name = "line-grid"
 version = "0.1.0"
+dependencies = [
+ "geometry",
+ "vector2d",
+]
 
 [[package]]
 name = "vector2d"

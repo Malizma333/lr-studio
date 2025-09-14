@@ -1,0 +1,96 @@
+use geometry::Point;
+use vector2d::{Vector2Df, Vector2Di};
+
+pub type CellKey = i32;
+
+pub struct GridCell {
+    position: Vector2Di,
+    remainder: Vector2Df,
+}
+
+impl Clone for GridCell {
+    fn clone(&self) -> GridCell {
+        GridCell {
+            position: self.position.clone(),
+            remainder: self.remainder.clone(),
+        }
+    }
+}
+
+impl GridCell {
+    pub fn new(world_position: Point, cell_size: u32) -> GridCell {
+        let scaled_position = world_position / f64::from(cell_size);
+        let position = Vector2Di::new(
+            scaled_position.x().floor() as i32,
+            scaled_position.y().floor() as i32,
+        );
+        let remainder = world_position - f64::from(cell_size) * Vector2Df::from(&position);
+        GridCell {
+            position,
+            remainder,
+        }
+    }
+
+    pub fn position(&self) -> &Vector2Di {
+        &self.position
+    }
+
+    pub fn remainder(&self) -> &Vector2Df {
+        &self.remainder
+    }
+
+    pub fn get_key(&self) -> CellKey {
+        let x_comp = if self.position.x() >= 0 {
+            2 * self.position.x()
+        } else {
+            -2 * self.position.x() - 1
+        };
+
+        let y_comp = if self.position.y() >= 0 {
+            2 * self.position.y()
+        } else {
+            -2 * self.position.y() - 1
+        };
+
+        let hash = if x_comp >= y_comp {
+            x_comp * x_comp + x_comp + y_comp
+        } else {
+            y_comp * y_comp + x_comp
+        };
+
+        if hash % 2 == 1 {
+            (-(hash - 1) / 2) - 1
+        } else {
+            hash / 2 + 1
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use geometry::Point;
+    use std::collections::HashMap;
+
+    use crate::grid::cell_position::GridCell;
+
+    #[test]
+    fn clone() {
+        let cell = GridCell::new(Point::new(10.0, 1.0), 3);
+        let other_cell = cell.clone();
+        assert!(other_cell.position.x() == cell.position.x());
+        assert!(other_cell.position.y() == cell.position.y())
+    }
+
+    #[test]
+    fn unique_hash() {
+        let mut seen: HashMap<i32, (i32, i32)> = HashMap::new();
+
+        for i in -10..11 {
+            for j in -10..11 {
+                let key = GridCell::new(Point::new(f64::from(i), f64::from(j)), 1).get_key();
+                assert!(!seen.contains_key(&key));
+                seen.insert(key, (i, j));
+            }
+        }
+    }
+}

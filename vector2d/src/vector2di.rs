@@ -1,22 +1,9 @@
 use std::ops::{Add, Sub};
 
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector2Di {
     x: i32,
     y: i32,
-}
-
-impl Copy for Vector2Di {}
-
-impl Clone for Vector2Di {
-    fn clone(&self) -> Vector2Di {
-        Vector2Di::new(self.x(), self.y())
-    }
-}
-
-impl PartialEq for Vector2Di {
-    fn eq(&self, other: &Self) -> bool {
-        self.x() == other.x() && self.y() == other.y()
-    }
 }
 
 impl Add for Vector2Di {

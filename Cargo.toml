@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "vector2d",
+  "vector2d",
+    "geometry",
     "line-grid"
 ]
 resolver = "3"

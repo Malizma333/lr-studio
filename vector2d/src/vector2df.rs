@@ -2,23 +2,10 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use crate::Vector2Di;
 
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector2Df {
     x: f64,
     y: f64,
-}
-
-impl Copy for Vector2Df {}
-
-impl Clone for Vector2Df {
-    fn clone(&self) -> Vector2Df {
-        Vector2Df::new(self.x(), self.y())
-    }
-}
-
-impl PartialEq for Vector2Df {
-    fn eq(&self, other: &Self) -> bool {
-        self.x() == other.x() && self.y() == other.y()
-    }
 }
 
 impl Add for Vector2Df {
@@ -97,12 +84,12 @@ impl Vector2Df {
     }
 
     /** Calculates the result of `v1 ⋅ v2` */
-    pub fn dot(v1: &Vector2Df, v2: &Vector2Df) -> f64 {
+    pub fn dot(v1: Vector2Df, v2: Vector2Df) -> f64 {
         v1.x() * v2.x() + v1.y() * v2.y()
     }
 
     /** Calculates the result of `v1 ⨯ v2` */
-    pub fn cross(v1: &Vector2Df, v2: &Vector2Df) -> f64 {
+    pub fn cross(v1: Vector2Df, v2: Vector2Df) -> f64 {
         v1.x() * v2.y() - v1.y() * v2.x()
     }
 
@@ -114,7 +101,7 @@ impl Vector2Df {
         self.length_squared().sqrt()
     }
 
-    pub fn distance(v1: &Vector2Df, v2: &Vector2Df) -> f64 {
+    pub fn distance(v1: Vector2Df, v2: Vector2Df) -> f64 {
         (v1.clone() - v2.clone()).length()
     }
 
@@ -233,7 +220,7 @@ mod tests {
     fn dot_product() {
         let v1 = Vector2Df::new(1.0, 3.0);
         let v2 = Vector2Df::new(2.0, -4.0);
-        let result = Vector2Df::dot(&v1, &v2);
+        let result = Vector2Df::dot(v1, v2);
         assert_eq!(result, -10.0);
     }
 
@@ -241,7 +228,7 @@ mod tests {
     fn cross_product() {
         let v1 = Vector2Df::new(1.0, 3.0);
         let v2 = Vector2Df::new(2.0, -4.0);
-        let result = Vector2Df::cross(&v1, &v2);
+        let result = Vector2Df::cross(v1, v2);
         assert_eq!(result, -10.0);
     }
 
@@ -263,7 +250,7 @@ mod tests {
     fn distance() {
         let v1 = Vector2Df::new(7.0, -10.0);
         let v2 = Vector2Df::new(2.0, 2.0);
-        let result = Vector2Df::distance(&v1, &v2);
+        let result = Vector2Df::distance(v1, v2);
         assert_eq!(result, 13.0);
     }
 
