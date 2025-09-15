@@ -1,6 +1,6 @@
 use std::ops::{Add, Sub};
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector2Di {
     x: i32,
     y: i32,
@@ -34,14 +34,6 @@ impl Vector2Di {
     pub fn y(&self) -> i32 {
         self.y
     }
-
-    pub fn set_x(&mut self, x: i32) {
-        self.x = x;
-    }
-
-    pub fn set_y(&mut self, y: i32) {
-        self.y = y;
-    }
 }
 
 #[cfg(test)]
@@ -49,38 +41,14 @@ mod tests {
     use crate::vector2di::Vector2Di;
 
     #[test]
-    fn getters() {
-        let v1 = Vector2Di::new(1, 2);
-        assert_eq!(v1.x(), 1);
-        assert_eq!(v1.y(), 2);
-    }
-
-    #[test]
-    fn setters() {
-        let mut v1 = Vector2Di::new(1, 2);
-        v1.set_x(3);
-        v1.set_y(5);
-        assert_eq!(v1.x(), 3);
-        assert_eq!(v1.y(), 5);
-    }
-
-    #[test]
-    fn clone() {
-        let v1 = Vector2Di::new(5, 10);
-        let mut v2 = v1.clone();
-        assert_eq!(v2.x(), 5);
-        assert_eq!(v2.y(), 10);
-        v2.set_x(20);
-        assert_ne!(v1.x(), 20);
-    }
-
-    #[test]
     fn addition() {
         let v1 = Vector2Di::new(1, 2);
         let v2 = Vector2Di::new(4, 5);
         let v3 = v1 + v2;
-        assert_eq!(v3.x(), 5);
-        assert_eq!(v3.y(), 7);
+        assert!(
+            v3.x() == 5 && v3.y() == 7,
+            "vector addition should sum both components"
+        );
     }
 
     #[test]
@@ -88,18 +56,21 @@ mod tests {
         let v1 = Vector2Di::new(1, 5);
         let v2 = Vector2Di::new(4, 2);
         let v3 = v1 - v2;
-        assert_eq!(v3.x(), -3);
-        assert_eq!(v3.y(), 3);
+        assert!(
+            v3.x() == -3 && v3.y() == 3,
+            "vector subtraction should difference both components"
+        );
     }
 
     #[test]
     fn equality() {
         let v1 = Vector2Di::new(1, 5);
-        let v2 = Vector2Di::new(4, 3);
-        let v3 = Vector2Di::new(1, 5);
-        assert_eq!(v1 == v2, false);
-        assert_eq!(v2 == v1, false);
-        assert_eq!(v1 == v3, true);
-        assert_eq!(v2 == v3, false);
+        let v2 = Vector2Di::new(1, 5);
+        let v3 = Vector2Di::new(4, 5);
+        let v4 = Vector2Di::new(1, 3);
+        assert!(v1 == v2, "vectors with same components should be equal");
+        assert!(v2 == v1, "equality should be reflexive");
+        assert!(v1 != v3, "vectors with different x's should not be equal");
+        assert!(v1 != v4, "vectors with different y's should not be equal");
     }
 }

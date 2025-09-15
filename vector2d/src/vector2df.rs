@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use crate::Vector2Di;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector2Df {
     x: f64,
     y: f64,
@@ -65,14 +65,6 @@ impl Vector2Df {
         self.y
     }
 
-    pub fn set_x(&mut self, x: f64) {
-        self.x = x;
-    }
-
-    pub fn set_y(&mut self, y: f64) {
-        self.y = y;
-    }
-
     /** The zero vector (0.0, 0.0) */
     pub fn zero() -> Vector2Df {
         Vector2Df::new(0.0, 0.0)
@@ -125,51 +117,31 @@ mod tests {
     use crate::{Vector2Di, vector2df::Vector2Df};
 
     #[test]
-    fn getters() {
-        let v1 = Vector2Df::new(1.0, 2.0);
-        assert_eq!(v1.x(), 1.0);
-        assert_eq!(v1.y(), 2.0);
-    }
-
-    #[test]
-    fn setters() {
-        let mut v1 = Vector2Df::new(1.0, 2.0);
-        v1.set_x(3.0);
-        v1.set_y(5.0);
-        assert_eq!(v1.x(), 3.0);
-        assert_eq!(v1.y(), 5.0);
-    }
-
-    #[test]
-    fn clone() {
-        let v1 = Vector2Df::new(5.0, 10.0);
-        let mut v2 = v1.clone();
-        assert_eq!(v2.x(), 5.0);
-        assert_eq!(v2.y(), 10.0);
-        v2.set_x(20.0);
-        assert_ne!(v1.x(), 20.0);
-    }
-
-    #[test]
     fn from() {
         let v1 = Vector2Di::new(1, 3);
         let v2 = Vector2Df::from(&v1);
-        assert_eq!(v2.x(), 1.0);
-        assert_eq!(v2.y(), 3.0);
+        assert!(
+            v2.x() == 1.0 && v2.y() == 3.0,
+            "creating vector2df from vector2di should cast integers to floats"
+        );
     }
 
     #[test]
     fn zero_vector() {
         let v1 = Vector2Df::zero();
-        assert_eq!(v1.x(), 0.0);
-        assert_eq!(v1.y(), 0.0);
+        assert!(
+            v1.x() == 0.0 && v1.y() == 0.0,
+            "zero vector should have 0.0 for x and y components"
+        );
     }
 
     #[test]
     fn one_vector() {
         let v1 = Vector2Df::one();
-        assert_eq!(v1.x(), 1.0);
-        assert_eq!(v1.y(), 1.0);
+        assert!(
+            v1.x() == 1.0 && v1.y() == 1.0,
+            "one vector should have 1.0 for x and y components"
+        );
     }
 
     #[test]
@@ -177,8 +149,10 @@ mod tests {
         let v1 = Vector2Df::new(1.0, 2.0);
         let v2 = Vector2Df::new(4.0, 5.0);
         let v3 = v1 + v2;
-        assert_eq!(v3.x(), 5.0);
-        assert_eq!(v3.y(), 7.0);
+        assert!(
+            v3.x() == 5.0 && v3.y() == 7.0,
+            "vector addition should sum both components"
+        );
     }
 
     #[test]
@@ -186,38 +160,46 @@ mod tests {
         let v1 = Vector2Df::new(1.0, 5.0);
         let v2 = Vector2Df::new(4.0, 2.0);
         let v3 = v1 - v2;
-        assert_eq!(v3.x(), -3.0);
-        assert_eq!(v3.y(), 3.0);
+        assert!(
+            v3.x() == -3.0 && v3.y() == 3.0,
+            "vector subtraction should difference both components"
+        );
     }
 
     #[test]
     fn scalar_multiplication() {
-        let v1 = Vector2Df::new(2.0, 3.0);
-        let v2 = v1 * 5.0;
-        assert_eq!(v2.x(), 10.0);
-        assert_eq!(v2.y(), 15.0);
-        let v3 = 3.0 * v1;
-        assert_eq!(v3.x(), 6.0);
-        assert_eq!(v3.y(), 9.0);
+        let v1 = Vector2Df::new(2.0, 3.0) * 5.0;
+        assert!(
+            v1.x() == 10.0 && v1.y() == 15.0,
+            "vector scalar multiplication should scale both components"
+        );
+        let v2 = 3.0 * Vector2Df::new(2.0, 3.0);
+        assert!(
+            v2.x() == 6.0 && v2.y() == 9.0,
+            "vector scalar multiplication should be commutative"
+        );
     }
 
     #[test]
     fn scalar_division() {
         let v1 = Vector2Df::new(2.0, 6.0);
         let v2 = v1 / 2.0;
-        assert_eq!(v2.x(), 1.0);
-        assert_eq!(v2.y(), 3.0);
+        assert!(
+            v2.x() == 1.0 && v2.y() == 3.0,
+            "vector scalar division should scale both components"
+        );
     }
 
     #[test]
     fn equality() {
         let v1 = Vector2Df::new(1.0, 5.0);
-        let v2 = Vector2Df::new(4.0, 3.0);
-        let v3 = Vector2Df::new(1.0, 5.0);
-        assert_eq!(v1 == v2, false);
-        assert_eq!(v2 == v1, false);
-        assert_eq!(v1 == v3, true);
-        assert_eq!(v2 == v3, false);
+        let v2 = Vector2Df::new(1.0, 5.0);
+        let v3 = Vector2Df::new(4.0, 5.0);
+        let v4 = Vector2Df::new(1.0, 3.0);
+        assert!(v1 == v2, "vectors with same components should be equal");
+        assert!(v2 == v1, "equality should be reflexive");
+        assert!(v1 != v3, "vectors with different x's should not be equal");
+        assert!(v1 != v4, "vectors with different y's should not be equal");
     }
 
     #[test]
@@ -225,7 +207,7 @@ mod tests {
         let v1 = Vector2Df::new(1.0, 3.0);
         let v2 = Vector2Df::new(2.0, -4.0);
         let result = Vector2Df::dot(v1, v2);
-        assert_eq!(result, -10.0);
+        assert!(result == -10.0);
     }
 
     #[test]
@@ -233,21 +215,21 @@ mod tests {
         let v1 = Vector2Df::new(1.0, 3.0);
         let v2 = Vector2Df::new(2.0, -4.0);
         let result = Vector2Df::cross(v1, v2);
-        assert_eq!(result, -10.0);
+        assert!(result == -10.0);
     }
 
     #[test]
     fn length_squared() {
         let v1 = Vector2Df::new(1.0, -2.0);
         let result = v1.length_squared();
-        assert_eq!(result, 5.0);
+        assert!(result == 5.0);
     }
 
     #[test]
     fn length() {
         let v1 = Vector2Df::new(3.0, 4.0);
         let result = v1.length();
-        assert_eq!(result, 5.0);
+        assert!(result == 5.0);
     }
 
     #[test]
@@ -255,22 +237,20 @@ mod tests {
         let v1 = Vector2Df::new(7.0, -10.0);
         let v2 = Vector2Df::new(2.0, 2.0);
         let result = Vector2Df::distance(v1, v2);
-        assert_eq!(result, 13.0);
+        assert!(result == 13.0);
     }
 
     #[test]
     fn rotate_clockwise() {
         let v1 = Vector2Df::new(-3.0, 9.0);
         let v2 = v1.rotate_cw();
-        assert_eq!(v2.x(), 9.0);
-        assert_eq!(v2.y(), 3.0);
+        assert!(v2.x() == 9.0 && v2.y() == 3.0);
     }
 
     #[test]
     fn rotate_counterclockwise() {
         let v1 = Vector2Df::new(2.0, -7.0);
         let v2 = v1.rotate_ccw();
-        assert_eq!(v2.x(), 7.0);
-        assert_eq!(v2.y(), 2.0);
+        assert!(v2.x() == 7.0 && v2.y() == 2.0);
     }
 }

@@ -88,7 +88,7 @@ impl Grid {
 
     fn get_next_position(&self, current_position: Point, line: &Line) -> Point {
         let current_cell = GridCell::new(current_position, self.cell_size);
-        let line_vector = line.1 - line.0;
+        let line_vector = line.get_vector();
 
         let mut delta_x = if line_vector.x() > 0.0 {
             f64::from(self.cell_size) - current_cell.remainder().x()
@@ -125,7 +125,7 @@ impl Grid {
             Point::new(current_position.x() + delta_x, current_position.y())
         } else if matches!(self.version, GridVersion::V6_1) {
             let slope = line_vector.y() / line_vector.x();
-            let y_intercept = line.0.y() - slope * line.0.x();
+            let y_intercept = line.p0().y() - slope * line.p1().x();
             let next_x = ((current_position.y() + delta_y - y_intercept) / slope).round();
             let next_y = (slope * (current_position.x() + delta_x) + y_intercept).round();
             if (next_y - current_position.y()).abs() < delta_y.abs() {
@@ -157,11 +157,11 @@ impl Grid {
     }
 
     fn get_cell_positions_along(&self, line: &Line) -> Vec<GridCell> {
-        let initial_cell = GridCell::new(line.0, self.cell_size);
-        let final_cell = GridCell::new(line.1, self.cell_size);
+        let initial_cell = GridCell::new(line.p0(), self.cell_size);
+        let final_cell = GridCell::new(line.p1(), self.cell_size);
 
-        if line.0 == line.1 || initial_cell.position() == final_cell.position() {
-            return vec![initial_cell.clone()];
+        if line.p0() == line.p1() || initial_cell.position() == final_cell.position() {
+            return vec![initial_cell];
         }
 
         let mut cells: Vec<GridCell> = Vec::new();
@@ -169,14 +169,14 @@ impl Grid {
         let upper_bound_x = initial_cell.position().x().max(final_cell.position().x());
         let lower_bound_y = initial_cell.position().y().min(final_cell.position().y());
         let upper_bound_y = initial_cell.position().y().max(final_cell.position().y());
-        let mut current_position_along_line = line.0;
+        let mut current_position_along_line = line.p0();
         let mut current_cell = initial_cell;
-        let line_vector = line.1 - line.0;
+        let line_vector = line.get_vector();
         let line_normal = line_vector.rotate_ccw() * (1.0 / line_vector.length());
 
         if matches!(self.version, GridVersion::V6_0) {
             let line_halfway = 0.5 * Vector2Df::new(line_vector.x().abs(), line_vector.y().abs());
-            let line_midpoint = line.0 + 0.5 * line_vector;
+            let line_midpoint = line.p0() + 0.5 * line_vector;
             let absolute_normal = Vector2Df::new(line_normal.x().abs(), line_normal.y().abs());
             for cell_x in lower_bound_x..upper_bound_x + 1 {
                 for cell_y in lower_bound_y..upper_bound_y + 1 {
@@ -201,7 +201,7 @@ impl Grid {
                             >= distance_between_centers.y().abs()
                         && cell_overlap_into_hitbox >= distance_from_line
                     {
-                        cells.push(next_cell_position.clone());
+                        cells.push(next_cell_position);
                     }
                 }
             }
@@ -217,7 +217,7 @@ impl Grid {
                 if next_cell.position() == current_cell.position() {
                     break;
                 } else {
-                    cells.push(current_cell.clone());
+                    cells.push(current_cell);
                     current_cell = next_cell;
                 }
             }
@@ -226,7 +226,7 @@ impl Grid {
         cells
     }
 
-    fn get_lines_between_grid_cells(&self, cell1: GridCell, cell2: GridCell) -> HashSet<u32> {
+    fn get_lines_between_grid_cells(&self, cell1: &GridCell, cell2: &GridCell) -> HashSet<u32> {
         let lower = Vector2Di::new(
             cell1.position().x().min(cell2.position().x()),
             cell1.position().y().min(cell2.position().y()),
@@ -257,7 +257,7 @@ impl Grid {
         let upper_cell = GridCell::new(rectangle.top_right(), self.cell_size);
         let mut lines_included: Vec<u32> = Vec::new();
 
-        for id in self.get_lines_between_grid_cells(lower_cell, upper_cell) {
+        for id in self.get_lines_between_grid_cells(&lower_cell, &upper_cell) {
             if let Some(line) = self.lines.get(&id) {
                 if rectangle.includes_portion_of_line(line) {
                     lines_included.push(id);
@@ -276,7 +276,7 @@ impl Grid {
         let upper_cell = GridCell::new(circle.center() + radius_vector, self.cell_size);
         let mut lines_included: Vec<u32> = Vec::new();
 
-        for id in self.get_lines_between_grid_cells(lower_cell, upper_cell) {
+        for id in self.get_lines_between_grid_cells(&lower_cell, &upper_cell) {
             if let Some(line) = self.lines.get(&id) {
                 if circle.includes_part_of_line(line) {
                     lines_included.push(id);
@@ -300,12 +300,15 @@ mod tests {
         let cell_size = 1;
         let mut grid = Grid::new(super::GridVersion::V6_2, cell_size);
 
-        grid.lines.insert(0, Line(Point::zero(), Point::zero()));
+        grid.lines
+            .insert(0, Line::new(Point::zero(), Point::zero()));
 
         assert_eq!(grid.get_next_line_id(), 1);
 
-        grid.lines.insert(6, Line(Point::zero(), Point::zero()));
-        grid.lines.insert(3, Line(Point::zero(), Point::zero()));
+        grid.lines
+            .insert(6, Line::new(Point::zero(), Point::zero()));
+        grid.lines
+            .insert(3, Line::new(Point::zero(), Point::zero()));
 
         assert_eq!(grid.get_next_line_id(), 7);
 
@@ -360,7 +363,7 @@ mod tests {
         assert!(grid.cells.is_empty(), "new grid should have no cells");
         assert!(grid.lines.is_empty(), "new grid should have no lines");
 
-        grid.add_line(Line(Point::zero(), Point::one()));
+        grid.add_line(Line::new(Point::zero(), Point::one()));
 
         assert!(!grid.cells.is_empty(), "adding line should create cell");
         assert!(
@@ -370,12 +373,12 @@ mod tests {
         assert!(
             grid.lines
                 .get(&0)
-                .is_some_and(|x| x.0 == Point::zero() && x.1 == Point::one()),
+                .is_some_and(|x| x.p0() == Point::zero() && x.p1() == Point::one()),
             "first line added should match input"
         );
 
-        grid.add_line(Line(Point::one(), Point::zero()));
-        grid.add_line(Line(Point::one() * -1.0, Point::zero()));
+        grid.add_line(Line::new(Point::one(), Point::zero()));
+        grid.add_line(Line::new(Point::one() * -1.0, Point::zero()));
 
         assert!(
             grid.lines.contains_key(&2),
@@ -384,7 +387,7 @@ mod tests {
         assert!(
             grid.lines
                 .get(&2)
-                .is_some_and(|x| x.0 == Point::one() * -1.0 && x.1 == Point::zero()),
+                .is_some_and(|x| x.p0() == Point::one() * -1.0 && x.p1() == Point::zero()),
             "third line should match input"
         );
     }
@@ -392,8 +395,8 @@ mod tests {
     #[test]
     fn remove_line() {
         let mut grid = Grid::new(super::GridVersion::V6_2, 1);
-        grid.add_line(Line(Point::zero(), Point::one()));
-        grid.add_line(Line(Point::one(), Point::zero()));
+        grid.add_line(Line::new(Point::zero(), Point::one()));
+        grid.add_line(Line::new(Point::one(), Point::zero()));
         grid.remove_line(0);
         assert!(
             grid.lines.contains_key(&1),
@@ -413,18 +416,18 @@ mod tests {
     #[test]
     fn move_line() {
         let mut grid = Grid::new(super::GridVersion::V6_2, 1);
-        grid.add_line(Line(Point::one(), Point::zero()));
+        grid.add_line(Line::new(Point::one(), Point::zero()));
         assert!(
             grid.lines
                 .get(&0)
-                .is_some_and(|x| x.0 == Point::one() && x.1 == Point::zero()),
+                .is_some_and(|x| x.p0() == Point::one() && x.p1() == Point::zero()),
             "line endpoints should match input"
         );
-        grid.move_line(0, Line(Point::one(), Point::one()));
+        grid.move_line(0, Line::new(Point::one(), Point::one()));
         assert!(
             grid.lines
                 .get(&0)
-                .is_some_and(|x| x.0 == Point::one() && x.1 == Point::one()),
+                .is_some_and(|x| x.p0() == Point::one() && x.p1() == Point::one()),
             "same line endpoints should match new input after moving"
         );
     }
@@ -432,9 +435,9 @@ mod tests {
     #[test]
     fn select_rect() {
         let mut grid = Grid::new(super::GridVersion::V6_2, 1);
-        grid.add_line(Line(Point::one(), Point::zero()));
-        grid.add_line(Line(Point::one(), Point::one() * 2.0));
-        grid.add_line(Line(Point::one() * 0.5, Point::one() * 2.0));
+        grid.add_line(Line::new(Point::one(), Point::zero()));
+        grid.add_line(Line::new(Point::one(), Point::one() * 2.0));
+        grid.add_line(Line::new(Point::one() * 0.5, Point::one() * 2.0));
         let lines =
             grid.select_lines_in_rect(Rectangle::new(Point::one() * -1.0, Point::one() * 5.0));
         assert!(lines.len() == 3);
@@ -457,9 +460,9 @@ mod tests {
     #[test]
     fn select_circle() {
         let mut grid = Grid::new(super::GridVersion::V6_2, 1);
-        grid.add_line(Line(Point::one(), Point::zero()));
-        grid.add_line(Line(Point::one(), Point::one() * 2.0));
-        grid.add_line(Line(Point::one() * 0.5, Point::one() * 2.0));
+        grid.add_line(Line::new(Point::one(), Point::zero()));
+        grid.add_line(Line::new(Point::one(), Point::one() * 2.0));
+        grid.add_line(Line::new(Point::one() * 0.5, Point::one() * 2.0));
         let lines = grid.select_lines_in_radius(Circle::new(Point::one(), 0.5));
         assert!(lines.len() == 3);
         let lines = grid.select_lines_in_radius(Circle::new(Point::zero(), 0.5));

@@ -8,15 +8,6 @@ pub struct GridCell {
     remainder: Vector2Df,
 }
 
-impl Clone for GridCell {
-    fn clone(&self) -> GridCell {
-        GridCell {
-            position: self.position.clone(),
-            remainder: self.remainder.clone(),
-        }
-    }
-}
-
 impl GridCell {
     pub fn new(world_position: Point, cell_size: u32) -> GridCell {
         let scaled_position = world_position / f64::from(cell_size);
@@ -72,14 +63,6 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::grid::cell_position::GridCell;
-
-    #[test]
-    fn clone() {
-        let cell = GridCell::new(Point::new(10.0, 1.0), 3);
-        let other_cell = cell.clone();
-        assert!(other_cell.position.x() == cell.position.x());
-        assert!(other_cell.position.y() == cell.position.y())
-    }
 
     #[test]
     fn unique_hash() {

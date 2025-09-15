@@ -19,50 +19,12 @@ impl Rectangle {
         }
     }
 
-    pub fn origin(&self) -> Point {
-        self.origin
+    pub fn origin(&self) -> &Point {
+        &self.origin
     }
 
-    pub fn size(&self) -> Vector2Df {
-        self.size
-    }
-
-    /** Returns the line segment that represents the bottom side of this rectangle */
-    pub fn bottom(&self) -> Line {
-        Line(
-            Point::new(self.origin.x(), self.origin.y()),
-            Point::new(self.origin.x() + self.size.x(), self.origin.y()),
-        )
-    }
-
-    /** Returns the line segment that represents the top side of this rectangle */
-    pub fn top(&self) -> Line {
-        Line(
-            Point::new(self.origin.x(), self.origin.y() + self.size.y()),
-            Point::new(
-                self.origin.x() + self.size.x(),
-                self.origin.y() + self.size.y(),
-            ),
-        )
-    }
-
-    /** Returns the line segment that represents the left side of this rectangle */
-    pub fn left(&self) -> Line {
-        Line(
-            Point::new(self.origin.x(), self.origin.y()),
-            Point::new(self.origin.x(), self.origin.y() + self.size.y()),
-        )
-    }
-
-    /** Returns the line segment that represents the right side of this rectangle */
-    pub fn right(&self) -> Line {
-        Line(
-            Point::new(self.origin.x() + self.size.x(), self.origin.y()),
-            Point::new(
-                self.origin.x() + self.size.x(),
-                self.origin.y() + self.size.y(),
-            ),
-        )
+    pub fn size(&self) -> &Vector2Df {
+        &self.size
     }
 
     /** Returns the point at the bottom left of this rectangle */
@@ -88,6 +50,26 @@ impl Rectangle {
         )
     }
 
+    /** Returns the line segment that represents the bottom side of this rectangle */
+    pub fn bottom(&self) -> Line {
+        Line::new(self.bottom_left(), self.bottom_right())
+    }
+
+    /** Returns the line segment that represents the top side of this rectangle */
+    pub fn top(&self) -> Line {
+        Line::new(self.top_left(), self.top_right())
+    }
+
+    /** Returns the line segment that represents the left side of this rectangle */
+    pub fn left(&self) -> Line {
+        Line::new(self.bottom_left(), self.top_left())
+    }
+
+    /** Returns the line segment that represents the right side of this rectangle */
+    pub fn right(&self) -> Line {
+        Line::new(self.bottom_right(), self.top_right())
+    }
+
     pub fn contains_point(&self, point: Point) -> bool {
         self.origin.x() <= point.x()
             && point.x() <= self.origin.x() + self.size.x()
@@ -97,8 +79,8 @@ impl Rectangle {
 
     /** Whether this rectangle includes part of a line, including lines with endpoints outside of the rectangle that intersect it */
     pub fn includes_portion_of_line(&self, line: &Line) -> bool {
-        self.contains_point(line.0)
-            || self.contains_point(line.1)
+        self.contains_point(line.p0())
+            || self.contains_point(line.p1())
             || self.bottom().intersects(line)
             || self.top().intersects(line)
             || self.left().intersects(line)
@@ -116,11 +98,11 @@ mod tests {
     fn getters() {
         let rect = Rectangle::new(Point::new(10.0, 5.0), Point::new(-3.0, 6.0));
         assert!(
-            rect.origin() == Point::new(-3.0, 5.0),
+            *rect.origin() == Point::new(-3.0, 5.0),
             "origin should be minimum point"
         );
         assert!(
-            rect.size() == Vector2Df::new(13.0, 1.0),
+            *rect.size() == Vector2Df::new(13.0, 1.0),
             "size should be width and height components"
         );
     }
@@ -129,19 +111,19 @@ mod tests {
     fn bounds() {
         let rect = Rectangle::new(Point::new(10.0, 5.0), Point::new(-3.0, 6.0));
         assert!(
-            rect.bottom() == Line(Point::new(-3.0, 5.0), Point::new(10.0, 5.0)),
+            rect.bottom() == Line::new(Point::new(-3.0, 5.0), Point::new(10.0, 5.0)),
             "bottom should be lowest y points"
         );
         assert!(
-            rect.top() == Line(Point::new(-3.0, 6.0), Point::new(10.0, 6.0)),
+            rect.top() == Line::new(Point::new(-3.0, 6.0), Point::new(10.0, 6.0)),
             "top should be highest y points"
         );
         assert!(
-            rect.left() == Line(Point::new(-3.0, 5.0), Point::new(-3.0, 6.0)),
+            rect.left() == Line::new(Point::new(-3.0, 5.0), Point::new(-3.0, 6.0)),
             "left should be lowest x points"
         );
         assert!(
-            rect.right() == Line(Point::new(10.0, 5.0), Point::new(10.0, 6.0)),
+            rect.right() == Line::new(Point::new(10.0, 5.0), Point::new(10.0, 6.0)),
             "right should be highest x points"
         );
     }
@@ -149,10 +131,10 @@ mod tests {
     #[test]
     fn line_inclusion() {
         let rect = Rectangle::new(Point::new(-1.0, -3.0), Point::new(1.0, 3.0));
-        let line1 = Line(Point::new(0.0, -2.0), Point::new(0.0, 2.0));
-        let line2 = Line(Point::new(0.0, -2.0), Point::new(-2.0, 4.0));
-        let line3 = Line(Point::new(2.0, -5.0), Point::new(-2.0, 4.0));
-        let line4 = Line(Point::new(-2.0, -5.0), Point::new(-2.0, 4.0));
+        let line1 = Line::new(Point::new(0.0, -2.0), Point::new(0.0, 2.0));
+        let line2 = Line::new(Point::new(0.0, -2.0), Point::new(-2.0, 4.0));
+        let line3 = Line::new(Point::new(2.0, -5.0), Point::new(-2.0, 4.0));
+        let line4 = Line::new(Point::new(-2.0, -5.0), Point::new(-2.0, 4.0));
         assert!(
             rect.includes_portion_of_line(&line1),
             "rectangle should contain line inside"
@@ -174,12 +156,12 @@ mod tests {
     #[test]
     fn line_inclusion_edge_cases() {
         let rect = Rectangle::new(Point::new(-1.0, -3.0), Point::new(1.0, 3.0));
-        let line1 = Line(Point::new(-2.0, -3.0), Point::new(3.0, -3.0));
-        let line2 = Line(Point::new(-2.0, 3.0), Point::new(4.0, 3.0));
-        let line3 = Line(Point::new(-1.0, -5.0), Point::new(-1.0, 4.0));
-        let line4 = Line(Point::new(1.0, -3.0), Point::new(1.0, 4.0));
-        let line5 = Line(Point::new(-2.0, -2.0), Point::new(0.0, -4.0));
-        let line6 = Line(Point::new(-5.0, -5.0), Point::new(-1.0, -1.0));
+        let line1 = Line::new(Point::new(-2.0, -3.0), Point::new(3.0, -3.0));
+        let line2 = Line::new(Point::new(-2.0, 3.0), Point::new(4.0, 3.0));
+        let line3 = Line::new(Point::new(-1.0, -5.0), Point::new(-1.0, 4.0));
+        let line4 = Line::new(Point::new(1.0, -3.0), Point::new(1.0, 4.0));
+        let line5 = Line::new(Point::new(-2.0, -2.0), Point::new(0.0, -4.0));
+        let line6 = Line::new(Point::new(-5.0, -5.0), Point::new(-1.0, -1.0));
         assert!(
             rect.includes_portion_of_line(&line1),
             "rectangle should contain line collinear with bottom"

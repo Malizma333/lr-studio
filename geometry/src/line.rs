@@ -5,7 +5,7 @@ use vector2d::Vector2Df;
 use crate::Point;
 
 #[derive(PartialEq, Debug)]
-pub struct Line(pub Point, pub Point);
+pub struct Line(Point, Point);
 
 #[derive(PartialEq, Debug)]
 enum Orientation {
@@ -19,6 +19,22 @@ fn between(bound0: f64, value: f64, bound1: f64) -> bool {
 }
 
 impl Line {
+    pub fn new(point1: Point, point2: Point) -> Line {
+        Line(point1, point2)
+    }
+
+    pub fn p0(&self) -> Point {
+        self.0
+    }
+
+    pub fn p1(&self) -> Point {
+        self.1
+    }
+
+    pub fn get_vector(&self) -> Vector2Df {
+        self.1 - self.0
+    }
+
     pub fn intersects(&self, other: &Self) -> bool {
         let orientations = (
             Line::orientation((self.0, self.1, other.0)),
@@ -69,7 +85,7 @@ impl Line {
 
     /** Returns the closest point that lies on this line from another point */
     pub fn closest_included_point_from(&self, point: Point) -> Point {
-        let delta = self.1 - self.0;
+        let delta = self.get_vector();
 
         if delta == Vector2Df::zero() {
             self.0
@@ -87,10 +103,10 @@ mod tests {
 
     #[test]
     fn equal() {
-        let line1 = Line(Point::new(0.0, 0.0), Point::new(1.0, 1.0));
-        let line2 = Line(Point::new(0.0, 0.0), Point::new(1.0, 1.0));
-        let line3 = Line(Point::new(0.0, 0.0), Point::new(1.0, 2.0));
-        let line4 = Line(Point::new(1.0, 0.0), Point::new(1.0, 1.0));
+        let line1 = Line::new(Point::new(0.0, 0.0), Point::new(1.0, 1.0));
+        let line2 = Line::new(Point::new(0.0, 0.0), Point::new(1.0, 1.0));
+        let line3 = Line::new(Point::new(0.0, 0.0), Point::new(1.0, 2.0));
+        let line4 = Line::new(Point::new(1.0, 0.0), Point::new(1.0, 1.0));
         assert!(line1 == line2, "same endpoints should equal");
         assert!(line1 != line3, "different second point should not equal");
         assert!(line1 != line4, "different first point should not equal");
@@ -98,11 +114,11 @@ mod tests {
 
     #[test]
     fn intersection() {
-        let line1 = Line(Point::new(-1.0, -1.0), Point::new(1.0, 1.0));
-        let line2 = Line(Point::new(1.0, -1.0), Point::new(-1.0, 1.0));
-        let line3 = Line(Point::new(1.0, -1.0), Point::new(0.0, 0.0));
-        let line4 = Line(Point::new(0.0, 0.0), Point::new(0.0, 0.0));
-        let line5 = Line(Point::new(-2.0, -2.0), Point::new(0.0, 0.0));
+        let line1 = Line::new(Point::new(-1.0, -1.0), Point::new(1.0, 1.0));
+        let line2 = Line::new(Point::new(1.0, -1.0), Point::new(-1.0, 1.0));
+        let line3 = Line::new(Point::new(1.0, -1.0), Point::new(0.0, 0.0));
+        let line4 = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 0.0));
+        let line5 = Line::new(Point::new(-2.0, -2.0), Point::new(0.0, 0.0));
         assert!(line1.intersects(&line2), "lines should intersect");
         assert!(line1.intersects(&line3), "line endpoint should intersect");
         assert!(line1.intersects(&line4), "line point should intersect");
@@ -111,7 +127,7 @@ mod tests {
 
     #[test]
     fn contains_point() {
-        let line = Line(Point::new(-1.0, -1.0), Point::new(1.0, 1.0));
+        let line = Line::new(Point::new(-1.0, -1.0), Point::new(1.0, 1.0));
         let point1 = Point::new(0.0, 0.0);
         let point2 = Point::new(-1.0, -1.0);
         let point3 = Point::new(-2.0, -2.0);
@@ -130,7 +146,7 @@ mod tests {
 
     #[test]
     fn closet_point_on_line() {
-        let line = Line(Point::new(-2.0, -1.0), Point::new(2.0, 1.0));
+        let line = Line::new(Point::new(-2.0, -1.0), Point::new(2.0, 1.0));
         let point1 = Point::new(-1.0, 2.0);
         let point2 = Point::new(-3.0, -3.0);
         let point3 = Point::new(0.0, 0.0);
