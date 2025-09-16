@@ -13,28 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Install Clippy
-        run: |
-          rustup component add clippy
-      - name: Run Clippy
-        run: |
-          cargo clippy --all-targets --all-features -- -Aclippy::style
+      - run: cargo clippy --all-targets --all-features -- -Aclippy::style
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --workspace --all-features
+      - run: cargo test --workspace
 
-  formatting:
-    name: cargo fmt
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
+      - run: cargo fmt --all -- --check
