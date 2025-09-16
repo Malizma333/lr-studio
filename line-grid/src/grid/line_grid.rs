@@ -125,7 +125,7 @@ impl Grid {
             Point::new(current_position.x() + delta_x, current_position.y())
         } else if matches!(self.version, GridVersion::V6_1) {
             let slope = line_vector.y() / line_vector.x();
-            let y_intercept = line.p0().y() - slope * line.p1().x();
+            let y_intercept = line.p0().y() - slope * line.p0().x();
             let next_x = ((current_position.y() + delta_y - y_intercept) / slope).round();
             let next_y = (slope * (current_position.x() + delta_x) + y_intercept).round();
             if (next_y - current_position.y()).abs() < delta_y.abs() {
@@ -294,6 +294,15 @@ impl Grid {
 mod tests {
     use crate::grid::{Grid, cell_position::GridCell};
     use geometry::{Circle, Line, Point, Rectangle};
+    use serde::Deserialize;
+    use std::fs;
+
+    #[derive(Deserialize)]
+    struct GridTestCase {
+        name: String,
+        input: (f64, f64, f64, f64),
+        expected: Vec<(i32, i32)>,
+    }
 
     #[test]
     fn line_id() {
@@ -477,16 +486,91 @@ mod tests {
 
     #[test]
     fn cell_positions_of_line_60() {
-        todo!()
+        let grid = Grid::new(super::GridVersion::V6_0, 14);
+        let data =
+            fs::read_to_string("tests/grid_60_tests.json").expect("Failed to read JSON file");
+        let test_cases: Vec<GridTestCase> =
+            serde_json::from_str(&data).expect("Failed to parse JSON");
+
+        for case in test_cases {
+            let line = Line::new(
+                Point::new(case.input.0, case.input.1),
+                Point::new(case.input.2, case.input.3),
+            );
+            let grid_cells = grid.get_cell_positions_along(&line);
+            assert!(
+                grid_cells.len() == case.expected.len(),
+                "Test '{}' failed",
+                case.name
+            );
+            for i in 0..grid_cells.len() {
+                assert!(
+                    grid_cells[i].position().x() == case.expected[i].0
+                        && grid_cells[i].position().y() == case.expected[i].1,
+                    "Test '{}' failed",
+                    case.name
+                );
+            }
+        }
     }
 
     #[test]
     fn cell_positions_of_line_61() {
-        todo!()
+        let grid = Grid::new(super::GridVersion::V6_1, 14);
+        let data =
+            fs::read_to_string("tests/grid_61_tests.json").expect("Failed to read JSON file");
+        let test_cases: Vec<GridTestCase> =
+            serde_json::from_str(&data).expect("Failed to parse JSON");
+
+        for case in test_cases {
+            let line = Line::new(
+                Point::new(case.input.0, case.input.1),
+                Point::new(case.input.2, case.input.3),
+            );
+            let grid_cells = grid.get_cell_positions_along(&line);
+            assert!(
+                grid_cells.len() == case.expected.len(),
+                "Test '{}' failed",
+                case.name
+            );
+            for i in 0..grid_cells.len() {
+                assert!(
+                    grid_cells[i].position().x() == case.expected[i].0
+                        && grid_cells[i].position().y() == case.expected[i].1,
+                    "Test '{}' failed",
+                    case.name
+                );
+            }
+        }
     }
 
     #[test]
     fn cell_positions_of_line_62() {
-        todo!()
+        let grid = Grid::new(super::GridVersion::V6_2, 14);
+        let data =
+            fs::read_to_string("tests/grid_62_tests.json").expect("Failed to read JSON file");
+        let test_cases: Vec<GridTestCase> =
+            serde_json::from_str(&data).expect("Failed to parse JSON");
+
+        for case in test_cases {
+            let line = Line::new(
+                Point::new(case.input.0, case.input.1),
+                Point::new(case.input.2, case.input.3),
+            );
+            let grid_cells = grid.get_cell_positions_along(&line);
+            assert!(
+                grid_cells.len() == case.expected.len(),
+                "Test '{}' failed",
+                case.name
+            );
+            for i in 0..grid_cells.len() {
+                assert!(
+                    grid_cells[i].position().x() == case.expected[i].0
+                        && grid_cells[i].position().y() == case.expected[i].1,
+                    "Test '{}' failed",
+                    case.name
+                );
+            }
+        }
     }
 }

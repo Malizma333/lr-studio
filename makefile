@@ -22,13 +22,13 @@ dev: ## Run the application in development mode
 build: ## Build the optimized, product-ready application
 
 .PHONY: format
-format: ## Format all files with rustfmt
+format: ## Format files with rustfmt
 	cargo fmt --all
 
 .PHONY: lint
-lint: ## Lint rust files with clippy
+lint: ## Lint files with clippy
 	cargo clippy --all-targets --all-features -- -Aclippy::style
 
 .PHONY: test
-test: ## Run rust unit tests
+test: ## Run unit tests
 	cargo test --workspace
