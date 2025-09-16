@@ -2,6 +2,7 @@ TODO
 
 Guidelines:
 No generics
-No dependencies
+No external dependencies
 Avoid macros
-Avoid traits
+Disable saving in emulated legacy versions (eg 6.0/6.1 Grid, Beta Line Mods, etc)
+- Ensures not needing to version bugs in backwards implementations
