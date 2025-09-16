@@ -1,6 +1,6 @@
 # Line Rider Studio
 
-A free and open source Line Rider desktop client. Created as a modern successor to both [linerider.com](https://www.linerider.com/) and [Line Rider Overhaul](https://github.com/LunaKampling/LROverhaul).
+A free and open source Line Rider desktop client.
 
 ## Getting Started
 
@@ -52,6 +52,7 @@ This project is licensed under [GPL v3.0](LICENSE).
 
 - [Linerider.com](https://www.linerider.com/)
 - [Line Rider Advanced](https://github.com/jealouscloud/linerider-advanced)
+- [Line Rider Overhaul](https://github.com/LunaKampling/LROverhaul)
 - [The Line Rider community](https://discord.gg/KqsTrwqjxV)
 
 ##
