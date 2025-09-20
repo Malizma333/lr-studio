@@ -73,6 +73,10 @@ impl ContactPoint {
         self.base
             .update(new_position, new_velocity, new_previous_position);
     }
+
+    pub fn friction(&self) -> f64 {
+        self.friction
+    }
 }
 
 impl Clone for ContactPoint {
@@ -116,6 +120,10 @@ impl FlutterPoint {
     ) {
         self.base
             .update(new_position, new_velocity, new_previous_position);
+    }
+
+    pub fn air_friction(&self) -> f64 {
+        self.air_friction
     }
 }
 

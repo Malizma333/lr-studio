@@ -62,9 +62,9 @@ mod tests {
 
     use crate::line::computed::ComputedLineProperties;
 
-    struct ComputedStruct(pub Vector2Df, pub Vector2Df, pub bool, pub bool, pub bool);
+    struct SimpleStruct(pub Vector2Df, pub Vector2Df, pub bool, pub bool, pub bool);
 
-    impl ComputedLineProperties for ComputedStruct {
+    impl ComputedLineProperties for SimpleStruct {
         fn endpoints(&self) -> (geometry::Point, geometry::Point) {
             (self.0, self.1)
         }
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn vector() {
-        let x = ComputedStruct(
+        let x = SimpleStruct(
             Point::new(1.0, 2.0),
             Point::new(4.0, 6.0),
             false,
@@ -95,7 +95,29 @@ mod tests {
             x.vector() == Vector2Df::new(3.0, 4.0),
             "vector should be difference of endpoints"
         );
+    }
+
+    #[test]
+    fn vector_length() {
+        let x = SimpleStruct(
+            Point::new(1.0, 2.0),
+            Point::new(4.0, 6.0),
+            false,
+            false,
+            false,
+        );
         assert!(x.length() == 5.0, "length should be length of vector");
+    }
+
+    #[test]
+    fn vector_inverse_length_squared() {
+        let x = SimpleStruct(
+            Point::new(1.0, 2.0),
+            Point::new(4.0, 6.0),
+            false,
+            false,
+            false,
+        );
         assert!(
             x.inverse_length_squared() == 1.0 / 25.0,
             "inverse length squared should be correct"
@@ -103,8 +125,8 @@ mod tests {
     }
 
     #[test]
-    fn units() {
-        let mut x = ComputedStruct(
+    fn unit_vector() {
+        let x = SimpleStruct(
             Point::new(1.0, 2.0),
             Point::new(6.0, 14.0),
             false,
@@ -115,11 +137,28 @@ mod tests {
             x.unit() == (1.0 / 13.0) * Vector2Df::new(5.0, 12.0),
             "unit vector should be correct"
         );
+    }
+
+    #[test]
+    fn normal_vector() {
+        let x = SimpleStruct(
+            Point::new(1.0, 2.0),
+            Point::new(6.0, 14.0),
+            false,
+            false,
+            false,
+        );
         assert!(
             x.normal_unit() == (1.0 / 13.0) * Vector2Df::new(-12.0, 5.0),
             "normal vector should rotate counterclockwise if not flipped"
         );
-        x.2 = !x.2;
+        let x = SimpleStruct(
+            Point::new(1.0, 2.0),
+            Point::new(6.0, 14.0),
+            true,
+            false,
+            false,
+        );
         assert!(
             x.normal_unit() == (1.0 / 13.0) * Vector2Df::new(12.0, -5.0),
             "normal vector should rotate clockwise if flipped"
@@ -128,7 +167,7 @@ mod tests {
 
     #[test]
     fn unit_overflow() {
-        let x = ComputedStruct(
+        let x = SimpleStruct(
             Point::new(4.0, 3.0),
             Point::new(8.0, 6.0),
             false,
@@ -142,8 +181,8 @@ mod tests {
     }
 
     #[test]
-    fn extensions() {
-        let mut x = ComputedStruct(
+    fn extension_ratio() {
+        let x = SimpleStruct(
             Point::new(0.0, 0.0),
             Point::new(400.0, 300.0),
             false,
@@ -154,15 +193,37 @@ mod tests {
             x.extension_ratio() == 0.02,
             "Extension ratio should be correct"
         );
-        x.1 = Point::new(12.0, 9.0);
+        let x = SimpleStruct(
+            Point::new(0.0, 0.0),
+            Point::new(12.0, 9.0),
+            false,
+            false,
+            false,
+        );
         assert!(
             x.extension_ratio() == 0.25,
             "Extension ratio should cap at 0.25"
         );
+    }
+
+    #[test]
+    fn limits() {
+        let x = SimpleStruct(
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 1.0),
+            false,
+            false,
+            false,
+        );
         assert!(x.left_limit() == 0.0, "Left limit should not be extended");
         assert!(x.right_limit() == 1.0, "Right limit should not be extended");
-        x.3 = true;
-        x.4 = true;
+        let x = SimpleStruct(
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 1.0),
+            false,
+            true,
+            true,
+        );
         assert!(x.left_limit() == -0.25, "Left limit should extend");
         assert!(x.right_limit() == 1.25, "Right limit should extend");
     }
