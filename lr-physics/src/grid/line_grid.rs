@@ -1,17 +1,7 @@
-use crate::grid::grid_cell::{CellKey, GridCell};
+use crate::grid::{CELL_SIZE, CellKey, GridVersion, LineId, grid_cell::GridCell};
 use geometry::{Line, Point};
 use std::collections::{BTreeSet, HashMap};
 use vector2d::Vector2Df;
-
-pub const CELL_SIZE: f64 = 14.0;
-
-pub enum GridVersion {
-    V6_0,
-    V6_1,
-    V6_2,
-}
-
-pub type LineId = u32;
 
 pub struct Grid {
     version: GridVersion,
@@ -226,7 +216,10 @@ impl Grid {
 
 #[cfg(test)]
 mod tests {
-    use crate::grid::{Grid, grid_cell::GridCell, line_grid::CELL_SIZE};
+    use crate::grid::{
+        grid_cell::GridCell,
+        line_grid::{CELL_SIZE, Grid},
+    };
     use geometry::{Line, Point};
     use serde::Deserialize;
     use std::fs;

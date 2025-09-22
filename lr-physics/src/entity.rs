@@ -1,6 +1,5 @@
-mod bone;
-mod joint;
-mod point;
-mod skeleton;
-
-pub use point::{ContactPoint, FlutterPoint};
+pub mod bone;
+pub mod joint;
+pub mod mount;
+pub mod point;
+pub mod skeleton;

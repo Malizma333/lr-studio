@@ -1,26 +1,16 @@
 use geometry::Point;
 use vector2d::Vector2Df;
 
-struct BaseEntityPoint {
+pub type EntityPointIndex = usize;
+
+// Somewhere we should just keep a cache of states for every frame we want to access
+struct EntityPointState {
     position: Point,
     velocity: Vector2Df,
     previous_position: Point,
 }
 
-impl BaseEntityPoint {
-    fn update(
-        &mut self,
-        new_position: Point,
-        new_velocity: Vector2Df,
-        new_previous_position: Point,
-    ) {
-        self.position = new_position;
-        self.velocity = new_velocity;
-        self.previous_position = new_previous_position;
-    }
-}
-
-impl Clone for BaseEntityPoint {
+impl Clone for EntityPointState {
     fn clone(&self) -> Self {
         Self {
             position: self.position.clone(),
@@ -30,108 +20,106 @@ impl Clone for BaseEntityPoint {
     }
 }
 
-pub struct ContactPoint {
-    base: BaseEntityPoint,
-    friction: f64,
-}
-
-pub struct FlutterPoint {
-    base: BaseEntityPoint,
+pub struct EntityPoint {
+    state: EntityPointState,
+    contact: bool,
+    contact_friction: f64,
     air_friction: f64,
 }
 
-impl ContactPoint {
-    pub fn new(initial_position: Vector2Df, friction: f64) -> ContactPoint {
-        ContactPoint {
-            base: BaseEntityPoint {
-                position: initial_position,
-                velocity: Vector2Df::zero(),
-                previous_position: initial_position,
-            },
-            friction: friction,
+pub struct EntityPointBuilder {
+    initial_position: Option<Point>,
+    contact: bool,
+    contact_friction: Option<f64>,
+    air_friction: Option<f64>,
+}
+
+#[derive(Debug, Clone)]
+pub enum EntityPointBuilderError {
+    MissingInitialPosition,
+}
+
+impl EntityPointBuilder {
+    pub fn new() -> EntityPointBuilder {
+        EntityPointBuilder {
+            initial_position: None,
+            contact: false,
+            contact_friction: None,
+            air_friction: None,
         }
     }
 
-    pub fn position(&self) -> Point {
-        self.base.position
+    pub fn initial_position(&mut self, position: Point) -> &mut Self {
+        self.initial_position = Some(position);
+        self
     }
 
-    pub fn velocity(&self) -> Vector2Df {
-        self.base.velocity
+    pub fn contact(&mut self) -> &mut Self {
+        self.contact = true;
+        self
     }
 
-    pub fn previous_position(&self) -> Point {
-        self.base.previous_position
+    pub fn contact_friction(&mut self, friction: f64) -> &mut Self {
+        self.contact_friction = Some(friction);
+        self
     }
 
+    pub fn air_friction(&mut self, friction: f64) -> &mut Self {
+        self.air_friction = Some(friction);
+        self
+    }
+
+    pub fn build(&self) -> Result<EntityPoint, EntityPointBuilderError> {
+        if let Some(initial_position) = self.initial_position {
+            Ok(EntityPoint {
+                state: EntityPointState {
+                    position: initial_position,
+                    velocity: Vector2Df::zero(),
+                    previous_position: initial_position,
+                },
+                contact: self.contact,
+                contact_friction: self.contact_friction.unwrap_or(0.0),
+                air_friction: self.air_friction.unwrap_or(0.0),
+            })
+        } else {
+            Err(EntityPointBuilderError::MissingInitialPosition)
+        }
+    }
+}
+
+impl EntityPoint {
     pub fn update(
         &mut self,
         new_position: Point,
         new_velocity: Vector2Df,
         new_previous_position: Point,
     ) {
-        self.base
-            .update(new_position, new_velocity, new_previous_position);
+        self.state.position = new_position;
+        self.state.velocity = new_velocity;
+        self.state.previous_position = new_previous_position;
+    }
+
+    pub fn position(&self) -> Point {
+        self.state.position
+    }
+
+    pub fn velocity(&self) -> Vector2Df {
+        self.state.velocity
+    }
+
+    pub fn previous_position(&self) -> Point {
+        self.state.previous_position
     }
 
     pub fn friction(&self) -> f64 {
-        self.friction
-    }
-}
-
-impl Clone for ContactPoint {
-    fn clone(&self) -> Self {
-        Self {
-            base: self.base.clone(),
-            friction: self.friction.clone(),
-        }
-    }
-}
-
-impl FlutterPoint {
-    pub fn new(initial_position: Vector2Df, air_friction: f64) -> FlutterPoint {
-        FlutterPoint {
-            base: BaseEntityPoint {
-                position: initial_position,
-                velocity: Vector2Df::zero(),
-                previous_position: initial_position,
-            },
-            air_friction,
-        }
-    }
-
-    pub fn position(&self) -> Point {
-        self.base.position
-    }
-
-    pub fn velocity(&self) -> Vector2Df {
-        self.base.velocity
-    }
-
-    pub fn previous_position(&self) -> Point {
-        self.base.previous_position
-    }
-
-    pub fn update(
-        &mut self,
-        new_position: Point,
-        new_velocity: Vector2Df,
-        new_previous_position: Point,
-    ) {
-        self.base
-            .update(new_position, new_velocity, new_previous_position);
+        self.contact_friction
     }
 
     pub fn air_friction(&self) -> f64 {
         self.air_friction
     }
-}
 
-impl Clone for FlutterPoint {
-    fn clone(&self) -> Self {
-        Self {
-            base: self.base.clone(),
-            air_friction: self.air_friction.clone(),
-        }
+    pub fn contact(&self) -> bool {
+        self.contact
     }
 }

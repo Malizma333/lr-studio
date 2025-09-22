@@ -1,18 +1,22 @@
 use vector2d::Vector2Df;
 
-use crate::{entity::ContactPoint, line::computed::ComputedLineProperties};
+use crate::{entity::point::EntityPoint, line::computed::ComputedLineProperties};
 
 pub(crate) const HITBOX_HEIGHT: f64 = 10.0;
 
 pub trait Hitbox: ComputedLineProperties {
     fn interact(
         &self,
-        point: &mut ContactPoint,
+        point: &mut EntityPoint,
         distance_from_line_top: f64,
         position_between_ends: f64,
     );
 
-    fn check_interaction(&self, point: &mut ContactPoint) -> bool {
+    fn check_interaction(&self, point: &mut EntityPoint) -> bool {
+        if !point.contact() {
+            return false;
+        }
+
         let offset_from_point = point.position() - self.endpoints().0;
         let moving_into_line = Vector2Df::dot(self.normal_unit(), point.velocity()) > 0.0;
         let distance_from_line_top = Vector2Df::dot(self.normal_unit(), offset_from_point);
@@ -39,7 +43,7 @@ mod tests {
     use vector2d::Vector2Df;
 
     use crate::{
-        entity::ContactPoint,
+        entity::point::{EntityPoint, EntityPointBuilder},
         line::{computed::ComputedLineProperties, hitbox::Hitbox},
     };
     struct SimpleStruct(pub Vector2Df, pub Vector2Df, pub bool, pub bool, pub bool);
@@ -65,7 +69,7 @@ mod tests {
     impl Hitbox for SimpleStruct {
         fn interact(
             &self,
-            point: &mut crate::entity::ContactPoint,
+            point: &mut EntityPoint,
             distance_from_line_top: f64,
             position_between_ends: f64,
         ) {
@@ -81,7 +85,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::one(), Vector2Df::one(), Point::zero());
         assert!(
             line.check_interaction(&mut contact_point),
@@ -98,7 +105,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::one(), -1.0 * Vector2Df::one(), Point::zero());
         assert!(
             !line.check_interaction(&mut contact_point),
@@ -115,7 +125,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(0.0, -1.0), Vector2Df::one(), Point::zero());
         assert!(
             !line.check_interaction(&mut contact_point),
@@ -132,7 +145,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(
             Point::new(0.0, -1.0),
             -1.0 * Vector2Df::one(),
@@ -153,7 +169,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(0.0, 12.0), Vector2Df::one(), Point::zero());
         assert!(
             !line.check_interaction(&mut contact_point),
@@ -170,7 +189,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(-11.0, 5.0), Vector2Df::one(), Point::zero());
         assert!(
             !line.check_interaction(&mut contact_point),
@@ -187,7 +209,10 @@ mod tests {
             false,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(11.0, 5.0), Vector2Df::one(), Point::zero());
         assert!(
             !line.check_interaction(&mut contact_point),
@@ -204,7 +229,10 @@ mod tests {
             true,
             false,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(-11.0, 5.0), Vector2Df::one(), Point::zero());
         assert!(
             line.check_interaction(&mut contact_point),
@@ -221,7 +249,10 @@ mod tests {
             false,
             true,
         );
-        let mut contact_point = ContactPoint::new(Point::zero(), 0.0);
+        let mut contact_point = EntityPointBuilder::new()
+            .initial_position(Point::zero())
+            .build()
+            .unwrap();
         contact_point.update(Point::new(11.0, 5.0), Vector2Df::one(), Point::zero());
         assert!(
             line.check_interaction(&mut contact_point),
@@ -230,21 +261,20 @@ mod tests {
     }
 }
 
-// Put line-specific implementations somewhere else?
-//             let new_position = point.position() - (self.normal_unit() * distance_from_line_top);
+// TODO: Put line-specific implementations of interact somewhere else?
+// let new_position = point.position() - (self.normal_unit() * distance_from_line_top);
 //
-//             let friction_vector =
-//                 (self.normal_unit().rotate_cw() * point.friction) * distance_from_line_top;
+// let friction_vector =
+//     (self.normal_unit().rotate_cw() * point.friction) * distance_from_line_top;
 //
-//             if point.previous_position().x() >= new_position.x() {
-//                 friction_vector.x *= -1;
-//             }
+// if point.previous_position().x() >= new_position.x() {
+//     friction_vector.x *= -1;
+// }
 //
-//             if point.previous_position().y() < new_position.y() {
-//                 friction_vector.y *= -1;
-//             }
+// if point.previous_position().y() < new_position.y() {
+//     friction_vector.y *= -1;
+// }
 //
-//             let new_previous_position =
-//                 point.base.previous_position + friction_vector - self.acceleration_vector;
+// let new_previous_position = point.base.previous_position + friction_vector - self.acceleration_vector;
 //
-//             (new_position, new_previous_position)
+// (new_position, new_previous_position)

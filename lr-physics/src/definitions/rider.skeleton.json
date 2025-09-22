@@ -1,0 +1,163 @@
+{
+  "contact_points": [
+    {
+      "initial_x": 0.0,
+      "initial_y": 0.0,
+      "friction": 0.8
+    },
+    {
+      "initial_x": 0.0,
+      "initial_y": -5.5,
+      "friction": 0.8
+    },
+    {
+      "initial_x": 6.5,
+      "initial_y": -5.0,
+      "friction": 0.1
+    },
+    {
+      "initial_x": 6.5,
+      "initial_y": -5.0,
+      "friction": 0.1
+    },
+    {
+      "initial_x": 5.0,
+      "initial_y": 5.0,
+      "friction": 0.0
+    },
+    {
+      "initial_x": 5.0,
+      "initial_y": 5.0,
+      "friction": 0.0
+    }
+  ],
+  "normal_bones": [
+    {
+      "point0": 1,
+      "point1": 0,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    },
+    {
+      "point0": 1,
+      "point1": 3,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    },
+    {
+      "point0": 1,
+      "point1": 2,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    },
+    {
+      "point0": 0,
+      "point1": 4,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    },
+    {
+      "point0": 0,
+      "point1": 5,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    },
+    {
+      "point0": 1,
+      "point1": 2,
+      "bias": 0.5,
+      "rest_length_factor": 1.0
+    }
+  ],
+  "repel_bones": [
+    {
+      "point0": 1,
+      "point1": 4,
+      "bias": 0.5,
+      "rest_length_factor": 0.5
+    },
+    {
+      "point0": 1,
+      "point1": 5,
+      "bias": 0.5,
+      "rest_length_factor": 0.5
+    }
+  ],
+  "flutter_points": [
+    {
+      "initial_x": -2.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -4.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -6.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -8.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -10.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -12.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    },
+    {
+      "initial_x": -14.0,
+      "initial_y": -5.5,
+      "air_friction": 0.2
+    }
+  ],
+  "flutter_attachments": [
+    {
+      "bias": 1.0,
+      "contact_point": 1,
+      "flutter_point": 0
+    }
+  ],
+  "flutter_bones": [
+    {
+      "bias": 1.0,
+      "point0": 0,
+      "point1": 1
+    },
+    {
+      "bias": 1.0,
+      "point0": 1,
+      "point1": 2
+    },
+    {
+      "bias": 1.0,
+      "point0": 2,
+      "point1": 3
+    },
+    {
+      "bias": 1.0,
+      "point0": 3,
+      "point1": 4
+    },
+    {
+      "bias": 1.0,
+      "point0": 4,
+      "point1": 5
+    },
+    {
+      "bias": 1.0,
+      "point0": 5,
+      "point1": 6
+    }
+  ],
+  "joints": []
+}
