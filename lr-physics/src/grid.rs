@@ -11,3 +11,5 @@ pub enum GridVersion {
     V6_1,
     V6_2,
 }
+
+pub use line_grid::Grid;

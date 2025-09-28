@@ -3,14 +3,51 @@ use vector2d::Vector2Df;
 
 use crate::line::hitbox::HITBOX_HEIGHT;
 
+pub struct ComputedProperties {
+    endpoints: (Point, Point),
+    flipped: bool,
+    extended_left: bool,
+    extended_right: bool,
+}
+
+impl ComputedProperties {
+    pub fn new(
+        endpoints: (Point, Point),
+        flipped: bool,
+        extended_left: bool,
+        extended_right: bool,
+    ) -> Self {
+        Self {
+            endpoints,
+            flipped,
+            extended_left,
+            extended_right,
+        }
+    }
+
+    pub fn endpoints(&self) -> (Point, Point) {
+        self.endpoints
+    }
+
+    pub fn flipped(&self) -> bool {
+        self.flipped
+    }
+
+    pub fn extended_left(&self) -> bool {
+        self.extended_left
+    }
+
+    pub fn extended_right(&self) -> bool {
+        self.extended_right
+    }
+}
+
+// TODO the results of these should be cached somewhere until props change
 pub trait ComputedLineProperties {
-    fn endpoints(&self) -> (Point, Point);
-    fn flipped(&self) -> bool;
-    fn extended_left(&self) -> bool;
-    fn extended_right(&self) -> bool;
+    fn properties(&self) -> ComputedProperties;
 
     fn vector(&self) -> Vector2Df {
-        self.endpoints().1 - self.endpoints().0
+        self.properties().endpoints.1 - self.properties().endpoints.0
     }
 
     fn length(&self) -> f64 {
@@ -26,7 +63,7 @@ pub trait ComputedLineProperties {
     }
 
     fn normal_unit(&self) -> Vector2Df {
-        if self.flipped() {
+        if self.properties().flipped {
             self.unit().rotate_cw()
         } else {
             self.unit().rotate_ccw()
@@ -39,7 +76,7 @@ pub trait ComputedLineProperties {
     }
 
     fn left_limit(&self) -> f64 {
-        if self.extended_left() {
+        if self.properties().extended_left {
             -self.extension_ratio()
         } else {
             0.0
@@ -47,7 +84,7 @@ pub trait ComputedLineProperties {
     }
 
     fn right_limit(&self) -> f64 {
-        if self.extended_right() {
+        if self.properties().extended_right {
             1.0 + self.extension_ratio()
         } else {
             1.0
@@ -60,25 +97,13 @@ mod tests {
     use geometry::Point;
     use vector2d::Vector2Df;
 
-    use crate::line::computed::ComputedLineProperties;
+    use crate::line::computed::{ComputedLineProperties, ComputedProperties};
 
-    struct SimpleStruct(pub Vector2Df, pub Vector2Df, pub bool, pub bool, pub bool);
+    struct SimpleStruct(pub Point, pub Point, pub bool, pub bool, pub bool);
 
     impl ComputedLineProperties for SimpleStruct {
-        fn endpoints(&self) -> (geometry::Point, geometry::Point) {
-            (self.0, self.1)
-        }
-
-        fn flipped(&self) -> bool {
-            self.2
-        }
-
-        fn extended_left(&self) -> bool {
-            self.3
-        }
-
-        fn extended_right(&self) -> bool {
-            self.4
+        fn properties(&self) -> ComputedProperties {
+            ComputedProperties::new((self.0, self.1), self.2, self.3, self.4)
         }
     }
 

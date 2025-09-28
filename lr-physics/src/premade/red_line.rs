@@ -1,6 +1,9 @@
 use geometry::Point;
 
-use crate::line::{computed::ComputedLineProperties, hitbox::Hitbox};
+use crate::line::{
+    computed::{ComputedLineProperties, ComputedProperties},
+    hitbox::Hitbox,
+};
 
 const ACCELERATION_FACTOR: f64 = 0.1;
 
@@ -13,20 +16,13 @@ pub struct RedLine {
 }
 
 impl ComputedLineProperties for RedLine {
-    fn endpoints(&self) -> (Point, Point) {
-        self.endpoints
-    }
-
-    fn extended_left(&self) -> bool {
-        self.left_extension
-    }
-
-    fn extended_right(&self) -> bool {
-        self.right_extension
-    }
-
-    fn flipped(&self) -> bool {
-        self.flipped
+    fn properties(&self) -> ComputedProperties {
+        ComputedProperties::new(
+            self.endpoints,
+            self.flipped,
+            self.left_extension,
+            self.right_extension,
+        )
     }
 }
 
@@ -50,6 +46,7 @@ impl Hitbox for RedLine {
             friction_vector.y *= -1.0;
         }
 
+        // TODO: allow extending computed properties to include custom fields?
         let acceleration_vector = self.unit() * (self.acceleration * ACCELERATION_FACTOR);
 
         let new_previous_position =

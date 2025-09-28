@@ -22,7 +22,7 @@ pub trait Hitbox: ComputedLineProperties {
             return None;
         }
 
-        let offset_from_point = point.position() - self.endpoints().0;
+        let offset_from_point = point.position() - self.properties().endpoints().0;
         let moving_into_line = Vector2Df::dot(self.normal_unit(), point.velocity()) > 0.0;
         let distance_from_line_top = Vector2Df::dot(self.normal_unit(), offset_from_point);
         let position_between_ends =
@@ -48,25 +48,16 @@ mod tests {
 
     use crate::{
         entity::point::{EntityPoint, EntityPointBuilder},
-        line::{computed::ComputedLineProperties, hitbox::Hitbox},
+        line::{
+            computed::{ComputedLineProperties, ComputedProperties},
+            hitbox::Hitbox,
+        },
     };
-    struct SimpleStruct(pub Vector2Df, pub Vector2Df, pub bool, pub bool, pub bool);
+    struct SimpleStruct(pub Point, pub Point, pub bool, pub bool, pub bool);
 
     impl ComputedLineProperties for SimpleStruct {
-        fn endpoints(&self) -> (geometry::Point, geometry::Point) {
-            (self.0, self.1)
-        }
-
-        fn flipped(&self) -> bool {
-            self.2
-        }
-
-        fn extended_left(&self) -> bool {
-            self.3
-        }
-
-        fn extended_right(&self) -> bool {
-            self.4
+        fn properties(&self) -> ComputedProperties {
+            ComputedProperties::new((self.0, self.1), self.2, self.3, self.4)
         }
     }
 
