@@ -1,3 +1,3 @@
-mod blue_line;
-mod green_line;
-mod red_line;
+pub mod acceleration_line;
+pub mod normal_line;
+pub mod scenery_line;

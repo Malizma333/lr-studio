@@ -117,7 +117,7 @@ impl EntityPoint {
         self.air_friction
     }
 
-    pub fn contact(&self) -> bool {
+    pub fn is_contact(&self) -> bool {
         self.contact
     }
 }

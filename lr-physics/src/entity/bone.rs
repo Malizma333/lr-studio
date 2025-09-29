@@ -2,7 +2,7 @@ use std::f64::INFINITY;
 
 use vector2d::Vector2Df;
 
-use crate::engine::{EntityRegistry, EntityRegistryIndex};
+use crate::engine::{Engine, EntityRegistryIndex};
 
 pub struct EntityBone {
     connected_points: (EntityRegistryIndex, EntityRegistryIndex),
@@ -86,7 +86,7 @@ impl EntityBoneBuilder {
         self
     }
 
-    pub fn build(&self, registry: &EntityRegistry) -> Result<EntityBone, EntityBoneBuilderError> {
+    pub fn build(&self, registry: &Engine) -> Result<EntityBone, EntityBoneBuilderError> {
         if let Some(connected_points) = self.connected_points {
             let bone_vector = registry.get_point(connected_points.1).position()
                 - registry.get_point(connected_points.0).position();
@@ -108,13 +108,26 @@ impl EntityBoneBuilder {
 }
 
 impl EntityBone {
-    pub fn get_vector(&self, registry: &EntityRegistry) -> Vector2Df {
-        registry.get_point(self.connected_points.1).position()
-            - registry.get_point(self.connected_points.0).position()
+    pub fn is_repel(&self) -> bool {
+        self.repel_only
     }
 
-    pub fn get_percent_adjustment(&self, registry: &EntityRegistry) -> f64 {
-        let bone_vector = self.get_vector(registry);
+    pub fn is_contact(&self, engine: &Engine) -> bool {
+        engine.get_point(self.connected_points.0).is_contact()
+            && engine.get_point(self.connected_points.1).is_contact()
+    }
+
+    pub fn get_points(&self) -> (EntityRegistryIndex, EntityRegistryIndex) {
+        self.connected_points
+    }
+
+    pub fn get_vector(&self, engine: &Engine) -> Vector2Df {
+        engine.get_point(self.connected_points.1).position()
+            - engine.get_point(self.connected_points.0).position()
+    }
+
+    pub fn get_percent_adjustment(&self, engine: &Engine) -> f64 {
+        let bone_vector = self.get_vector(engine);
         let current_length = bone_vector.length();
         let should_repel = current_length < self.initial_length * self.rest_length_factor;
 
@@ -125,13 +138,9 @@ impl EntityBone {
         }
     }
 
-    pub fn get_adjustment(
-        &self,
-        registry: &EntityRegistry,
-        remounting: bool,
-    ) -> (Vector2Df, Vector2Df) {
-        let bone_vector = self.get_vector(registry);
-        let percent_adjustment = self.get_percent_adjustment(registry);
+    pub fn get_adjustment(&self, engine: &Engine, remounting: bool) -> (Vector2Df, Vector2Df) {
+        let bone_vector = self.get_vector(engine);
+        let percent_adjustment = self.get_percent_adjustment(engine);
 
         let adjustment_strength = if remounting {
             self.adjustment_strength * self.remount_adjustment_strength_factor
@@ -145,8 +154,8 @@ impl EntityBone {
         )
     }
 
-    pub fn get_intact(&self, registry: &EntityRegistry, remounting: bool) -> bool {
-        let percent_adjustment = self.get_percent_adjustment(registry);
+    pub fn get_intact(&self, engine: &Engine, remounting: bool) -> bool {
+        let percent_adjustment = self.get_percent_adjustment(engine);
 
         let endurance = if remounting {
             self.endurance * self.remount_endurance_factor

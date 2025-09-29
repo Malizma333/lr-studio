@@ -5,14 +5,17 @@ use crate::line::{
     hitbox::Hitbox,
 };
 
-pub struct BlueLine {
+const ACCELERATION_FACTOR: f64 = 0.1;
+
+pub struct AccelerationLine {
     endpoints: (Point, Point),
     flipped: bool,
     left_extension: bool,
     right_extension: bool,
+    acceleration: f64,
 }
 
-impl ComputedLineProperties for BlueLine {
+impl ComputedLineProperties for AccelerationLine {
     fn properties(&self) -> ComputedProperties {
         ComputedProperties::new(
             self.endpoints,
@@ -23,7 +26,7 @@ impl ComputedLineProperties for BlueLine {
     }
 }
 
-impl Hitbox for BlueLine {
+impl Hitbox for AccelerationLine {
     fn interact(
         &self,
         point: &crate::entity::point::EntityPoint,
@@ -43,7 +46,11 @@ impl Hitbox for BlueLine {
             friction_vector.y *= -1.0;
         }
 
-        let new_previous_position = point.previous_position() + friction_vector;
+        // TODO: allow extending computed properties to include custom fields?
+        let acceleration_vector = self.unit() * (self.acceleration * ACCELERATION_FACTOR);
+
+        let new_previous_position =
+            point.previous_position() + friction_vector - acceleration_vector;
 
         Some((new_position, new_previous_position))
     }

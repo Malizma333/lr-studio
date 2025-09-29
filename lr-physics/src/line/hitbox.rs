@@ -18,7 +18,7 @@ pub trait Hitbox: ComputedLineProperties {
     ) -> Option<(Point, Point)>;
 
     fn check_interaction(&self, point: &EntityPoint) -> Option<(Point, Point)> {
-        if !point.contact() {
+        if !point.is_contact() {
             return None;
         }
 

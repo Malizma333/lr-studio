@@ -1,6 +1,6 @@
 use geometry::Point;
 
-pub struct GreenLine {
+pub struct SceneryLine {
     endpoints: (Point, Point),
     width: f64,
 }

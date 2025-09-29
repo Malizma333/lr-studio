@@ -1,5 +1,8 @@
 use crate::engine::EntityRegistryIndex;
 
+const REMOUNT_STRENGTH_FACTOR: f64 = 0.1;
+const LRA_REMOUNT_STRENGTH_FACTOR: f64 = 0.5;
+
 enum MountPhase {
     Mounted,
     Dismounting {
@@ -18,7 +21,7 @@ struct MountState {
     mount_bones: Vec<EntityRegistryIndex>,
     mount_joints: Vec<EntityRegistryIndex>,
     mount_phase: MountPhase,
-    other: Option<EntityRegistryIndex>,
+    other_skeleton: Option<EntityRegistryIndex>,
 }
 
 impl Clone for MountState {
@@ -47,7 +50,7 @@ impl Clone for MountState {
             mount_bones: self.mount_bones.clone(),
             mount_joints: self.mount_joints.clone(),
             mount_phase: mount_phase_clone,
-            other: self.other,
+            other_skeleton: self.other_skeleton,
         }
     }
 }
@@ -61,4 +64,43 @@ pub struct EntitySkeleton {
     remounting_timer: u32,
     remounted_timer: u32,
     mount_state: MountState,
+}
+
+impl EntitySkeleton {
+    pub fn is_remounting(&self) -> bool {
+        matches!(
+            self.mount_state.mount_phase,
+            MountPhase::Remounting {
+                frames_until_remounted: _
+            }
+        )
+    }
+
+    pub fn is_mounted(&self) -> bool {
+        matches!(self.mount_state.mount_phase, MountPhase::Mounted) || self.is_remounting()
+    }
+
+    pub fn dismount(&mut self) {
+        todo!()
+    }
+
+    pub fn points(&self) -> &Vec<EntityRegistryIndex> {
+        &self.points
+    }
+
+    pub fn bones(&self) -> &Vec<EntityRegistryIndex> {
+        &self.bones
+    }
+
+    pub fn joints(&self) -> &Vec<EntityRegistryIndex> {
+        &self.joints
+    }
+
+    pub fn mount_bones(&self) -> &Vec<EntityRegistryIndex> {
+        &self.mount_state.mount_bones
+    }
+
+    pub fn mount_joints(&self) -> &Vec<EntityRegistryIndex> {
+        &self.mount_state.mount_joints
+    }
 }
