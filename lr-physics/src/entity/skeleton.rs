@@ -1,4 +1,4 @@
-use crate::engine::registry_index::EntityRegistryIndex;
+use crate::engine::entity_registry::EntityRegistryIndex;
 
 const REMOUNT_STRENGTH_FACTOR: f64 = 0.1;
 const LRA_REMOUNT_STRENGTH_FACTOR: f64 = 0.5;
@@ -17,7 +17,7 @@ enum MountPhase {
     },
 }
 
-struct MountState {
+pub struct EntitySkeletonState {
     // TODO it should be clear that this should only have unstable indices
     mount_bones: Vec<EntityRegistryIndex>,
     mount_joints: Vec<EntityRegistryIndex>,
@@ -25,7 +25,7 @@ struct MountState {
     other_skeleton: Option<EntityRegistryIndex>,
 }
 
-impl Clone for MountState {
+impl Clone for EntitySkeletonState {
     fn clone(&self) -> Self {
         let mount_phase_clone = match self.mount_phase {
             MountPhase::Mounted => MountPhase::Mounted,
@@ -46,7 +46,7 @@ impl Clone for MountState {
             },
         };
 
-        MountState {
+        EntitySkeletonState {
             // TODO: these reference invalid bones + joints
             mount_bones: self.mount_bones.clone(),
             mount_joints: self.mount_joints.clone(),
@@ -64,13 +64,13 @@ pub struct EntitySkeleton {
     dismounted_timer: u32,
     remounting_timer: u32,
     remounted_timer: u32,
-    mount_state: MountState,
+    state: EntitySkeletonState,
 }
 
 impl EntitySkeleton {
     pub fn is_remounting(&self) -> bool {
         matches!(
-            self.mount_state.mount_phase,
+            self.state.mount_phase,
             MountPhase::Remounting {
                 frames_until_remounted: _
             }
@@ -78,7 +78,7 @@ impl EntitySkeleton {
     }
 
     pub fn is_mounted(&self) -> bool {
-        matches!(self.mount_state.mount_phase, MountPhase::Mounted) || self.is_remounting()
+        matches!(self.state.mount_phase, MountPhase::Mounted) || self.is_remounting()
     }
 
     pub fn dismount(&mut self) {
@@ -98,10 +98,10 @@ impl EntitySkeleton {
     }
 
     pub fn mount_bones(&self) -> &Vec<EntityRegistryIndex> {
-        &self.mount_state.mount_bones
+        &self.state.mount_bones
     }
 
     pub fn mount_joints(&self) -> &Vec<EntityRegistryIndex> {
-        &self.mount_state.mount_joints
+        &self.state.mount_joints
     }
 }

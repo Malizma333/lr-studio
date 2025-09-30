@@ -1,2 +1,2 @@
-pub mod registry_index;
+pub mod entity_registry;
 pub mod timeline_engine;

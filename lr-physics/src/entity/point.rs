@@ -1,8 +1,7 @@
 use geometry::Point;
 use vector2d::Vector2Df;
 
-// TODO: Somewhere we should just keep a cache of states for every frame we want to access
-struct EntityPointState {
+pub struct EntityPointState {
     position: Point,
     velocity: Vector2Df,
     previous_position: Point,

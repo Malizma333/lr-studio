@@ -1,7 +1,10 @@
 use vector2d::Vector2Df;
 
 use crate::{
-    engine::{registry_index::EntityRegistryIndex, timeline_engine::Engine},
+    engine::{
+        entity_registry::{EntityRegistry, EntityRegistryIndex},
+        timeline_engine::Engine,
+    },
     entity::bone::EntityBoneLogic,
 };
 
@@ -59,16 +62,16 @@ impl EntityJointLogic for EntityJointSnapshot {
 }
 
 impl EntityJoint {
-    pub fn get_snapshot(&self, engine: &Engine) -> EntityJointSnapshot {
+    pub fn get_snapshot(&self, registry: &EntityRegistry) -> EntityJointSnapshot {
         // Don't care about remounting when getting joint snapshot
         let remounting = false;
         let bones = (
-            engine
+            registry
                 .get_bone(self.bones_involved.0)
-                .get_snapshot(engine, remounting),
-            engine
+                .get_snapshot(registry, remounting),
+            registry
                 .get_bone(self.bones_involved.0)
-                .get_snapshot(engine, remounting),
+                .get_snapshot(registry, remounting),
         );
         EntityJointSnapshot {
             bone_vectors: (bones.0.vector(), bones.1.vector()),

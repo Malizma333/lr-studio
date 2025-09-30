@@ -2,7 +2,7 @@ use std::f64::INFINITY;
 
 use vector2d::Vector2Df;
 
-use crate::engine::{registry_index::EntityRegistryIndex, timeline_engine::Engine};
+use crate::engine::entity_registry::{EntityRegistry, EntityRegistryIndex};
 
 pub struct EntityBone {
     connected_points: (EntityRegistryIndex, EntityRegistryIndex),
@@ -86,7 +86,7 @@ impl EntityBoneBuilder {
         self
     }
 
-    pub fn build(&self, registry: &Engine) -> Result<EntityBone, EntityBoneBuilderError> {
+    pub fn build(&self, registry: &EntityRegistry) -> Result<EntityBone, EntityBoneBuilderError> {
         if let Some(connected_points) = self.connected_points {
             let bone_vector = registry.get_point(connected_points.1).position()
                 - registry.get_point(connected_points.0).position();
@@ -188,11 +188,11 @@ impl EntityBoneSnapshot {
 }
 
 impl EntityBone {
-    pub fn get_snapshot(&self, engine: &Engine, remounting: bool) -> EntityBoneSnapshot {
-        let is_flutter = !(engine.get_point(self.connected_points.0).is_contact()
-            && engine.get_point(self.connected_points.1).is_contact());
-        let vector = engine.get_point(self.connected_points.1).position()
-            - engine.get_point(self.connected_points.0).position();
+    pub fn get_snapshot(&self, registry: &EntityRegistry, remounting: bool) -> EntityBoneSnapshot {
+        let is_flutter = !(registry.get_point(self.connected_points.0).is_contact()
+            && registry.get_point(self.connected_points.1).is_contact());
+        let vector = registry.get_point(self.connected_points.1).position()
+            - registry.get_point(self.connected_points.0).position();
         let adjustment_strength = if remounting {
             self.adjustment_strength * self.adjustment_strength_remount_factor
         } else {
