@@ -103,7 +103,7 @@ impl EntityPointLogic for EntityPoint {
         self.state.velocity
     }
 
-    fn update_state(
+    fn update(
         &mut self,
         new_position: Point,
         new_velocity: Vector2Df,

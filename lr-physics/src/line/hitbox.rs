@@ -1,7 +1,10 @@
 use geometry::Point;
 use vector2d::Vector2Df;
 
-use crate::{entity::point::EntityPoint, line::computed::ComputedLineProperties};
+use crate::{
+    entity::{logic::point::EntityPointLogic, point::EntityPoint},
+    line::computed::ComputedLineProperties,
+};
 
 pub(crate) const HITBOX_HEIGHT: f64 = 10.0;
 
@@ -47,7 +50,10 @@ mod tests {
     use vector2d::Vector2Df;
 
     use crate::{
-        entity::point::{EntityPoint, EntityPointTemplate},
+        entity::{
+            logic::point::EntityPointLogic,
+            point::{EntityPoint, EntityPointTemplate},
+        },
         line::{
             computed::{ComputedLineProperties, ComputedProperties},
             hitbox::Hitbox,

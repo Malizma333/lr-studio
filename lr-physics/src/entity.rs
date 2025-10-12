@@ -1,6 +1,6 @@
-pub mod bone;
-pub mod entity_registry;
-pub mod joint;
-pub mod logic;
-pub mod point;
-pub mod skeleton;
+pub(crate) mod bone;
+pub(crate) mod entity_registry;
+pub(crate) mod joint;
+pub(crate) mod logic;
+pub(crate) mod point;
+pub(crate) mod skeleton;

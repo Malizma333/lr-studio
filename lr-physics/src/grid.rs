@@ -12,4 +12,4 @@ pub enum GridVersion {
     V6_2,
 }
 
-pub use line_grid::Grid;
+pub(crate) use line_grid::Grid;

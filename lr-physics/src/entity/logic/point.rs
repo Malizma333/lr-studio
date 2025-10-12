@@ -8,7 +8,7 @@ pub trait EntityPointLogic {
     fn air_friction(&self) -> f64;
     fn contact_friction(&self) -> f64;
     fn is_contact(&self) -> bool;
-    fn update_state(
+    fn update(
         &mut self,
         new_position: Point,
         new_velocity: Vector2Df,
@@ -19,7 +19,7 @@ pub trait EntityPointLogic {
         let computed_velocity = self.position() - self.previous_position();
         let new_velocity = computed_velocity * (1.0 - self.air_friction()) + gravity;
         let new_position = self.position() + new_velocity;
-        self.update_state(new_position, new_velocity, self.position());
+        self.update(new_position, new_velocity, self.position());
     }
 }
 
@@ -51,7 +51,7 @@ mod tests {
         fn is_contact(&self) -> bool {
             self.5
         }
-        fn update_state(
+        fn update(
             &mut self,
             new_position: Point,
             new_velocity: Vector2Df,

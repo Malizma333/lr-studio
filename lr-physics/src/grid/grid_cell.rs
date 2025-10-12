@@ -3,7 +3,7 @@ use vector2d::{Vector2Df, Vector2Di};
 
 use crate::grid::{CELL_SIZE, CellKey};
 
-pub struct GridCell {
+pub(super) struct GridCell {
     position: Vector2Di,
     remainder: Vector2Df,
 }

@@ -3,7 +3,7 @@ use geometry::{Line, Point};
 use std::collections::{BTreeSet, HashMap};
 use vector2d::Vector2Df;
 
-pub struct Grid {
+pub(crate) struct Grid {
     version: GridVersion,
     cells: HashMap<CellKey, BTreeSet<LineId>>,
 }
