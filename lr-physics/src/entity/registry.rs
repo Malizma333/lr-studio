@@ -4,10 +4,10 @@ use std::{
 };
 
 use crate::entity::{
-    bone::{EntityBone, EntityBoneTemplate},
-    joint::{EntityJoint, EntityJointTemplate},
-    point::{EntityPoint, EntityPointTemplate},
-    skeleton::{EntitySkeleton, EntitySkeletonTemplate},
+    bone::{EntityBone, template::EntityBoneTemplate},
+    joint::{EntityJoint, template::EntityJointTemplate},
+    point::{EntityPoint, template::EntityPointTemplate},
+    skeleton::{EntitySkeleton, template::EntitySkeletonTemplate},
 };
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

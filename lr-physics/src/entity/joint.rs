@@ -1,45 +1,13 @@
-use std::collections::HashMap;
-
-use vector2d::Vector2Df;
-
 use crate::entity::{
-    entity_registry::{EntityBoneId, EntityBoneTemplateId, EntityRegistry},
-    logic::{bone::EntityBoneLogic, joint::EntityJointLogic},
+    joint::snapshot::EntityJointSnapshot,
+    registry::{EntityBoneId, EntityRegistry},
 };
+
+pub(crate) mod snapshot;
+pub(crate) mod template;
 
 pub struct EntityJoint {
     bones_involved: (EntityBoneId, EntityBoneId),
-}
-
-pub struct EntityJointTemplate {
-    bones_involved: (EntityBoneTemplateId, EntityBoneTemplateId),
-}
-
-impl EntityJointTemplate {
-    pub fn new(
-        bones_involved: (EntityBoneTemplateId, EntityBoneTemplateId),
-    ) -> EntityJointTemplate {
-        EntityJointTemplate { bones_involved }
-    }
-
-    pub fn build(&self, mapping: &HashMap<EntityBoneTemplateId, EntityBoneId>) -> EntityJoint {
-        EntityJoint {
-            bones_involved: (
-                mapping[&self.bones_involved.0],
-                mapping[&self.bones_involved.1],
-            ),
-        }
-    }
-}
-
-pub struct EntityJointSnapshot {
-    bone_vectors: (Vector2Df, Vector2Df),
-}
-
-impl EntityJointLogic for EntityJointSnapshot {
-    fn bone_vectors(&self) -> (Vector2Df, Vector2Df) {
-        self.bone_vectors
-    }
 }
 
 impl EntityJoint {

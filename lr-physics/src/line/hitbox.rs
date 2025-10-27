@@ -2,7 +2,7 @@ use geometry::Point;
 use vector2d::Vector2Df;
 
 use crate::{
-    entity::{logic::point::EntityPointLogic, point::EntityPoint},
+    entity::point::{EntityPoint, logic::EntityPointLogic},
     line::computed::ComputedLineProperties,
 };
 
@@ -50,10 +50,7 @@ mod tests {
     use vector2d::Vector2Df;
 
     use crate::{
-        entity::{
-            logic::point::EntityPointLogic,
-            point::{EntityPoint, EntityPointTemplate},
-        },
+        entity::point::{EntityPoint, logic::EntityPointLogic, template::EntityPointTemplate},
         line::{
             computed::{ComputedLineProperties, ComputedProperties},
             hitbox::Hitbox,

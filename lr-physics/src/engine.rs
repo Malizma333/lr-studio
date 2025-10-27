@@ -1,8 +1,8 @@
 use crate::{
     engine::state::EngineState,
-    entity::entity_registry::{EntityRegistry, EntitySkeletonId},
+    entity::registry::{EntityRegistry, EntitySkeletonId},
     grid::{Grid, LineId},
-    line::hitbox::Hitbox,
+    line::Hitbox,
 };
 use geometry::Line;
 use std::collections::HashMap;
@@ -49,6 +49,7 @@ impl Engine {
         self.get_skeleton_frozen_at_time = function;
     }
 
+    // TODO transaction api for batch line updates
     pub fn create_line(&mut self, line: Box<dyn Hitbox>) -> LineId {
         let line_points = &Line::from_tuple(line.properties().endpoints());
         let id = self.grid.add_line(line_points);
@@ -74,6 +75,7 @@ impl Engine {
         }
     }
 
+    // TODO better api for registry modifications
     pub fn registry(&mut self) -> &mut EntityRegistry {
         &mut self.registry
     }
@@ -92,6 +94,7 @@ impl Engine {
         }
     }
 
+    // TODO multithreading multirider support
     fn get_next_state(
         &self,
         current_state: EngineState,

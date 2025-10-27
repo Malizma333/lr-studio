@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::entity::{entity_registry::EntityPointId, point::EntityPointState};
+use crate::entity::{point::state::EntityPointState, registry::EntityPointId};
 
 pub(super) struct EngineState {
     point_states: HashMap<EntityPointId, EntityPointState>,

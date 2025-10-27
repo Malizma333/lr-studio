@@ -1,11 +1,7 @@
 use geometry::Point;
 
 use crate::{
-    entity::logic::point::EntityPointLogic,
-    line::{
-        computed::{ComputedLineProperties, ComputedProperties},
-        hitbox::Hitbox,
-    },
+    ComputedLineProperties, ComputedProperties, Hitbox, entity::point::logic::EntityPointLogic,
 };
 
 pub struct NormalLine {

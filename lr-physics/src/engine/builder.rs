@@ -6,7 +6,7 @@ use crate::{
         defaults::{default_get_gravity_at_time, default_get_skeleton_frozen_at_time},
         state::EngineState,
     },
-    entity::entity_registry::EntityRegistry,
+    entity::registry::EntityRegistry,
     grid::Grid,
 };
 
