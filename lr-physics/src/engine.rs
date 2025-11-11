@@ -105,3 +105,48 @@ impl Engine {
         todo!("transform the current state of entities to the next state by simulating a frame")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::Deserialize;
+    use std::fs;
+    use vector2d::Vector2Df;
+
+    use crate::{Engine, EngineBuilder};
+
+    #[derive(Deserialize)]
+    struct EngineTestCaseEntity {
+        points: Vec<(String, String, String, String)>,
+        mount_state: Option<String>,
+        sled_state: Option<String>,
+        rider_state: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct EngineTestCaseState {
+        entities: Vec<EngineTestCaseEntity>,
+    }
+
+    #[derive(Deserialize)]
+    struct EngineTestCase {
+        test: String,
+        frame: u32,
+        file: String,
+        state: EngineTestCaseState,
+    }
+
+    #[test]
+    fn engine_fixtures() {
+        let data =
+            fs::read_to_string("tests/fixture_tests.json").expect("Failed to read JSON file");
+        let test_cases: Vec<EngineTestCase> =
+            serde_json::from_str(&data).expect("Failed to parse JSON");
+
+        for test in test_cases {
+            let file_name = format!("tests/fixtures/{}.json", test.file);
+            let file = fs::read_to_string(file_name).expect("Failed to read JSON file");
+            let engine = EngineBuilder::new(crate::GridVersion::V6_2);
+            engine.build();
+        }
+    }
+}
