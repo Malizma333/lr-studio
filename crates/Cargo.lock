@@ -102,6 +102,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "formatter"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "derive_builder",
+ "derive_more",
+ "getset",
+ "once_cell",
+ "paste",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "geometry"
 version = "0.1.0"
 dependencies = [
@@ -133,32 +148,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
-name = "lr-physics"
-version = "0.1.0"
-dependencies = [
- "geometry",
- "lr_formatter_rs",
- "serde",
- "serde_json",
- "vector2d",
-]
-
-[[package]]
-name = "lr_formatter_rs"
-version = "0.1.0"
-dependencies = [
- "byteorder",
- "derive_builder",
- "derive_more",
- "getset",
- "once_cell",
- "paste",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "memchr"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,6 +164,17 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "physics"
+version = "0.1.0"
+dependencies = [
+ "formatter",
+ "geometry",
+ "serde",
+ "serde_json",
+ "vector2d",
+]
 
 [[package]]
 name = "proc-macro-error-attr2"

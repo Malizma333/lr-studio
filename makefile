@@ -26,16 +26,16 @@ build: ## Build the optimized, product-ready application
 
 .PHONY: doc
 doc: ## Generate documentation and open in the browser
-	cargo doc --no-deps --open
+	cd crates && cargo doc --no-deps --open
 
 .PHONY: format
 format: ## Format files with rustfmt
-	cargo fmt --all
+	cd crates && cargo fmt --all
 
 .PHONY: lint
 lint: ## Lint files with clippy
-	cargo clippy --all-targets --all-features -- -Aclippy::style
+	cd crates && cargo clippy --all-targets --all-features -- -Aclippy::style
 
 .PHONY: test
 test: ## Run unit tests
-	cargo test --workspace
+	cd crates && cargo test --workspace

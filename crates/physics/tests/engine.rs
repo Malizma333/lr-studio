@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
+    use format_core::{formats::json, track::GridVersion};
     use geometry::Point;
-    use lr_formatter_rs::{formats::json, track::GridVersion};
-    use lr_physics::{
+    use physics::{
         AccelerationLine as PhysicsAccelerationLine, EngineBuilder, EngineState,
         GridVersion as PhysicsGridVersion, MountPhase, NormalLine as PhysicsNormalLine,
     };

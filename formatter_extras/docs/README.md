@@ -10,7 +10,7 @@ Created for [LRA](https://github.com/jealouscloud/linerider-advanced), with cont
 
 ### JSON (.track.json)
 
-Created for linerider.com, with a modified version created in LRA for compatibility purposes. However, while the linerider.com writer received updates to the file structure, the LRA implementation did not catch up to these updates and added support for LRA-native features, diverting the initial format into almost two separate JSON formats. Documentation for the overall format can be found [here](https://github.com/Malizma/lr-formatter-rs/blob/main/docs/json.md).
+Created for linerider.com, with a modified version created in LRA for compatibility purposes. However, while the linerider.com writer received updates to the file structure, the LRA implementation did not catch up to these updates and added support for LRA-native features, diverting the initial format into almost two separate JSON formats. Documentation for the overall format can be found [here](https://github.com/Malizma/lr-studio/blob/main/docs/json.md).
 
 ## Other Formats (Unsupported)
 

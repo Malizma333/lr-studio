@@ -1,4 +1,4 @@
-use formatter::{
+use format_core::{
     formats::json,
     track::{GridVersion, TrackBuilder},
 };

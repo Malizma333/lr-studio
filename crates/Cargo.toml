@@ -1,3 +1,3 @@
 [workspace]
-members = ["vector2d", "geometry", "physics", "formatter"]
+members = ["vector2d", "geometry", "physics", "format_core"]
 resolver = "3"
