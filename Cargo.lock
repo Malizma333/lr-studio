@@ -285,8 +285,6 @@ dependencies = [
  "getset",
  "once_cell",
  "paste",
- "serde",
- "serde_json",
  "thiserror",
 ]
 
@@ -294,13 +292,7 @@ dependencies = [
 name = "format_json"
 version = "0.1.0"
 dependencies = [
- "byteorder",
- "derive_builder",
- "derive_more",
  "format_core",
- "getset",
- "once_cell",
- "paste",
  "serde",
  "serde_json",
  "thiserror",
@@ -311,14 +303,7 @@ name = "format_sol"
 version = "0.1.0"
 dependencies = [
  "byteorder",
- "derive_builder",
- "derive_more",
  "format_core",
- "getset",
- "once_cell",
- "paste",
- "serde",
- "serde_json",
  "thiserror",
 ]
 
@@ -327,14 +312,7 @@ name = "format_trk"
 version = "0.1.0"
 dependencies = [
  "byteorder",
- "derive_builder",
- "derive_more",
  "format_core",
- "getset",
- "once_cell",
- "paste",
- "serde",
- "serde_json",
  "thiserror",
 ]
 

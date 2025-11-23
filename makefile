@@ -6,31 +6,19 @@ help: ## Show this help message
 
 .PHONY: init-lib
 init-lib: ## Create a new library crate
-	@if [ -n "lib/$(NAME)" ]; then \
-		cargo init --lib --vcs none lib/$(NAME); \
+	@if [ -n "$(NAME)" ]; then \
+		cargo init --lib --vcs none $(NAME); \
 	else \
 		echo "Usage: make init-lib NAME=[name]"; \
 	fi
 
 .PHONY: init-app
 init-app: ## Create a new application crate
-	@if [ -n "applications/$(NAME)" ]; then \
-		cargo init --vcs none applications/$(NAME); \
+	@if [ -n "$(NAME)" ]; then \
+		cargo init --vcs none $(NAME); \
 	else \
 		echo "Usage: make init-app NAME=[name]"; \
 	fi
-
-.PHONY: install
-install: ## Install dependencies
-	@echo "TODO" && exit 1
-
-.PHONY: dev
-dev: ## Run the application in development mode
-	@echo "TODO" && exit 1
-
-.PHONY: build
-build: ## Build the optimized, product-ready application
-	@echo "TODO" && exit 1
 
 .PHONY: format
 format: ## Format files with rustfmt
