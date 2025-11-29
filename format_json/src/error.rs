@@ -6,14 +6,6 @@ use std::{
 
 use thiserror::Error;
 
-use format_core::{
-    track::{
-        TrackBuilderError, layer::layer_group::LayerGroupBuilderError,
-        line::line_group::LineGroupBuilderError, rider::rider_group::RiderGroupBuilderError,
-    },
-    util::ParseLengthPrefixedStringError,
-};
-
 #[derive(Error, Debug)]
 pub enum JsonReadError {
     #[error("{0}")]

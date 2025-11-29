@@ -1,52 +1,48 @@
 use crate::track::{
-    CameraZoomEvent, FrameBoundsTrigger, GroupBuilderBase,
-    group_builder::{
-        group_builder_base::GroupBuilder,
-        group_builder_error::{GroupBuilderError, IntoGroupResult},
-        group_builder_macro::define_group_builder,
-    },
-    groups::trigger::triggered_event::{
-        TriggeredEvent, TriggeredEventBuilder, TriggeredEventBuilderError,
-    },
+    primitives::{CameraZoomEvent, FrameBoundsTrigger},
+    trigger::triggered_event::{TriggeredEvent, TriggeredEventBuilder},
 };
-use std::collections::HashSet;
 
 pub type CameraZoomTrigger = TriggeredEvent<CameraZoomEvent, FrameBoundsTrigger>;
 pub type CameraZoomTriggerBuilder = TriggeredEventBuilder<CameraZoomEvent, FrameBoundsTrigger>;
-pub type CameraZoomTriggerBuilderError = TriggeredEventBuilderError;
 
-define_group_builder! (
-    enum CameraZoomFeature { }
+pub struct CameraZoomGroup {
+    triggers: Vec<CameraZoomTrigger>,
+}
 
-    struct CameraZoomGroup {
-        triggers: Vec<CameraZoomTrigger>, Vec<CameraZoomTriggerBuilder>, CameraZoomTriggerBuilderError,
-    }
-);
-
-impl GroupBuilder for CameraZoomGroupBuilder {
-    fn build_group(&mut self) -> Result<Self::Output, GroupBuilderError<Self::SubError>> {
-        let mut triggers: Vec<CameraZoomTrigger> = vec![];
-
-        for trigger_builder in &self.triggers {
-            let trigger = trigger_builder.build().map_group_err()?;
-            triggers.push(trigger);
-        }
-
-        Ok(CameraZoomGroup {
-            features: self.features.clone(),
-            triggers,
-        })
+impl CameraZoomGroup {
+    pub fn triggers(&self) -> &Vec<CameraZoomTrigger> {
+        &self.triggers
     }
 }
 
+pub struct CameraZoomGroupBuilder {
+    triggers: Vec<CameraZoomTriggerBuilder>,
+}
+
 impl CameraZoomGroupBuilder {
-    pub fn add_trigger(&mut self) -> &mut CameraZoomTriggerBuilder {
+    pub fn add_trigger(
+        &mut self,
+        event: CameraZoomEvent,
+        trigger: FrameBoundsTrigger,
+    ) -> &mut CameraZoomTriggerBuilder {
         self.triggers
-            .push(CameraZoomTriggerBuilder::default().to_owned());
+            .push(CameraZoomTriggerBuilder::new(event, trigger));
         self.triggers.last_mut().unwrap()
     }
 
-    pub fn get_triggers(&mut self) -> impl Iterator<Item = &mut CameraZoomTriggerBuilder> {
-        self.triggers.iter_mut()
+    pub fn get_triggers(&mut self) -> &mut Vec<CameraZoomTriggerBuilder> {
+        &mut self.triggers
+    }
+
+    pub fn build(&self) -> CameraZoomGroup {
+        let mut triggers: Vec<CameraZoomTrigger> = vec![];
+
+        for trigger_builder in &self.triggers {
+            let trigger = trigger_builder.build();
+            triggers.push(trigger);
+        }
+
+        CameraZoomGroup { triggers }
     }
 }

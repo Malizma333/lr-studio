@@ -1,9 +1,6 @@
-use getset::CloneGetters;
-
 use crate::track::primitives::triggers::Trigger;
 
-#[derive(CloneGetters, Debug, Clone, Copy)]
-#[getset(get_clone = "pub")]
+#[derive(Debug, Clone, Copy)]
 pub struct FrameReachedTrigger {
     frame: u32,
 }
@@ -11,6 +8,10 @@ pub struct FrameReachedTrigger {
 impl FrameReachedTrigger {
     pub fn new(frame: u32) -> Self {
         Self { frame }
+    }
+
+    pub fn frame(&self) -> u32 {
+        self.frame
     }
 }
 

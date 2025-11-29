@@ -3,4 +3,5 @@ pub enum RemountVersion {
     None,
     ComV1,
     ComV2,
+    LRA,
 }

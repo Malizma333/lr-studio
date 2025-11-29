@@ -1,4 +1,3 @@
-use byteorder::{ByteOrder, ReadBytesExt};
 use std::io::{self, Read};
 use std::string::FromUtf8Error;
 use thiserror::Error;
@@ -21,13 +20,27 @@ pub enum StringLength {
     Fixed(usize),
 }
 
+pub enum Endianness {
+    Big,
+    Little,
+}
+
 /// Generalized function for reading binary length-prefixed strings
-pub fn parse_string<B: ByteOrder>(
+pub fn parse_string(
     cursor: &mut io::Cursor<Vec<u8>>,
     length_type: StringLength,
+    length_endianness: Endianness,
 ) -> Result<String, ParseLengthPrefixedStringError> {
     let length = match length_type {
-        StringLength::U16 => usize::from(cursor.read_u16::<B>()?),
+        StringLength::U16 => {
+            let mut length_bytes: [u8; 2] = [0, 0];
+            cursor.read_exact(&mut length_bytes)?;
+            let size = match length_endianness {
+                Endianness::Big => u16::from_be_bytes(length_bytes),
+                Endianness::Little => u16::from_le_bytes(length_bytes),
+            };
+            usize::from(size)
+        }
         StringLength::Fixed(size) => size,
     };
 

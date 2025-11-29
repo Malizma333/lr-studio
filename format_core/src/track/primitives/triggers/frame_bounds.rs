@@ -1,9 +1,6 @@
-use getset::CloneGetters;
-
 use crate::track::primitives::triggers::Trigger;
 
-#[derive(CloneGetters, Debug, Clone, Copy)]
-#[getset(get_clone = "pub")]
+#[derive(Debug, Clone, Copy)]
 pub struct FrameBoundsTrigger {
     start: u32,
     end: u32,
@@ -12,6 +9,14 @@ pub struct FrameBoundsTrigger {
 impl FrameBoundsTrigger {
     pub fn new(start: u32, end: u32) -> Self {
         Self { start, end }
+    }
+
+    pub fn start(&self) -> u32 {
+        self.start
+    }
+
+    pub fn end(&self) -> u32 {
+        self.end
     }
 }
 

@@ -1,9 +1,6 @@
-use getset::CloneGetters;
-
 use crate::track::{RGBColor, primitives::events::Event};
 
-#[derive(CloneGetters, Debug, Clone, Copy)]
-#[getset(get_clone = "pub")]
+#[derive(Debug, Clone, Copy)]
 pub struct LineColorEvent {
     color: RGBColor,
 }
@@ -11,6 +8,10 @@ pub struct LineColorEvent {
 impl LineColorEvent {
     pub fn new(color: RGBColor) -> Self {
         Self { color }
+    }
+
+    pub fn color(&self) -> RGBColor {
+        self.color
     }
 }
 

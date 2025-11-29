@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use format_core::track::GridVersion;
+    use format_core::track::GridVersion as FormatGridVersion;
     use format_json;
     use geometry::Point;
     use physics::{
@@ -47,9 +47,9 @@ mod tests {
 
             // TODO duplication across libraries
             let version = match track.metadata().grid_version() {
-                GridVersion::V6_0 => PhysicsGridVersion::V6_0,
-                GridVersion::V6_1 => PhysicsGridVersion::V6_1,
-                GridVersion::V6_2 => PhysicsGridVersion::V6_2,
+                FormatGridVersion::V6_0 => PhysicsGridVersion::V6_0,
+                FormatGridVersion::V6_1 => PhysicsGridVersion::V6_1,
+                FormatGridVersion::V6_2 => PhysicsGridVersion::V6_2,
             };
             let mut engine = EngineBuilder::new(version).build();
             for line in track.line_group().acceleration_lines() {

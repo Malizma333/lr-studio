@@ -1,52 +1,48 @@
 use crate::track::{
-    CameraZoomEvent, GroupBuilderBase, LineHitTrigger,
-    group_builder::{
-        group_builder_base::GroupBuilder,
-        group_builder_error::{GroupBuilderError, IntoGroupResult},
-        group_builder_macro::define_group_builder,
-    },
-    groups::trigger::triggered_event::{
-        TriggeredEvent, TriggeredEventBuilder, TriggeredEventBuilderError,
-    },
+    primitives::{CameraZoomEvent, LineHitTrigger},
+    trigger::triggered_event::{TriggeredEvent, TriggeredEventBuilder},
 };
-use std::collections::HashSet;
 
 pub type LegacyCameraZoomTrigger = TriggeredEvent<CameraZoomEvent, LineHitTrigger>;
 pub type LegacyCameraZoomTriggerBuilder = TriggeredEventBuilder<CameraZoomEvent, LineHitTrigger>;
-pub type LegacyCameraZoomTriggerBuilderError = TriggeredEventBuilderError;
 
-define_group_builder! (
-    enum LegacyCameraZoomFeature { }
+pub struct LegacyCameraZoomGroup {
+    triggers: Vec<LegacyCameraZoomTrigger>,
+}
 
-    struct LegacyCameraZoomGroup {
-        triggers: Vec<LegacyCameraZoomTrigger>, Vec<LegacyCameraZoomTriggerBuilder>, LegacyCameraZoomTriggerBuilderError,
-    }
-);
-
-impl GroupBuilder for LegacyCameraZoomGroupBuilder {
-    fn build_group(&mut self) -> Result<Self::Output, GroupBuilderError<Self::SubError>> {
-        let mut triggers: Vec<LegacyCameraZoomTrigger> = vec![];
-
-        for trigger_builder in &self.triggers {
-            let trigger = trigger_builder.build().map_group_err()?;
-            triggers.push(trigger);
-        }
-
-        Ok(LegacyCameraZoomGroup {
-            features: self.features.clone(),
-            triggers,
-        })
+impl LegacyCameraZoomGroup {
+    pub fn triggers(&self) -> &Vec<LegacyCameraZoomTrigger> {
+        &self.triggers
     }
 }
 
+pub struct LegacyCameraZoomGroupBuilder {
+    triggers: Vec<LegacyCameraZoomTriggerBuilder>,
+}
+
 impl LegacyCameraZoomGroupBuilder {
-    pub fn add_trigger(&mut self) -> &mut LegacyCameraZoomTriggerBuilder {
+    pub fn add_trigger(
+        &mut self,
+        event: CameraZoomEvent,
+        trigger: LineHitTrigger,
+    ) -> &mut LegacyCameraZoomTriggerBuilder {
         self.triggers
-            .push(LegacyCameraZoomTriggerBuilder::default().to_owned());
+            .push(LegacyCameraZoomTriggerBuilder::new(event, trigger));
         self.triggers.last_mut().unwrap()
     }
 
-    pub fn get_triggers(&mut self) -> impl Iterator<Item = &mut LegacyCameraZoomTriggerBuilder> {
-        self.triggers.iter_mut()
+    pub fn get_triggers(&mut self) -> &mut Vec<LegacyCameraZoomTriggerBuilder> {
+        &mut self.triggers
+    }
+
+    pub fn build(&self) -> LegacyCameraZoomGroup {
+        let mut triggers: Vec<LegacyCameraZoomTrigger> = vec![];
+
+        for trigger_builder in &self.triggers {
+            let trigger = trigger_builder.build();
+            triggers.push(trigger);
+        }
+
+        LegacyCameraZoomGroup { triggers }
     }
 }

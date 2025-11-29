@@ -1,7 +1,4 @@
-use getset::CloneGetters;
-
-#[derive(Debug, Clone, Copy, CloneGetters)]
-#[getset(get_clone = "pub")]
+#[derive(Debug, Clone, Copy)]
 pub struct RGBColor {
     red: u8,
     green: u8,
@@ -11,6 +8,18 @@ pub struct RGBColor {
 impl RGBColor {
     pub fn new(red: u8, green: u8, blue: u8) -> Self {
         Self { red, green, blue }
+    }
+
+    pub fn red(&self) -> u8 {
+        self.red
+    }
+
+    pub fn green(&self) -> u8 {
+        self.green
+    }
+
+    pub fn blue(&self) -> u8 {
+        self.blue
     }
 
     pub fn to_css_string(&self) -> String {

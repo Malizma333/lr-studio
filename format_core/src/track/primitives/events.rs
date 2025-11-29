@@ -6,4 +6,4 @@ pub use background_color::BackgroundColorEvent;
 pub use camera_zoom::CameraZoomEvent;
 pub use line_color::LineColorEvent;
 
-pub trait Event {}
+pub trait Event: Clone {}
