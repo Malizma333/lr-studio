@@ -1,4 +1,4 @@
-# Line Rider Studio
+# Line Rider Core (In Rust)
 
 > [!WARNING]
 > This project is in an unfinished state. Use at your own risk.
@@ -14,13 +14,7 @@
 Clone this repository
 
 ```sh
-git clone git@github.com:Malizma333/lr-studio.git
-```
-
-Install dependencies
-
-```sh
-make install
+git clone git@github.com:Malizma333/lr-core-rs.git
 ```
 
 Run tests
@@ -29,7 +23,7 @@ Run tests
 make test
 ```
 
-See other helpful commands
+See all available commands
 
 ```sh
 make help
