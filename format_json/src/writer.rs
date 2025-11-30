@@ -129,8 +129,8 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
         for rider in rider_group.riders() {
             let start_position = if let Some(start_pos) = rider.start_position() {
                 V2 {
-                    x: start_pos.x(),
-                    y: start_pos.y(),
+                    x: start_pos.x,
+                    y: start_pos.y,
                 }
             } else {
                 V2 { x: 0.0, y: 0.0 }
@@ -138,8 +138,8 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
 
             let start_velocity = if let Some(start_vel) = rider.start_velocity() {
                 V2 {
-                    x: start_vel.x(),
-                    y: start_vel.y(),
+                    x: start_vel.x,
+                    y: start_vel.y,
                 }
             } else if zero_start {
                 V2 { x: 0.0, y: 0.0 }
@@ -191,8 +191,8 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
 
     let start_pos = if let Some(start_position) = track.metadata().start_position() {
         Some(V2 {
-            x: start_position.x(),
-            y: start_position.y(),
+            x: start_position.x,
+            y: start_position.y,
         })
     } else {
         Some(V2 { x: 0.0, y: 0.0 })

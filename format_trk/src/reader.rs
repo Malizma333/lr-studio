@@ -16,13 +16,14 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RGBColor, Track, TrackBuilder, Vec2,
+        LineHitTrigger, LineType, RGBColor, Track, TrackBuilder,
     },
     util::{
         bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
         string_parser::{Endianness, StringLength, parse_string},
     },
 };
+use vector2d::Vector2Df;
 
 pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
     let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
@@ -108,7 +109,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
     let start_pos_y = cursor.read_f64::<LittleEndian>()?;
     track_builder
         .metadata()
-        .start_position(Vec2::new(start_pos_x, start_pos_y));
+        .start_position(Vector2Df::new(start_pos_x, start_pos_y));
 
     let line_count = cursor.read_u32::<LittleEndian>()?;
 
@@ -172,7 +173,10 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         let line_y1 = cursor.read_f64::<LittleEndian>()?;
         let line_x2 = cursor.read_f64::<LittleEndian>()?;
         let line_y2 = cursor.read_f64::<LittleEndian>()?;
-        let endpoints = (Vec2::new(line_x1, line_y1), Vec2::new(line_x2, line_y2));
+        let endpoints = (
+            Vector2Df::new(line_x1, line_y1),
+            Vector2Df::new(line_x2, line_y2),
+        );
         let left_extension = line_ext & 0x1 != 0;
         let right_extension = line_ext & 0x2 != 0;
 
@@ -366,7 +370,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
     track_builder.metadata().start_zoom(start_zoom);
     track_builder
         .metadata()
-        .start_gravity(Vec2::new(start_gravity_x, start_gravity_y));
+        .start_gravity(Vector2Df::new(start_gravity_x, start_gravity_y));
     track_builder
         .metadata()
         .gravity_well_size(gravity_well_size);

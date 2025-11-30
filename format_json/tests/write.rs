@@ -2,7 +2,8 @@
 mod tests {
     use std::fs;
 
-    use format_core::track::{GridVersion, RGBColor, TrackBuilder, Vec2};
+    use format_core::track::{GridVersion, RGBColor, TrackBuilder};
+    use vector2d::Vector2Df;
 
     #[test]
     fn write_metadata_features() {
@@ -14,7 +15,7 @@ mod tests {
             .duration(10)
             .grid_version(GridVersion::V6_0)
             .script("none".to_string())
-            .start_position(Vec2::new(0.5, 1.5))
+            .start_position(Vector2Df::new(0.5, 1.5))
             .title("some title".to_string())
             .zero_velocity_start_riders(true);
         let result = format_json::write(&track.build()).unwrap();
@@ -47,10 +48,10 @@ mod tests {
             .remount_riders(true)
             .script("none".to_string())
             .start_background_color(RGBColor::new(0, 20, 40))
-            .start_gravity(Vec2::new(10.0, 20.0))
+            .start_gravity(Vector2Df::new(10.0, 20.0))
             .start_line(0)
             .start_line_color(RGBColor::new(5, 6, 7))
-            .start_position(Vec2::new(0.5, 1.5))
+            .start_position(Vector2Df::new(0.5, 1.5))
             .start_zoom(3.4)
             .title("some title".to_string())
             .zero_friction_riders(true)

@@ -6,7 +6,7 @@ pub use groups::{layer, line, metadata, rider, trigger};
 pub use line_type::LineType;
 pub use primitives::{
     BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-    LineHitTrigger, RGBColor, RemountVersion, Vec2,
+    LineHitTrigger, RGBColor, RemountVersion,
 };
 
 use crate::track::{

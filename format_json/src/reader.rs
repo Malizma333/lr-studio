@@ -1,10 +1,11 @@
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RGBColor, RemountVersion, Track, TrackBuilder, Vec2,
+        LineHitTrigger, LineType, RGBColor, RemountVersion, Track, TrackBuilder,
     },
     util::from_lra_zoom,
 };
+use vector2d::Vector2Df;
 
 use crate::{FaultyBool, FaultyU32, JsonReadError, JsonTrack, LRAJsonArrayLine};
 
@@ -40,7 +41,10 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                 }
             };
 
-            let endpoints = (Vec2::new(line.x1, line.y1), Vec2::new(line.x2, line.y2));
+            let endpoints = (
+                Vector2Df::new(line.x1, line.y1),
+                Vector2Df::new(line.x2, line.y2),
+            );
 
             let (left_extension, right_extension) = if line_type == LineType::Scenery {
                 (false, false)
@@ -103,7 +107,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
         for line in line_list {
             match line {
                 LRAJsonArrayLine::Standard(id, x1, y1, x2, y2, extended, flipped) => {
-                    let endpoints = (Vec2::new(x1, y1), Vec2::new(x2, y2));
+                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
                     track_builder
@@ -125,7 +129,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     _,
                     multiplier,
                 ) => {
-                    let endpoints = (Vec2::new(x1, y1), Vec2::new(x2, y2));
+                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
                     track_builder
@@ -137,7 +141,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                         .multiplier(f64::from(multiplier));
                 }
                 LRAJsonArrayLine::Scenery(id, x1, y1, x2, y2) => {
-                    let endpoints = (Vec2::new(x1, y1), Vec2::new(x2, y2));
+                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
                     track_builder.line_group().add_scenery_line(id, endpoints);
                 }
             }
@@ -184,8 +188,8 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
 
     if let Some(riders) = json_track.riders {
         for rider in riders.iter() {
-            let start_position = Vec2::new(rider.start_pos.x, rider.start_pos.y);
-            let start_velocity = Vec2::new(rider.start_vel.x, rider.start_vel.y);
+            let start_position = Vector2Df::new(rider.start_pos.x, rider.start_pos.y);
+            let start_velocity = Vector2Df::new(rider.start_vel.x, rider.start_vel.y);
 
             let rider_builder = track_builder
                 .rider_group()
@@ -211,7 +215,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
     if let Some(start_pos) = json_track.start_pos {
         track_builder
             .metadata()
-            .start_position(Vec2::new(start_pos.x, start_pos.y));
+            .start_position(Vector2Df::new(start_pos.x, start_pos.y));
     }
 
     if let Some(label) = json_track.label {
@@ -258,7 +262,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
         1.0
     };
 
-    let start_gravity = Vec2::new(start_gravity_x, start_gravity_y);
+    let start_gravity = Vector2Df::new(start_gravity_x, start_gravity_y);
 
     track_builder.metadata().start_gravity(start_gravity);
 

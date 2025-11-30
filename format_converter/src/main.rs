@@ -59,9 +59,6 @@ fn parse_format(format: &str, sol_index: Option<u32>) -> Result<Format> {
 
 fn run() -> Result<()> {
     let args = Cli::parse();
-
-    bail!("test");
-
     let mut input_data = Vec::new();
 
     File::open(&args.input_file)

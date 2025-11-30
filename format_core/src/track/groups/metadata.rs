@@ -1,10 +1,12 @@
-use crate::track::{GridVersion, RGBColor, Vec2};
+use vector2d::Vector2Df;
+
+use crate::track::{GridVersion, RGBColor};
 
 #[derive(Debug)]
 pub struct Metadata {
     // Shared Properties
     grid_version: GridVersion,
-    start_position: Option<Vec2>,
+    start_position: Option<Vector2Df>,
 
     // Linerider.com Properties
     title: Option<String>,
@@ -17,7 +19,7 @@ pub struct Metadata {
     gravity_well_size: Option<f64>,
     audio_filename: Option<String>,
     audio_offset_until_start: Option<f64>,
-    start_gravity: Option<Vec2>,
+    start_gravity: Option<Vector2Df>,
     start_zoom: Option<f64>,
     start_line_color: Option<RGBColor>,
     start_background_color: Option<RGBColor>,
@@ -36,7 +38,7 @@ impl Metadata {
         self.grid_version
     }
 
-    pub fn start_position(&self) -> Option<Vec2> {
+    pub fn start_position(&self) -> Option<Vector2Df> {
         self.start_position
     }
 
@@ -72,7 +74,7 @@ impl Metadata {
         self.audio_offset_until_start
     }
 
-    pub fn start_gravity(&self) -> Option<Vec2> {
+    pub fn start_gravity(&self) -> Option<Vector2Df> {
         self.start_gravity
     }
 
@@ -116,7 +118,7 @@ impl Metadata {
 pub struct MetadataBuilder {
     // Shared Properties
     grid_version: GridVersion,
-    start_position: Option<Vec2>,
+    start_position: Option<Vector2Df>,
     // Linerider.com Properties
     title: Option<String>,
     artist: Option<String>,
@@ -128,7 +130,7 @@ pub struct MetadataBuilder {
     gravity_well_size: Option<f64>,
     audio_filename: Option<String>,
     audio_offset_until_start: Option<f64>,
-    start_gravity: Option<Vec2>,
+    start_gravity: Option<Vector2Df>,
     start_zoom: Option<f64>,
     start_line_color: Option<RGBColor>,
     start_background_color: Option<RGBColor>,
@@ -173,7 +175,7 @@ impl MetadataBuilder {
         self
     }
 
-    pub fn start_position(&mut self, start_position: Vec2) -> &mut Self {
+    pub fn start_position(&mut self, start_position: Vector2Df) -> &mut Self {
         self.start_position = Some(start_position);
         self
     }
@@ -218,7 +220,7 @@ impl MetadataBuilder {
         self
     }
 
-    pub fn start_gravity(&mut self, start_gravity: Vec2) -> &mut Self {
+    pub fn start_gravity(&mut self, start_gravity: Vector2Df) -> &mut Self {
         self.start_gravity = Some(start_gravity);
         self
     }

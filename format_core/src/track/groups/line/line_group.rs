@@ -1,10 +1,9 @@
-use crate::track::{
-    Vec2,
-    line::{
-        acceleration_line::{AccelerationLine, AccelerationLineBuilder},
-        scenery_line::{SceneryLine, SceneryLineBuilder},
-        standard_line::{StandardLine, StandardLineBuilder},
-    },
+use vector2d::Vector2Df;
+
+use crate::track::line::{
+    acceleration_line::{AccelerationLine, AccelerationLineBuilder},
+    scenery_line::{SceneryLine, SceneryLineBuilder},
+    standard_line::{StandardLine, StandardLineBuilder},
 };
 
 pub struct LineGroup {
@@ -45,7 +44,7 @@ impl LineGroupBuilder {
     pub fn add_standard_line(
         &mut self,
         id: u32,
-        endpoints: (Vec2, Vec2),
+        endpoints: (Vector2Df, Vector2Df),
     ) -> &mut StandardLineBuilder {
         self.standard_lines
             .push(StandardLineBuilder::new(id, endpoints));
@@ -59,7 +58,7 @@ impl LineGroupBuilder {
     pub fn add_acceleration_line(
         &mut self,
         id: u32,
-        endpoints: (Vec2, Vec2),
+        endpoints: (Vector2Df, Vector2Df),
     ) -> &mut AccelerationLineBuilder {
         self.acceleration_lines
             .push(AccelerationLineBuilder::new(id, endpoints));
@@ -74,7 +73,7 @@ impl LineGroupBuilder {
     pub fn add_scenery_line(
         &mut self,
         id: u32,
-        endpoints: (Vec2, Vec2),
+        endpoints: (Vector2Df, Vector2Df),
     ) -> &mut SceneryLineBuilder {
         self.scenery_lines
             .push(SceneryLineBuilder::new(id, endpoints));

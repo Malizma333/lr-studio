@@ -1,3 +1,5 @@
+// TODO make this its own crate (in case we want to use "colors" later)
+
 #[derive(Debug, Clone, Copy)]
 pub struct RGBColor {
     red: u8,

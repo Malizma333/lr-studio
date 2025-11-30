@@ -1,19 +1,21 @@
-use crate::track::{RemountVersion, Vec2};
+use vector2d::Vector2Df;
+
+use crate::track::RemountVersion;
 
 pub struct Rider {
-    start_position: Option<Vec2>,
-    start_velocity: Option<Vec2>,
+    start_position: Option<Vector2Df>,
+    start_velocity: Option<Vector2Df>,
     start_angle: Option<f64>,
     can_remount: Option<bool>,
     remount_version: RemountVersion,
 }
 
 impl Rider {
-    pub fn start_position(&self) -> Option<Vec2> {
+    pub fn start_position(&self) -> Option<Vector2Df> {
         self.start_position
     }
 
-    pub fn start_velocity(&self) -> Option<Vec2> {
+    pub fn start_velocity(&self) -> Option<Vector2Df> {
         self.start_velocity
     }
 
@@ -31,8 +33,8 @@ impl Rider {
 }
 
 pub struct RiderBuilder {
-    start_position: Option<Vec2>,
-    start_velocity: Option<Vec2>,
+    start_position: Option<Vector2Df>,
+    start_velocity: Option<Vector2Df>,
     start_angle: Option<f64>,
     can_remount: Option<bool>,
     remount_version: RemountVersion,
@@ -49,12 +51,12 @@ impl RiderBuilder {
         }
     }
 
-    pub fn start_position(&mut self, start_position: Vec2) -> &mut Self {
+    pub fn start_position(&mut self, start_position: Vector2Df) -> &mut Self {
         self.start_position = Some(start_position);
         self
     }
 
-    pub fn start_velocity(&mut self, start_velocity: Vec2) -> &mut Self {
+    pub fn start_velocity(&mut self, start_velocity: Vector2Df) -> &mut Self {
         self.start_velocity = Some(start_velocity);
         self
     }

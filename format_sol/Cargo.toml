@@ -1,9 +1,10 @@
 [package]
+edition = "2024"
 name = "format_sol"
 version = "0.1.0"
-edition = "2024"
 
 [dependencies]
-format_core = { version = "0.1.0", path = "../format_core" }
 byteorder = "1.0"
+format_core = {version = "0.1.0", path = "../format_core"}
 thiserror = "1.0"
+vector2d = {path = "../vector2d"}

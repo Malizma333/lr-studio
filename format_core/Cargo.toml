@@ -2,3 +2,6 @@
 edition = "2024"
 name = "format_core"
 version = "0.1.0"
+
+[dependencies]
+vector2d = {path = "../vector2d"}

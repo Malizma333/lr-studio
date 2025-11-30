@@ -185,6 +185,9 @@ dependencies = [
 [[package]]
 name = "format_core"
 version = "0.1.0"
+dependencies = [
+ "vector2d",
+]
 
 [[package]]
 name = "format_json"
@@ -194,6 +197,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "vector2d",
 ]
 
 [[package]]
@@ -203,6 +207,7 @@ dependencies = [
  "byteorder",
  "format_core",
  "thiserror",
+ "vector2d",
 ]
 
 [[package]]
@@ -212,6 +217,7 @@ dependencies = [
  "byteorder",
  "format_core",
  "thiserror",
+ "vector2d",
 ]
 
 [[package]]

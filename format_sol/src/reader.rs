@@ -1,10 +1,11 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
+use vector2d::Vector2Df;
 
 use crate::{SolReadError, amf0::deserialize};
 
 use format_core::{
-    track::{GridVersion, LineType, Track, TrackBuilder, Vec2},
+    track::{GridVersion, LineType, Track, TrackBuilder},
     util::{
         bytes_to_hex_string,
         string_parser::{Endianness, StringLength, parse_string},
@@ -169,7 +170,7 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
 
         track_builder
             .metadata()
-            .start_position(Vec2::new(start_pos_x, start_pos_y));
+            .start_position(Vector2Df::new(start_pos_x, start_pos_y));
     }
 
     if target_track.contains_key("trackData") {
@@ -327,7 +328,7 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
                 }
             };
 
-            let endpoints = (Vec2::new(x1, y1), Vec2::new(x2, y2));
+            let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
 
             match line_type {
                 LineType::Standard => {

@@ -3,13 +3,14 @@ use std::{
     collections::HashMap,
     io::{Cursor, Seek, Write},
 };
+use vector2d::Vector2Df;
 
 use crate::{
     SolWriteError,
     amf0::{Amf0Value, serialize},
 };
 
-use format_core::track::{GridVersion, Track, Vec2};
+use format_core::track::{GridVersion, Track};
 
 pub fn write(track: &Track) -> Result<Vec<u8>, SolWriteError> {
     let mut cursor = Cursor::new(Vec::new());
@@ -103,12 +104,12 @@ pub fn write(track: &Track) -> Result<Vec<u8>, SolWriteError> {
     let start_position = if let Some(start_pos) = track.metadata().start_position() {
         start_pos
     } else {
-        Vec2::new(0.0, 0.0)
+        Vector2Df::zero()
     };
 
     let mut array_start_position = HashMap::new();
-    array_start_position.insert("0".to_string(), Amf0Value::Number(start_position.x()));
-    array_start_position.insert("1".to_string(), Amf0Value::Number(start_position.y()));
+    array_start_position.insert("0".to_string(), Amf0Value::Number(start_position.x));
+    array_start_position.insert("1".to_string(), Amf0Value::Number(start_position.y));
 
     let mut first_null_array = HashMap::new();
     first_null_array.insert("0".to_string(), Amf0Value::Null);
