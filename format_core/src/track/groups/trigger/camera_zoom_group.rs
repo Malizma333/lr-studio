@@ -21,6 +21,12 @@ pub struct CameraZoomGroupBuilder {
 }
 
 impl CameraZoomGroupBuilder {
+    pub fn new() -> Self {
+        CameraZoomGroupBuilder {
+            triggers: Vec::new(),
+        }
+    }
+
     pub fn add_trigger(
         &mut self,
         event: CameraZoomEvent,
@@ -35,7 +41,7 @@ impl CameraZoomGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> CameraZoomGroup {
+    pub fn build(&self) -> Option<CameraZoomGroup> {
         let mut triggers: Vec<CameraZoomTrigger> = vec![];
 
         for trigger_builder in &self.triggers {
@@ -43,6 +49,10 @@ impl CameraZoomGroupBuilder {
             triggers.push(trigger);
         }
 
-        CameraZoomGroup { triggers }
+        if triggers.len() == 0 {
+            None
+        } else {
+            Some(CameraZoomGroup { triggers })
+        }
     }
 }

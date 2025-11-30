@@ -3,8 +3,6 @@ use std::{
     io::{Cursor, Read, Seek, SeekFrom},
 };
 
-use byteorder::{LittleEndian, ReadBytesExt};
-
 use crate::{
     FEATURE_6_1, FEATURE_BACKGROUND_COLOR_B, FEATURE_BACKGROUND_COLOR_G,
     FEATURE_BACKGROUND_COLOR_R, FEATURE_FRICTIONLESS, FEATURE_GRAVITY_WELL_SIZE,
@@ -14,24 +12,20 @@ use crate::{
     TrkReadError,
 };
 
+use byteorder::{LittleEndian, ReadBytesExt};
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
         LineHitTrigger, LineType, RGBColor, Track, TrackBuilder, Vec2,
     },
-    util::{StringLength, bytes_to_hex_string, parse_string},
+    util::{
+        bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
+        string_parser::{Endianness, StringLength, parse_string},
+    },
 };
 
-fn from_lra_scenery_width(width: u8) -> f64 {
-    f64::from(width) / 10.0
-}
-
-fn from_lra_zoom(zoom: f32) -> f64 {
-    f64::log(f64::from(zoom), 2.0)
-}
-
 pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
-    let track_builder = &mut TrackBuilder::default();
+    let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
     let mut cursor = Cursor::new(data);
 
     // Magic number
@@ -55,7 +49,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         });
     }
 
-    let feature_string = parse_string::<LittleEndian>(&mut cursor, StringLength::U16)?;
+    let feature_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
     let mut included_features: HashSet<&str> = Default::default();
 
     for feature in feature_string.split(';').filter(|s| !s.is_empty()) {
@@ -85,8 +79,11 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
             bit_shift += 7;
         }
 
-        let song_string =
-            parse_string::<LittleEndian>(&mut cursor, StringLength::Fixed(song_string_length))?;
+        let song_string = parse_string(
+            &mut cursor,
+            StringLength::Fixed(song_string_length),
+            Endianness::Little,
+        )?;
         let song_data: Vec<&str> = song_string
             .split("\r\n")
             .filter(|s| !s.is_empty())
@@ -103,7 +100,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         let seconds_offset = song_data[1].parse::<f64>()?;
         track_builder
             .metadata()
-            .audio_filename(name)
+            .audio_filename(name.to_string())
             .audio_offset_until_start(-seconds_offset);
     }
 
@@ -133,7 +130,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
             }
         };
 
-        let line_inv = (flags >> 7) != 0;
+        let flipped = (flags >> 7) != 0;
         let line_ext = (flags >> 5) & 0x3;
 
         let mut line_multiplier = 1.0;
@@ -166,9 +163,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
                     let line_hit = LineHitTrigger::new(line_id, length);
                     track_builder
                         .legacy_camera_zoom_group()
-                        .add_trigger()
-                        .trigger(line_hit)
-                        .event(zoom_event);
+                        .add_trigger(zoom_event, line_hit);
                 }
             }
         }
@@ -178,19 +173,25 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         let line_x2 = cursor.read_f64::<LittleEndian>()?;
         let line_y2 = cursor.read_f64::<LittleEndian>()?;
         let endpoints = (Vec2::new(line_x1, line_y1), Vec2::new(line_x2, line_y2));
-        let left_ext = line_ext & 0x1 != 0;
-        let right_ext = line_ext & 0x2 != 0;
+        let left_extension = line_ext & 0x1 != 0;
+        let right_extension = line_ext & 0x2 != 0;
 
         match line_type {
             LineType::Standard => {
                 track_builder
                     .line_group()
-                    .add_standard_line(line_id, endpoints, line_inv, left_ext, right_ext);
+                    .add_standard_line(line_id, endpoints)
+                    .flipped(flipped)
+                    .left_extension(left_extension)
+                    .right_extension(right_extension);
             }
             LineType::Acceleration => {
                 track_builder
                     .line_group()
-                    .add_acceleration_line(line_id, endpoints, line_inv, left_ext, right_ext)
+                    .add_acceleration_line(line_id, endpoints)
+                    .flipped(flipped)
+                    .left_extension(left_extension)
+                    .right_extension(right_extension)
                     .multiplier(line_multiplier);
             }
             LineType::Scenery => {
@@ -202,7 +203,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         }
     }
 
-    for line in track_builder.line_group().get_scenery_lines() {
+    for line in track_builder.line_group().scenery_lines() {
         max_id += 1;
         line.id(max_id);
     }
@@ -225,7 +226,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.seek(SeekFrom::Start(current))?;
 
     if current == end {
-        return Ok(track_builder.build()?);
+        return Ok(track_builder.build());
     }
 
     // Metadata section
@@ -254,7 +255,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
     let mut start_bg_color_blue = 249;
 
     for _ in 0..num_entries {
-        let meta_string = parse_string::<LittleEndian>(&mut cursor, StringLength::U16)?;
+        let meta_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
         let key_value_pair: Vec<&str> = meta_string.split("=").filter(|s| !s.is_empty()).collect();
 
         if key_value_pair.len() != 2 {
@@ -319,9 +320,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                             track_builder
                                 .camera_zoom_group()
-                                .add_trigger()
-                                .trigger(frame_bounds)
-                                .event(zoom_event);
+                                .add_trigger(zoom_event, frame_bounds);
                         }
                         "1" => {
                             // Background Color
@@ -335,9 +334,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                             track_builder
                                 .background_color_group()
-                                .add_trigger()
-                                .trigger(frame_bounds)
-                                .event(bg_color_event);
+                                .add_trigger(bg_color_event, frame_bounds);
                         }
                         "2" => {
                             // Line Color
@@ -351,9 +348,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                             track_builder
                                 .line_color_group()
-                                .add_trigger()
-                                .trigger(frame_bounds)
-                                .event(line_color_event);
+                                .add_trigger(line_color_event, frame_bounds);
                         }
                         other => {
                             return Err(TrkReadError::InvalidData {
@@ -388,5 +383,5 @@ pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {
         start_line_color_blue,
     ));
 
-    Ok(track_builder.build()?)
+    Ok(track_builder.build())
 }

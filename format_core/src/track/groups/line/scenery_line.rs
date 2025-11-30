@@ -52,6 +52,10 @@ impl SceneryLineBuilder {
         self
     }
 
+    pub fn id(&mut self, _id: u32) -> &mut Self {
+        unimplemented!("Id should be determined at instantiation")
+    }
+
     pub fn build(&self) -> SceneryLine {
         SceneryLine {
             id: self.id,

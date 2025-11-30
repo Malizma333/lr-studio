@@ -1,5 +1,8 @@
 mod debug_format;
-mod string_parser;
+pub mod string_parser;
+mod unit_conversion;
 
 pub use debug_format::bytes_to_hex_string;
-pub use string_parser::{ParseLengthPrefixedStringError, StringLength, parse_string};
+pub use unit_conversion::{
+    from_lra_scenery_width, from_lra_zoom, from_web_gravity, to_web_gravity,
+};

@@ -1,16 +1,14 @@
-use format_core::track::{
-    BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-    LineHitTrigger, LineType, RGBColor, RemountVersion, Track, TrackBuilder, Vec2,
+use format_core::{
+    track::{
+        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
+        LineHitTrigger, LineType, RGBColor, RemountVersion, Track, TrackBuilder, Vec2,
+    },
+    util::from_lra_zoom,
 };
-
-fn from_lra_zoom(zoom: f32) -> f64 {
-    f64::log(f64::from(zoom), 2.0)
-}
 
 use crate::{FaultyBool, FaultyU32, JsonReadError, JsonTrack, LRAJsonArrayLine};
 
 pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
-    let track_builder = &mut TrackBuilder::default();
     let json_string = String::from_utf8(data.to_vec())?;
     let json_track: JsonTrack = serde_json::from_str(&json_string)?;
 
@@ -26,7 +24,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
         }
     };
 
-    track_builder.metadata().grid_version(grid_version);
+    let track_builder = &mut TrackBuilder::new(grid_version);
 
     if let Some(line_list) = json_track.lines {
         for line in line_list {
@@ -70,22 +68,20 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
 
             match line_type {
                 LineType::Standard => {
-                    track_builder.line_group().add_standard_line(
-                        line.id,
-                        endpoints,
-                        flipped,
-                        left_extension,
-                        right_extension,
-                    );
+                    track_builder
+                        .line_group()
+                        .add_standard_line(line.id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension);
                 }
                 LineType::Acceleration => {
-                    let line_builder = track_builder.line_group().add_acceleration_line(
-                        line.id,
-                        endpoints,
-                        flipped,
-                        left_extension,
-                        right_extension,
-                    );
+                    let line_builder = track_builder
+                        .line_group()
+                        .add_acceleration_line(line.id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension);
                     if let Some(multiplier) = line.multiplier {
                         line_builder.multiplier(multiplier);
                     }
@@ -110,13 +106,12 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     let endpoints = (Vec2::new(x1, y1), Vec2::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
-                    track_builder.line_group().add_standard_line(
-                        id,
-                        endpoints,
-                        flipped,
-                        left_extension,
-                        right_extension,
-                    );
+                    track_builder
+                        .line_group()
+                        .add_standard_line(id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension);
                 }
                 LRAJsonArrayLine::Acceleration(
                     id,
@@ -135,13 +130,10 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     let right_extension = extended & 0x2 != 0;
                     track_builder
                         .line_group()
-                        .add_acceleration_line(
-                            id,
-                            endpoints,
-                            flipped,
-                            left_extension,
-                            right_extension,
-                        )
+                        .add_acceleration_line(id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension)
                         .multiplier(f64::from(multiplier));
                 }
                 LRAJsonArrayLine::Scenery(id, x1, y1, x2, y2) => {
@@ -159,8 +151,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
             if !layer_is_folder {
                 let layer_builder = track_builder
                     .layer_group()
-                    .add_layer(layer.id, index)?
-                    .index(index)
+                    .add_layer(layer.id, index)
                     .name(layer.name.to_string())
                     .visible(layer.visible);
 
@@ -170,14 +161,13 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
 
                 if let Some(folder_id) = &layer.folder_id {
                     if let FaultyU32::Valid(valid_folder_id) = folder_id {
-                        layer_builder.folder_id(Some(*valid_folder_id));
+                        layer_builder.folder_id(*valid_folder_id);
                     }
                 }
             } else {
                 let layer_folder_builder = track_builder
                     .layer_group()
-                    .add_layer_folder(layer.id, index)?
-                    .index(index)
+                    .add_layer_folder(layer.id, index, 0)
                     .name(layer.name.to_string())
                     .visible(layer.visible);
 
@@ -199,15 +189,13 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
 
             let rider_builder = track_builder
                 .rider_group()
-                .add_rider()
+                .add_rider(RemountVersion::None)
                 .start_position(start_position)
                 .start_velocity(start_velocity);
 
             if let Some(angle) = rider.angle {
                 rider_builder.start_angle(angle);
             }
-
-            rider_builder.remount_version(RemountVersion::None);
 
             if let Some(remount) = &rider.remountable {
                 let (remount_bool, remount_version) = match remount {
@@ -333,9 +321,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                 let zoom_event = CameraZoomEvent::new(from_lra_zoom(trigger.target));
                 track_builder
                     .legacy_camera_zoom_group()
-                    .add_trigger()
-                    .trigger(line_hit)
-                    .event(zoom_event);
+                    .add_trigger(zoom_event, line_hit);
             }
         }
     }
@@ -352,9 +338,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                     track_builder
                         .camera_zoom_group()
-                        .add_trigger()
-                        .trigger(frame_bounds)
-                        .event(zoom_event);
+                        .add_trigger(zoom_event, frame_bounds);
                 }
                 1 => {
                     // Background Color
@@ -367,9 +351,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                     track_builder
                         .background_color_group()
-                        .add_trigger()
-                        .trigger(frame_bounds)
-                        .event(bg_color_event);
+                        .add_trigger(bg_color_event, frame_bounds);
                 }
                 2 => {
                     // Line Color
@@ -382,9 +364,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                     let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
                     track_builder
                         .line_color_group()
-                        .add_trigger()
-                        .trigger(frame_bounds)
-                        .event(line_color_event);
+                        .add_trigger(line_color_event, frame_bounds);
                 }
                 other => {
                     return Err(JsonReadError::InvalidData {
@@ -396,7 +376,7 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
         }
     }
 
-    Ok(track_builder.build()?)
+    Ok(track_builder.build())
 }
 
 fn extract_u8(value: &Option<FaultyU32>, field: &'static str) -> Result<u8, JsonReadError> {

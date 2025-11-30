@@ -1,10 +1,10 @@
 use crate::{
-    FaultyBool, FaultyU32, JsonLayer, JsonLine, JsonReadError, JsonRider, JsonTrack,
+    FaultyBool, FaultyU32, JsonLayer, JsonLine, JsonRider, JsonTrack, JsonWriteError,
     LAYER_TYPE_FOLDER, LAYER_TYPE_LAYER, V2,
 };
 use format_core::track::{GridVersion, RemountVersion, Track};
 
-pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
+pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let version = match track.metadata().grid_version() {
         GridVersion::V6_0 => String::from("6.0"),
         GridVersion::V6_1 => String::from("6.1"),
@@ -69,7 +69,7 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
     if let Some(layer_group) = track.layer_group() {
         let mut tupled_layers = vec![];
         for layer in layer_group.layers() {
-            let json_folder_id = if let Some(valid_id) = layer.folder_id().unwrap_or(None) {
+            let json_folder_id = if let Some(valid_id) = layer.folder_id() {
                 Some(FaultyU32::Valid(valid_id))
             } else {
                 Some(FaultyU32::Invalid(-1))
@@ -80,7 +80,7 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
                 JsonLayer {
                     id: layer.id(),
                     layer_type: Some(LAYER_TYPE_LAYER),
-                    name: layer.name().unwrap_or("".to_string()),
+                    name: layer.name().clone().unwrap_or("".to_string()),
                     visible: layer.visible().unwrap_or(true),
                     editable: layer.editable(),
                     folder_id: json_folder_id,
@@ -95,11 +95,11 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
                     JsonLayer {
                         id: layer_folder.id(),
                         layer_type: Some(LAYER_TYPE_FOLDER),
-                        name: layer_folder.name().unwrap_or("".to_string()),
+                        name: layer_folder.name().clone().unwrap_or("".to_string()),
                         visible: layer_folder.visible().unwrap_or(true),
                         editable: layer_folder.editable(),
                         folder_id: None,
-                        size: layer_folder.size(),
+                        size: Some(layer_folder.size()),
                     },
                 ));
             }
@@ -127,9 +127,13 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
 
     if let Some(rider_group) = track.rider_group() {
         for rider in rider_group.riders() {
-            let start_position = V2 {
-                x: rider.start_position().x(),
-                y: rider.start_position().y(),
+            let start_position = if let Some(start_pos) = rider.start_position() {
+                V2 {
+                    x: start_pos.x(),
+                    y: start_pos.y(),
+                }
+            } else {
+                V2 { x: 0.0, y: 0.0 }
             };
 
             let start_velocity = if let Some(start_vel) = rider.start_velocity() {
@@ -155,6 +159,12 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonReadError> {
                         0
                     },
                 )),
+                RemountVersion::LRA => {
+                    return Err(JsonWriteError::InvalidData {
+                        name: "remount_version",
+                        value: "LRA".to_string(),
+                    });
+                }
             };
 
             riders.push(JsonRider {

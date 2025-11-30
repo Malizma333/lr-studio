@@ -3,15 +3,8 @@ use std::{
     num::{ParseFloatError, ParseIntError, TryFromIntError},
 };
 
+use format_core::util::string_parser::ParseLengthPrefixedStringError;
 use thiserror::Error;
-
-use format_core::{
-    track::{
-        TrackBuilderError, layer::layer_group::LayerGroupBuilderError,
-        line::line_group::LineGroupBuilderError, rider::rider_group::RiderGroupBuilderError,
-    },
-    util::ParseLengthPrefixedStringError,
-};
 
 #[derive(Error, Debug)]
 pub enum TrkReadError {
@@ -25,14 +18,6 @@ pub enum TrkReadError {
     FloatConversion(#[from] ParseFloatError),
     #[error("{0}")]
     StringParsing(#[from] ParseLengthPrefixedStringError),
-    #[error("{0}")]
-    TrackGroup(#[from] TrackBuilderError),
-    #[error("{0}")]
-    LineGroup(#[from] LineGroupBuilderError),
-    #[error("{0}")]
-    RiderGroup(#[from] RiderGroupBuilderError),
-    #[error("{0}")]
-    LayerGroup(#[from] LayerGroupBuilderError),
     #[error("Invalid value for `{name}`: {value}")]
     InvalidData { name: String, value: String },
 }

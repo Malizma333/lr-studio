@@ -21,6 +21,12 @@ pub struct LineColorGroupBuilder {
 }
 
 impl LineColorGroupBuilder {
+    pub fn new() -> Self {
+        LineColorGroupBuilder {
+            triggers: Vec::new(),
+        }
+    }
+
     pub fn add_trigger(
         &mut self,
         event: LineColorEvent,
@@ -35,7 +41,7 @@ impl LineColorGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> LineColorGroup {
+    pub fn build(&self) -> Option<LineColorGroup> {
         let mut triggers: Vec<LineColorTrigger> = vec![];
 
         for trigger_builder in &self.triggers {
@@ -43,6 +49,10 @@ impl LineColorGroupBuilder {
             triggers.push(trigger);
         }
 
-        LineColorGroup { triggers }
+        if triggers.len() == 0 {
+            None
+        } else {
+            Some(LineColorGroup { triggers })
+        }
     }
 }

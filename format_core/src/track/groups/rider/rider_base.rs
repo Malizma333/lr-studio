@@ -49,23 +49,23 @@ impl RiderBuilder {
         }
     }
 
-    pub fn start_position(&mut self, start_position: Option<Vec2>) -> &mut Self {
-        self.start_position = start_position;
+    pub fn start_position(&mut self, start_position: Vec2) -> &mut Self {
+        self.start_position = Some(start_position);
         self
     }
 
-    pub fn start_velocity(&mut self, start_velocity: Option<Vec2>) -> &mut Self {
-        self.start_velocity = start_velocity;
+    pub fn start_velocity(&mut self, start_velocity: Vec2) -> &mut Self {
+        self.start_velocity = Some(start_velocity);
         self
     }
 
-    pub fn start_angle(&mut self, start_angle: Option<f64>) -> &mut Self {
-        self.start_angle = start_angle;
+    pub fn start_angle(&mut self, start_angle: f64) -> &mut Self {
+        self.start_angle = Some(start_angle);
         self
     }
 
-    pub fn can_remount(&mut self, can_remount: Option<bool>) -> &mut Self {
-        self.can_remount = can_remount;
+    pub fn can_remount(&mut self, can_remount: bool) -> &mut Self {
+        self.can_remount = Some(can_remount);
         self
     }
 

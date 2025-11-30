@@ -69,6 +69,11 @@ impl LayerFolderBuilder {
         self
     }
 
+    pub fn size(&mut self, size: u32) -> &mut Self {
+        self.size = size;
+        self
+    }
+
     pub fn build(&self) -> LayerFolder {
         LayerFolder {
             id: self.id,

@@ -21,6 +21,12 @@ pub struct LegacyCameraZoomGroupBuilder {
 }
 
 impl LegacyCameraZoomGroupBuilder {
+    pub fn new() -> Self {
+        LegacyCameraZoomGroupBuilder {
+            triggers: Vec::new(),
+        }
+    }
+
     pub fn add_trigger(
         &mut self,
         event: CameraZoomEvent,
@@ -35,7 +41,7 @@ impl LegacyCameraZoomGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> LegacyCameraZoomGroup {
+    pub fn build(&self) -> Option<LegacyCameraZoomGroup> {
         let mut triggers: Vec<LegacyCameraZoomTrigger> = vec![];
 
         for trigger_builder in &self.triggers {
@@ -43,6 +49,10 @@ impl LegacyCameraZoomGroupBuilder {
             triggers.push(trigger);
         }
 
-        LegacyCameraZoomGroup { triggers }
+        if triggers.len() == 0 {
+            None
+        } else {
+            Some(LegacyCameraZoomGroup { triggers })
+        }
     }
 }

@@ -22,6 +22,12 @@ pub struct BackgroundColorGroupBuilder {
 }
 
 impl BackgroundColorGroupBuilder {
+    pub fn new() -> Self {
+        BackgroundColorGroupBuilder {
+            triggers: Vec::new(),
+        }
+    }
+
     pub fn add_trigger(
         &mut self,
         event: BackgroundColorEvent,
@@ -36,7 +42,7 @@ impl BackgroundColorGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> BackgroundColorGroup {
+    pub fn build(&self) -> Option<BackgroundColorGroup> {
         let mut triggers: Vec<BackgroundColorTrigger> = vec![];
 
         for trigger_builder in &self.triggers {
@@ -44,6 +50,10 @@ impl BackgroundColorGroupBuilder {
             triggers.push(trigger);
         }
 
-        BackgroundColorGroup { triggers }
+        if triggers.len() == 0 {
+            None
+        } else {
+            Some(BackgroundColorGroup { triggers })
+        }
     }
 }

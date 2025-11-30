@@ -34,6 +34,14 @@ pub struct LineGroupBuilder {
 }
 
 impl LineGroupBuilder {
+    pub fn new() -> Self {
+        Self {
+            standard_lines: Vec::new(),
+            acceleration_lines: Vec::new(),
+            scenery_lines: Vec::new(),
+        }
+    }
+
     pub fn add_standard_line(
         &mut self,
         id: u32,
@@ -77,7 +85,7 @@ impl LineGroupBuilder {
         &mut self.scenery_lines
     }
 
-    pub fn build(&mut self) -> LineGroup {
+    pub fn build(&self) -> LineGroup {
         let mut standard_lines: Vec<StandardLine> = vec![];
         let mut acceleration_lines: Vec<AccelerationLine> = vec![];
         let mut scenery_lines: Vec<SceneryLine> = vec![];

@@ -5,11 +5,14 @@ use crate::{SolReadError, amf0::deserialize};
 
 use format_core::{
     track::{GridVersion, LineType, Track, TrackBuilder, Vec2},
-    util::{StringLength, bytes_to_hex_string, parse_string},
+    util::{
+        bytes_to_hex_string,
+        string_parser::{Endianness, StringLength, parse_string},
+    },
 };
 
 pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadError> {
-    let track_builder = &mut TrackBuilder::default();
+    let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
     let data_size = u64::try_from(data.len())?;
     let mut cursor = Cursor::new(data);
 
@@ -46,7 +49,7 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
         });
     }
 
-    let sol_name = parse_string::<BigEndian>(&mut cursor, StringLength::U16)?;
+    let sol_name = parse_string(&mut cursor, StringLength::U16, Endianness::Big)?;
     if sol_name.as_str() != "savedLines" {
         return Err(SolReadError::InvalidData {
             name: "sol name".to_string(),
@@ -56,7 +59,7 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
 
     let _padding = cursor.read_u32::<BigEndian>()?;
 
-    let data_name = parse_string::<BigEndian>(&mut cursor, StringLength::U16)?;
+    let data_name = parse_string(&mut cursor, StringLength::U16, Endianness::Big)?;
     if data_name.as_str() != "trackList" {
         return Err(SolReadError::InvalidData {
             name: "data name".to_string(),
@@ -328,22 +331,20 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
 
             match line_type {
                 LineType::Standard => {
-                    track_builder.line_group().add_standard_line(
-                        id,
-                        endpoints,
-                        flipped,
-                        left_extension,
-                        right_extension,
-                    );
+                    track_builder
+                        .line_group()
+                        .add_standard_line(id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension);
                 }
                 LineType::Acceleration => {
-                    track_builder.line_group().add_acceleration_line(
-                        id,
-                        endpoints,
-                        flipped,
-                        left_extension,
-                        right_extension,
-                    );
+                    track_builder
+                        .line_group()
+                        .add_acceleration_line(id, endpoints)
+                        .flipped(flipped)
+                        .left_extension(left_extension)
+                        .right_extension(right_extension);
                 }
                 LineType::Scenery => {
                     track_builder.line_group().add_scenery_line(id, endpoints);
@@ -352,5 +353,5 @@ pub fn read(data: Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadErr
         }
     }
 
-    Ok(track_builder.build()?)
+    Ok(track_builder.build())
 }

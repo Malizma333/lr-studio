@@ -26,6 +26,13 @@ pub struct LayerGroupBuilder {
 }
 
 impl LayerGroupBuilder {
+    pub fn new() -> Self {
+        LayerGroupBuilder {
+            layers: Vec::new(),
+            layer_folders: None,
+        }
+    }
+
     pub fn add_layer(&mut self, id: u32, index: usize) -> &mut LayerBuilder {
         self.layers.push(LayerBuilder::new(id, index));
         self.layers.last_mut().unwrap()
@@ -50,7 +57,7 @@ impl LayerGroupBuilder {
         &mut self.layer_folders
     }
 
-    pub fn build(&self) -> LayerGroup {
+    pub fn build(&self) -> Option<LayerGroup> {
         let mut layers: Vec<Layer> = vec![];
         let mut layer_folders: Option<Vec<LayerFolder>> = None;
 
@@ -68,9 +75,17 @@ impl LayerGroupBuilder {
             layer_folders = Some(some_layer_folders);
         }
 
-        LayerGroup {
-            layers,
-            layer_folders,
+        if layers.len() == 0
+            && layer_folders
+                .as_ref()
+                .is_none_or(|layer_folders| layer_folders.len() == 0)
+        {
+            None
+        } else {
+            Some(LayerGroup {
+                layers,
+                layer_folders,
+            })
         }
     }
 }

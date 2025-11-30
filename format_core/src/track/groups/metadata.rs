@@ -23,8 +23,8 @@ pub struct Metadata {
     start_background_color: Option<RGBColor>,
     lra_remount: Option<bool>,
     legacy_lra_fakie: Option<bool>,
-    zero_friction_riders: Option<bool>,
-    zero_velocity_start_riders: Option<bool>,
+    zero_friction_riders: bool,
+    zero_velocity_start_riders: bool,
     remount_riders: Option<bool>,
 
     // Flash Properties
@@ -96,11 +96,11 @@ impl Metadata {
         self.legacy_lra_fakie
     }
 
-    pub fn zero_friction_riders(&self) -> Option<bool> {
+    pub fn zero_friction_riders(&self) -> bool {
         self.zero_friction_riders
     }
 
-    pub fn zero_velocity_start_riders(&self) -> Option<bool> {
+    pub fn zero_velocity_start_riders(&self) -> bool {
         self.zero_velocity_start_riders
     }
 
@@ -134,8 +134,8 @@ pub struct MetadataBuilder {
     start_background_color: Option<RGBColor>,
     lra_remount: Option<bool>,
     legacy_lra_fakie: Option<bool>,
-    zero_friction_riders: Option<bool>,
-    zero_velocity_start_riders: Option<bool>,
+    zero_friction_riders: bool,
+    zero_velocity_start_riders: bool,
     remount_riders: Option<bool>,
 
     // Flash Properties
@@ -161,11 +161,16 @@ impl MetadataBuilder {
             start_background_color: None,
             lra_remount: None,
             legacy_lra_fakie: None,
-            zero_friction_riders: None,
-            zero_velocity_start_riders: None,
+            zero_friction_riders: false,
+            zero_velocity_start_riders: false,
             remount_riders: None,
             start_line: None,
         }
+    }
+
+    pub fn grid_version(&mut self, grid_version: GridVersion) -> &mut Self {
+        self.grid_version = grid_version;
+        self
     }
 
     pub fn start_position(&mut self, start_position: Vec2) -> &mut Self {
@@ -244,12 +249,12 @@ impl MetadataBuilder {
     }
 
     pub fn zero_friction_riders(&mut self, zero_friction_riders: bool) -> &mut Self {
-        self.zero_friction_riders = Some(zero_friction_riders);
+        self.zero_friction_riders = zero_friction_riders;
         self
     }
 
     pub fn zero_velocity_start_riders(&mut self, zero_velocity_start_riders: bool) -> &mut Self {
-        self.zero_velocity_start_riders = Some(zero_velocity_start_riders);
+        self.zero_velocity_start_riders = zero_velocity_start_riders;
         self
     }
 
