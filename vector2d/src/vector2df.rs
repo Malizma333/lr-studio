@@ -122,6 +122,10 @@ impl Vector2Df {
     pub fn rotate_ccw(&self) -> Vector2Df {
         Vector2Df::new(-self.y, self.x)
     }
+
+    pub fn to_hex_string(&self) -> String {
+        format!("(0x{:016x}, 0x{:016x})", self.x.to_bits(), self.y.to_bits(),)
+    }
 }
 
 #[cfg(test)]

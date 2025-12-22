@@ -35,7 +35,7 @@ impl EntityBone {
         point_states: (&EntityPointState, &EntityPointState),
         remounting: bool,
     ) -> (Vector2Df, Vector2Df) {
-        let bone_vector = point_states.1.position() - point_states.0.position();
+        let bone_vector = point_states.0.position() - point_states.1.position();
         let percent_adjustment = self.get_percent_adjustment(bone_vector);
 
         let adjustment_strength = if remounting {
@@ -43,11 +43,11 @@ impl EntityBone {
         } else {
             self.adjustment_strength
         };
+        let adjustment = adjustment_strength * percent_adjustment;
+
         (
-            point_states.0.position()
-                - bone_vector * adjustment_strength * percent_adjustment * (1.0 - self.bias),
-            point_states.1.position()
-                + bone_vector * adjustment_strength * percent_adjustment * self.bias,
+            point_states.0.position() - bone_vector * adjustment * (1.0 - self.bias),
+            point_states.1.position() + bone_vector * adjustment * self.bias,
         )
     }
 

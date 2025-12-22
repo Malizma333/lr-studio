@@ -125,6 +125,8 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
 
     let zero_start = track.metadata().zero_velocity_start_riders();
 
+    let mut lra = None;
+
     if let Some(rider_group) = track.rider_group() {
         for rider in rider_group.riders() {
             let start_position = if let Some(start_pos) = rider.start_position() {
@@ -160,10 +162,8 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
                     },
                 )),
                 RemountVersion::LRA => {
-                    return Err(JsonWriteError::InvalidData {
-                        name: "remount_version",
-                        value: "LRA".to_string(),
-                    });
+                    lra = Some(true);
+                    Some(FaultyBool::IntRep(1))
                 }
             };
 
@@ -211,6 +211,7 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let duration = Some(track.metadata().duration().unwrap_or(1200));
 
     let track = JsonTrack {
+        lra,
         label,
         version,
         start_pos,

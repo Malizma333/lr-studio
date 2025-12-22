@@ -7,12 +7,7 @@ pub fn build_default_rider(
     version: RemountVersion,
 ) -> EntitySkeletonTemplateId {
     let repel_length_factor = 0.5;
-    let scarf_friction = match version {
-        RemountVersion::None => 0.1,
-        RemountVersion::ComV1 => 0.2,
-        RemountVersion::ComV2 => 0.2,
-        RemountVersion::LRA => 0.1,
-    };
+    let scarf_friction = 0.1;
     let mount_endurance = 0.057;
     let remount_endurance_factor = 2.0;
     let remount_strength_factor = match version {
@@ -32,7 +27,6 @@ pub fn build_default_rider(
     skeleton = match version {
         RemountVersion::None => skeleton,
         _ => skeleton
-            .enable_remount()
             .dismounted_timer(30)
             .remounting_timer(3)
             .mounted_timer(3),
@@ -197,11 +191,13 @@ pub fn build_default_rider(
         .bone(shoulder, left_foot)
         .repel()
         .initial_length_factor(repel_length_factor)
+        .adjustment_strength_remount_factor(unbreakable_remount_strength_factor)
         .build();
     let (skeleton, _) = skeleton
         .bone(shoulder, right_foot)
         .repel()
         .initial_length_factor(repel_length_factor)
+        .adjustment_strength_remount_factor(unbreakable_remount_strength_factor)
         .build();
     let (skeleton, _) = skeleton.bone(shoulder, scarf0).bias(1.0).build();
     let (skeleton, _) = skeleton.bone(scarf0, scarf1).bias(1.0).build();

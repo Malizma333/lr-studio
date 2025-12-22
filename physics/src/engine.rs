@@ -1,11 +1,13 @@
 use crate::{
-    EntitySkeletonInitialProperties, MountPhase,
+    EntitySkeletonInitialProperties, MountPhase, RemountVersion,
     engine::state::EngineState,
     entity::{
         joint::entity::EntityJoint,
         point::state::EntityPointState,
         registry::{EntityRegistry, EntitySkeletonId, EntitySkeletonTemplateId},
-        skeleton::{builder::EntitySkeletonBuilder, state::EntitySkeletonState},
+        skeleton::{
+            builder::EntitySkeletonBuilder, entity::EntitySkeleton, state::EntitySkeletonState,
+        },
     },
     grid::{Grid, LineId},
     line::Hitbox,
@@ -201,84 +203,90 @@ impl Engine {
                     );
                 }
 
-                let initial_mount_phase = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.mount_phase()
-                };
+                let initial_mount_phase = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .mount_phase();
 
                 for _ in 0..6 {
                     // bones
                     for bone_id in skeleton.bones() {
                         let bone = self.registry.get_bone(*bone_id);
-                        let point_states = (
-                            current_state.points().get(&bone.points().0).unwrap(),
-                            current_state.points().get(&bone.points().1).unwrap(),
-                        );
-                        let mount_phase = if skeleton.remount_version().lra() {
-                            initial_mount_phase
-                        } else {
-                            let skeleton_state =
-                                current_state.skeletons().get(skeleton_id).unwrap();
-                            skeleton_state.mount_phase()
-                        };
 
-                        if !bone.is_breakable() {
-                            let adjustment =
-                                bone.get_adjustment(point_states, mount_phase.remounting());
-                            {
-                                let bone_point0_state = current_state
+                        if !bone.is_flutter() {
+                            let point_states = (
+                                current_state.points().get(&bone.points().0).unwrap(),
+                                current_state.points().get(&bone.points().1).unwrap(),
+                            );
+
+                            let mount_phase = match skeleton.remount_version() {
+                                RemountVersion::LRA => initial_mount_phase,
+                                _ => current_state
+                                    .skeletons()
+                                    .get(skeleton_id)
+                                    .unwrap()
+                                    .mount_phase(),
+                            };
+
+                            if !bone.is_breakable() {
+                                let adjustment =
+                                    bone.get_adjustment(point_states, mount_phase.remounting());
+                                current_state
                                     .points_mut()
                                     .get_mut(&bone.points().0)
-                                    .unwrap();
-                                bone_point0_state.update(Some(adjustment.0), None, None);
-                            }
-                            {
-                                let bone_point1_state = current_state
+                                    .unwrap()
+                                    .update(Some(adjustment.0), None, None);
+                                current_state
                                     .points_mut()
                                     .get_mut(&bone.points().1)
-                                    .unwrap();
-                                bone_point1_state.update(Some(adjustment.1), None, None);
-                            }
-                        } else if mount_phase.remounting() || mount_phase.mounted() {
-                            let intact = bone.get_intact(point_states, mount_phase.remounting());
-                            if !dismounted_this_frame {
-                                if intact {
+                                    .unwrap()
+                                    .update(Some(adjustment.1), None, None);
+                            } else if (mount_phase.remounting() || mount_phase.mounted())
+                                && !dismounted_this_frame
+                            {
+                                if bone.get_intact(point_states, mount_phase.remounting()) {
                                     let adjustment =
                                         bone.get_adjustment(point_states, mount_phase.remounting());
-                                    {
-                                        let bone_point0_state = current_state
-                                            .points_mut()
-                                            .get_mut(&bone.points().0)
-                                            .unwrap();
-                                        bone_point0_state.update(Some(adjustment.0), None, None);
-                                    }
-                                    {
-                                        let bone_point1_state = current_state
-                                            .points_mut()
-                                            .get_mut(&bone.points().1)
-                                            .unwrap();
-                                        bone_point1_state.update(Some(adjustment.1), None, None);
-                                    }
+                                    current_state
+                                        .points_mut()
+                                        .get_mut(&bone.points().0)
+                                        .unwrap()
+                                        .update(Some(adjustment.0), None, None);
+                                    current_state
+                                        .points_mut()
+                                        .get_mut(&bone.points().1)
+                                        .unwrap()
+                                        .update(Some(adjustment.1), None, None);
                                 } else {
                                     dismounted_this_frame = true;
-                                    let skeleton_state_mut =
-                                        current_state.skeletons_mut().get_mut(skeleton_id).unwrap();
-                                    let next_mount_phase = if !skeleton.remount_enabled() {
-                                        MountPhase::Dismounted {
+
+                                    let next_mount_phase = match skeleton.remount_version() {
+                                        RemountVersion::None => MountPhase::Dismounted {
                                             frames_until_remounting: 0,
+                                        },
+                                        _ => {
+                                            if mount_phase.mounted() {
+                                                MountPhase::Dismounting {
+                                                    frames_until_dismounted: skeleton
+                                                        .dismounted_timer(),
+                                                }
+                                            } else if mount_phase.remounting() {
+                                                MountPhase::Dismounted {
+                                                    frames_until_remounting: skeleton
+                                                        .remounting_timer(),
+                                                }
+                                            } else {
+                                                mount_phase
+                                            }
                                         }
-                                    } else if mount_phase.mounted() {
-                                        MountPhase::Dismounting {
-                                            frames_until_dismounted: skeleton.dismounted_timer(),
-                                        }
-                                    } else if mount_phase.remounting() {
-                                        MountPhase::Dismounted {
-                                            frames_until_remounting: skeleton.remounting_timer(),
-                                        }
-                                    } else {
-                                        mount_phase
                                     };
-                                    skeleton_state_mut.set_mount_phase(next_mount_phase);
+
+                                    current_state
+                                        .skeletons_mut()
+                                        .get_mut(skeleton_id)
+                                        .unwrap()
+                                        .set_mount_phase(next_mount_phase);
                                 }
                             }
                         }
@@ -305,7 +313,7 @@ impl Engine {
                     }
                 }
 
-                // flutter bones (like scarf)
+                // flutter bones
                 for bone_id in skeleton.bones() {
                     let bone = self.registry.get_bone(*bone_id);
                     if bone.is_flutter() {
@@ -313,11 +321,11 @@ impl Engine {
                             current_state.points().get(&bone.points().0).unwrap(),
                             current_state.points().get(&bone.points().1).unwrap(),
                         );
-                        let mount_phase = {
-                            let skeleton_state =
-                                current_state.skeletons().get(skeleton_id).unwrap();
-                            skeleton_state.mount_phase()
-                        };
+                        let mount_phase = current_state
+                            .skeletons()
+                            .get(skeleton_id)
+                            .unwrap()
+                            .mount_phase();
                         let adjustment =
                             bone.get_adjustment(point_states, mount_phase.remounting());
                         current_state
@@ -325,14 +333,21 @@ impl Engine {
                             .get_mut(&bone.points().0)
                             .unwrap()
                             .update(Some(adjustment.0), None, None);
+                        current_state
+                            .points_mut()
+                            .get_mut(&bone.points().1)
+                            .unwrap()
+                            .update(Some(adjustment.1), None, None);
                     }
                 }
 
                 // check dismount
-                let mount_phase = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.mount_phase()
-                };
+                let mount_phase = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .mount_phase();
+
                 if mount_phase.mounted() || mount_phase.remounting() {
                     for joint_id in skeleton.joints() {
                         let joint = self.registry.get_joint(*joint_id);
@@ -341,53 +356,74 @@ impl Engine {
                             && !dismounted_this_frame
                         {
                             dismounted_this_frame = true;
-                            let skeleton_state_mut =
-                                current_state.skeletons_mut().get_mut(skeleton_id).unwrap();
-                            let next_mount_phase = if !skeleton.remount_enabled() {
-                                MountPhase::Dismounted {
+
+                            let next_mount_phase = match skeleton.remount_version() {
+                                RemountVersion::None => MountPhase::Dismounted {
                                     frames_until_remounting: 0,
+                                },
+                                _ => {
+                                    if mount_phase.mounted() {
+                                        MountPhase::Dismounting {
+                                            frames_until_dismounted: skeleton.dismounted_timer(),
+                                        }
+                                    } else if mount_phase.remounting() {
+                                        MountPhase::Dismounted {
+                                            frames_until_remounting: skeleton.remounting_timer(),
+                                        }
+                                    } else {
+                                        mount_phase
+                                    }
                                 }
-                            } else if mount_phase.mounted() {
-                                MountPhase::Dismounting {
-                                    frames_until_dismounted: skeleton.dismounted_timer(),
-                                }
-                            } else if mount_phase.remounting() {
-                                MountPhase::Dismounted {
-                                    frames_until_remounting: skeleton.remounting_timer(),
-                                }
-                            } else {
-                                mount_phase
                             };
-                            skeleton_state_mut.set_mount_phase(next_mount_phase);
+
+                            current_state
+                                .skeletons_mut()
+                                .get_mut(skeleton_id)
+                                .unwrap()
+                                .set_mount_phase(next_mount_phase);
+
                             // LRA also breaks sled on mount joint break
-                            if skeleton.remount_version().lra() {
-                                skeleton_state_mut.set_sled_intact(false);
+                            match skeleton.remount_version() {
+                                RemountVersion::LRA => current_state
+                                    .skeletons_mut()
+                                    .get_mut(skeleton_id)
+                                    .unwrap()
+                                    .set_sled_intact(false),
+                                _ => {}
                             }
                         }
                     }
                 }
 
                 // check skeleton break (like sled break)
-                let mount_phase = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.mount_phase()
+                let mount_phase = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .mount_phase();
+                let sled_intact = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .sled_intact();
+
+                let sled_break_version = match skeleton.remount_version() {
+                    RemountVersion::None | RemountVersion::ComV2 => true,
+                    _ => false,
                 };
-                let sled_intact = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.sled_intact()
-                };
-                if !((skeleton.remount_version().lra() || skeleton.remount_version().comv1())
-                    && !(mount_phase.mounted() || mount_phase.remounting()))
-                {
+
+                if mount_phase.mounted() || mount_phase.remounting() || sled_break_version {
                     for joint_id in skeleton.joints() {
                         let joint = self.registry.get_joint(*joint_id);
                         if !joint.is_mount()
                             && self.get_joint_should_break(joint, &current_state)
                             && sled_intact
                         {
-                            let skeleton_state_mut =
-                                current_state.skeletons_mut().get_mut(skeleton_id).unwrap();
-                            skeleton_state_mut.set_sled_intact(false);
+                            current_state
+                                .skeletons_mut()
+                                .get_mut(skeleton_id)
+                                .unwrap()
+                                .set_sled_intact(false);
                         }
                     }
                 }
@@ -403,134 +439,151 @@ impl Engine {
             let dismounted_this_frame = dismount_flags[dismount_flag_index];
             dismount_flag_index += 1;
 
-            if !(self.get_skeleton_frozen_at_time)(*skeleton_id, frame)
-                && skeleton.remount_enabled()
-                && !dismounted_this_frame
-            {
-                let mount_phase = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.mount_phase()
-                };
+            if !(self.get_skeleton_frozen_at_time)(*skeleton_id, frame) && !dismounted_this_frame {
+                let current_mount_phase = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .mount_phase();
 
-                let sled_intact = {
-                    let skeleton_state = current_state.skeletons().get(skeleton_id).unwrap();
-                    skeleton_state.sled_intact()
-                };
+                let sled_intact = current_state
+                    .skeletons()
+                    .get(skeleton_id)
+                    .unwrap()
+                    .sled_intact();
 
-                let skeleton_state_mut =
-                    current_state.skeletons_mut().get_mut(skeleton_id).unwrap();
-
-                if skeleton.remount_version().lra() {
-                    if !sled_intact {
-                        skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                            frames_until_remounting: 0,
-                        });
-                    } else {
-                        if mount_phase.dismounting() {
-                            if mount_phase.timer() == 0 {
-                                skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                    frames_until_remounting: skeleton.remounting_timer(),
-                                });
-                            } else {
-                                skeleton_state_mut.set_mount_phase(MountPhase::Dismounting {
-                                    frames_until_dismounted: skeleton_state_mut
-                                        .timer()
-                                        .saturating_sub(1),
-                                });
+                let next_mount_phase = match skeleton.remount_version() {
+                    RemountVersion::LRA => {
+                        if !sled_intact {
+                            MountPhase::Dismounted {
+                                frames_until_remounting: 0,
                             }
-                        } else if mount_phase.dismounted() {
-                            let can_enter_remounting = false;
-                            // TODO
-                            // if self.state.can_enter_remounting(self, other_entities):
-                            if can_enter_remounting {
-                                if mount_phase.timer() == 0 {
-                                    skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
-                                        frames_until_mounted: skeleton.mounted_timer(),
-                                    });
-                                } else {
-                                    skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                        frames_until_remounting: skeleton_state_mut
-                                            .timer()
-                                            .saturating_sub(1),
-                                    });
+                        } else {
+                            match current_mount_phase {
+                                MountPhase::Dismounting {
+                                    frames_until_dismounted,
+                                } => {
+                                    if frames_until_dismounted == 0 {
+                                        MountPhase::Dismounted {
+                                            frames_until_remounting: skeleton.remounting_timer(),
+                                        }
+                                    } else {
+                                        MountPhase::Dismounting {
+                                            frames_until_dismounted: frames_until_dismounted
+                                                .saturating_sub(1),
+                                        }
+                                    }
+                                }
+                                MountPhase::Dismounted {
+                                    frames_until_remounting,
+                                } => {
+                                    if self.skeleton_can_swap_sleds(&mut current_state, skeleton_id)
+                                    {
+                                        if frames_until_remounting == 0 {
+                                            MountPhase::Remounting {
+                                                frames_until_mounted: skeleton.mounted_timer(),
+                                            }
+                                        } else {
+                                            MountPhase::Dismounted {
+                                                frames_until_remounting: frames_until_remounting
+                                                    .saturating_sub(1),
+                                            }
+                                        }
+                                    } else {
+                                        MountPhase::Dismounted {
+                                            frames_until_remounting: skeleton.remounting_timer(),
+                                        }
+                                    }
+                                }
+                                MountPhase::Remounting {
+                                    frames_until_mounted,
+                                } => {
+                                    if self.skeleton_can_enter_phase(
+                                        &current_state,
+                                        skeleton,
+                                        false,
+                                    ) {
+                                        if frames_until_mounted == 0 {
+                                            MountPhase::Mounted
+                                        } else {
+                                            MountPhase::Remounting {
+                                                frames_until_mounted: frames_until_mounted
+                                                    .saturating_sub(1),
+                                            }
+                                        }
+                                    } else {
+                                        MountPhase::Remounting {
+                                            frames_until_mounted: skeleton.mounted_timer(),
+                                        }
+                                    }
+                                }
+                                MountPhase::Mounted => MountPhase::Mounted,
+                            }
+                        }
+                    }
+                    RemountVersion::ComV1 | RemountVersion::ComV2 => match current_mount_phase {
+                        MountPhase::Dismounting {
+                            frames_until_dismounted,
+                        } => {
+                            let next_timer = frames_until_dismounted.saturating_sub(1);
+                            if next_timer == 0 {
+                                MountPhase::Dismounted {
+                                    frames_until_remounting: skeleton.remounting_timer(),
                                 }
                             } else {
-                                skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                    frames_until_remounting: skeleton.remounting_timer(),
-                                });
-                            }
-                        } else if mount_phase.remounting() {
-                            let can_enter_mounted = false;
-                            // TODO
-                            // if self.state.can_enter_mount_phase(self, MountPhase.MOUNTED):
-                            if can_enter_mounted {
-                                if mount_phase.timer() == 0 {
-                                    skeleton_state_mut.set_mount_phase(MountPhase::Mounted);
-                                } else {
-                                    skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
-                                        frames_until_mounted: skeleton_state_mut
-                                            .timer()
-                                            .saturating_sub(1),
-                                    });
+                                MountPhase::Dismounting {
+                                    frames_until_dismounted: next_timer,
                                 }
-                            } else {
-                                skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
+                            }
+                        }
+                        MountPhase::Dismounted {
+                            frames_until_remounting,
+                        } => {
+                            let next_timer =
+                                if self.skeleton_can_swap_sleds(&mut current_state, skeleton_id) {
+                                    frames_until_remounting.saturating_sub(1)
+                                } else {
+                                    skeleton.remounting_timer()
+                                };
+
+                            if next_timer == 0 {
+                                MountPhase::Remounting {
                                     frames_until_mounted: skeleton.mounted_timer(),
-                                });
+                                }
+                            } else {
+                                MountPhase::Dismounted {
+                                    frames_until_remounting: next_timer,
+                                }
                             }
                         }
-                    }
-                } else {
-                    if mount_phase.dismounting() {
-                        skeleton_state_mut.set_mount_phase(MountPhase::Dismounting {
-                            frames_until_dismounted: skeleton_state_mut.timer().saturating_sub(1),
-                        });
+                        MountPhase::Remounting {
+                            frames_until_mounted,
+                        } => {
+                            let next_timer =
+                                if self.skeleton_can_enter_phase(&current_state, skeleton, false) {
+                                    frames_until_mounted.saturating_sub(1)
+                                } else {
+                                    skeleton.mounted_timer()
+                                };
 
-                        if skeleton_state_mut.timer() == 0 {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                frames_until_remounting: skeleton.remounting_timer(),
-                            });
+                            if next_timer == 0 {
+                                MountPhase::Mounted
+                            } else {
+                                MountPhase::Remounting {
+                                    frames_until_mounted: next_timer,
+                                }
+                            }
                         }
-                    } else if mount_phase.dismounted() {
-                        // TODO
-                        // if self.state.can_enter_remounting(self, other_entities):
-                        let can_enter_remounting = false;
-                        if can_enter_remounting {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                frames_until_remounting: skeleton_state_mut
-                                    .timer()
-                                    .saturating_sub(1),
-                            });
-                        } else {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Dismounted {
-                                frames_until_remounting: skeleton.remounting_timer(),
-                            });
-                        }
+                        MountPhase::Mounted => MountPhase::Mounted,
+                    },
+                    RemountVersion::None => current_mount_phase,
+                };
 
-                        if skeleton_state_mut.timer() == 0 {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
-                                frames_until_mounted: skeleton.mounted_timer(),
-                            });
-                        }
-                    } else if mount_phase.remounting() {
-                        let can_enter_mounted = false;
-                        // TODO
-                        // if self.state.can_enter_mount_phase(self, MountPhase.MOUNTED):
-                        if can_enter_mounted {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
-                                frames_until_mounted: skeleton_state_mut.timer().saturating_sub(1),
-                            });
-                        } else {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Remounting {
-                                frames_until_mounted: skeleton.mounted_timer(),
-                            });
-                        }
-
-                        if skeleton_state_mut.timer() == 0 {
-                            skeleton_state_mut.set_mount_phase(MountPhase::Mounted);
-                        }
-                    }
-                }
+                current_state
+                    .skeletons_mut()
+                    .get_mut(skeleton_id)
+                    .unwrap()
+                    .set_mount_phase(next_mount_phase);
             }
         }
 
@@ -547,9 +600,139 @@ impl Engine {
         let bone1_p0 = current_state.points().get(&bones.1.points().0).unwrap();
         let bone1_p1 = current_state.points().get(&bones.1.points().1).unwrap();
         let bone_vectors = (
-            bone0_p1.position() - bone0_p0.position(),
-            bone1_p1.position() - bone1_p0.position(),
+            bone0_p0.position() - bone0_p1.position(),
+            bone1_p0.position() - bone1_p1.position(),
         );
         joint.should_break(bone_vectors)
+    }
+
+    fn swap_skeleton_sleds(
+        &self,
+        current_state: &mut EngineState,
+        target_skeleton_id: &EntitySkeletonId,
+        other_skeleton_id: &EntitySkeletonId,
+    ) {
+        let target_skeleton = self.registry.get_skeleton(*target_skeleton_id);
+        let other_skeleton = self.registry.get_skeleton(*other_skeleton_id);
+
+        match target_skeleton.remount_version() {
+            RemountVersion::ComV2 | RemountVersion::LRA => {
+                let sled_intact = current_state
+                    .skeletons()
+                    .get(target_skeleton_id)
+                    .unwrap()
+                    .sled_intact();
+                let other_sled_intact = current_state
+                    .skeletons()
+                    .get(other_skeleton_id)
+                    .unwrap()
+                    .sled_intact();
+                current_state
+                    .skeletons_mut()
+                    .get_mut(other_skeleton_id)
+                    .unwrap()
+                    .set_sled_intact(sled_intact);
+                current_state
+                    .skeletons_mut()
+                    .get_mut(target_skeleton_id)
+                    .unwrap()
+                    .set_sled_intact(other_sled_intact);
+            }
+            _ => {}
+        }
+
+        // Assumes sled points are in same order, because they originate from same template
+        for (index, target_point_id) in target_skeleton.sled_points().iter().enumerate() {
+            let other_points = other_skeleton.sled_points();
+            let other_point_id = other_points.get(index).unwrap();
+            let target_state = current_state.points().get(target_point_id).unwrap().clone();
+            let other_state = current_state.points().get(other_point_id).unwrap().clone();
+
+            current_state
+                .points_mut()
+                .get_mut(other_point_id)
+                .unwrap()
+                .update(
+                    Some(target_state.position()),
+                    Some(target_state.velocity()),
+                    Some(target_state.previous_position()),
+                );
+            current_state
+                .points_mut()
+                .get_mut(target_point_id)
+                .unwrap()
+                .update(
+                    Some(other_state.position()),
+                    Some(other_state.velocity()),
+                    Some(other_state.previous_position()),
+                );
+        }
+    }
+
+    fn skeleton_can_swap_sleds(
+        &self,
+        current_state: &mut EngineState,
+        target_skeleton_id: &EntitySkeletonId,
+    ) -> bool {
+        let target_skeleton = self.registry.get_skeleton(*target_skeleton_id);
+        for (other_skeleton_id, skeleton) in self.registry.skeletons() {
+            let skeleton_state = current_state.skeletons().get(other_skeleton_id).unwrap();
+            if skeleton_state.sled_intact()
+                && skeleton_state.mount_phase().dismounted()
+                && skeleton.template_id() == target_skeleton.template_id()
+            {
+                // Swap sleds to check entity can safely remount
+                self.swap_skeleton_sleds(current_state, target_skeleton_id, other_skeleton_id);
+
+                if self.skeleton_can_enter_phase(current_state, target_skeleton, true) {
+                    return true;
+                }
+
+                // Swap sleds back if we failed
+                self.swap_skeleton_sleds(current_state, target_skeleton_id, other_skeleton_id);
+            }
+        }
+
+        false
+    }
+
+    fn skeleton_can_enter_phase(
+        &self,
+        current_state: &EngineState,
+        skeleton: &EntitySkeleton,
+        target_phase_is_remounting: bool,
+    ) -> bool {
+        for bone_id in skeleton.bones() {
+            let bone = self.registry.get_bone(*bone_id);
+            let point_states = (
+                current_state.points().get(&bone.points().0).unwrap(),
+                current_state.points().get(&bone.points().1).unwrap(),
+            );
+
+            if bone.is_breakable() && !bone.get_intact(point_states, target_phase_is_remounting) {
+                return false;
+            }
+        }
+
+        match skeleton.remount_version() {
+            RemountVersion::ComV1 | RemountVersion::ComV2 => {
+                for joint_id in skeleton.joints() {
+                    let joint = self.registry.get_joint(*joint_id);
+                    if !joint.is_mount() && self.get_joint_should_break(joint, &current_state) {
+                        return false;
+                    }
+                }
+
+                for joint_id in skeleton.joints() {
+                    let joint = self.registry.get_joint(*joint_id);
+                    if joint.is_mount() && self.get_joint_should_break(joint, &current_state) {
+                        return false;
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        true
     }
 }

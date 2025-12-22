@@ -209,6 +209,10 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                 rider_builder.can_remount(remount_bool);
                 rider_builder.remount_version(remount_version);
             }
+
+            if json_track.lra.is_some_and(|f| f) {
+                rider_builder.remount_version(RemountVersion::LRA);
+            }
         }
     }
 

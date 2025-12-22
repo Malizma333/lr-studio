@@ -21,15 +21,6 @@ impl MountPhase {
         }
     }
 
-    pub(crate) fn dismounting(&self) -> bool {
-        match self {
-            MountPhase::Dismounting {
-                frames_until_dismounted: _,
-            } => true,
-            _ => false,
-        }
-    }
-
     pub(crate) fn dismounted(&self) -> bool {
         match self {
             MountPhase::Dismounted {
@@ -45,21 +36,6 @@ impl MountPhase {
                 frames_until_mounted: _,
             } => true,
             _ => false,
-        }
-    }
-
-    pub(crate) fn timer(&self) -> u32 {
-        match self {
-            MountPhase::Mounted => 0,
-            MountPhase::Dismounting {
-                frames_until_dismounted,
-            } => *frames_until_dismounted,
-            MountPhase::Dismounted {
-                frames_until_remounting,
-            } => *frames_until_remounting,
-            MountPhase::Remounting {
-                frames_until_mounted,
-            } => *frames_until_mounted,
         }
     }
 }

@@ -5,7 +5,7 @@ use crate::{
     entity::{
         registry::{
             EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId,
-            EntityPointId, EntityPointTemplateId,
+            EntityPointId, EntityPointTemplateId, EntitySkeletonTemplateId,
         },
         skeleton::entity::EntitySkeleton,
     },
@@ -15,7 +15,6 @@ pub(crate) struct EntitySkeletonTemplate {
     pub(super) points: Vec<EntityPointTemplateId>,
     pub(super) bones: Vec<EntityBoneTemplateId>,
     pub(super) joints: Vec<EntityJointTemplateId>,
-    pub(super) remount_enabled: bool,
     pub(super) dismounted_timer: u32,
     pub(super) remounting_timer: u32,
     pub(super) mounted_timer: u32,
@@ -40,6 +39,7 @@ impl EntitySkeletonTemplate {
         point_mapping: &HashMap<EntityPointTemplateId, EntityPointId>,
         bone_mapping: &HashMap<EntityBoneTemplateId, EntityBoneId>,
         joint_mapping: &HashMap<EntityJointTemplateId, EntityJointId>,
+        template_id: EntitySkeletonTemplateId,
     ) -> EntitySkeleton {
         EntitySkeleton {
             points: self
@@ -57,11 +57,11 @@ impl EntitySkeletonTemplate {
                 .iter()
                 .map(|joint_template_id| joint_mapping[joint_template_id])
                 .collect(),
-            remount_enabled: self.remount_enabled,
             dismounted_timer: self.dismounted_timer,
             remounting_timer: self.remounting_timer,
             mounted_timer: self.mounted_timer,
             remount_version: self.remount_version,
+            template_id,
         }
     }
 }

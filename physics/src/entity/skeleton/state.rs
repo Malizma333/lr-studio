@@ -40,19 +40,4 @@ impl EntitySkeletonState {
     pub(crate) fn set_sled_intact(&mut self, sled_intact: bool) {
         self.sled_intact = sled_intact;
     }
-
-    pub(crate) fn timer(&self) -> u32 {
-        match self.mount_phase {
-            MountPhase::Dismounted {
-                frames_until_remounting,
-            } => frames_until_remounting,
-            MountPhase::Dismounting {
-                frames_until_dismounted,
-            } => frames_until_dismounted,
-            MountPhase::Mounted => 0,
-            MountPhase::Remounting {
-                frames_until_mounted,
-            } => frames_until_mounted,
-        }
-    }
 }

@@ -1,11 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use format_core::track::GridVersion as FormatGridVersion;
+    use format_core::track::{
+        GridVersion as FormatGridVersion, RemountVersion as FormatRemountVersion,
+    };
     use format_json;
     use geometry::Point;
     use physics::{
         AccelerationLine as PhysicsAccelerationLine, EngineBuilder, EngineView,
-        EntitySkeletonInitialProperties, GridVersion as PhysicsGridVersion, MountPhase,
+        EntitySkeletonInitialProperties, GridVersion as PhysicsGridVersion, Hitbox, MountPhase,
         NormalLine as PhysicsNormalLine, RemountVersion, build_default_rider,
     };
     use serde::Deserialize;
@@ -39,8 +41,8 @@ mod tests {
         let test_cases: Vec<EngineTestCase> =
             serde_json::from_str(&data).expect("Failed to parse JSON");
 
-        for test in test_cases {
-            println!("Running test {}", test.test);
+        for (i, test) in test_cases.iter().enumerate() {
+            println!("Engine test {}: {}", i, test.test);
 
             let file_name = format!("tests/fixtures/{}.track.json", test.file);
             let file = fs::read(file_name).expect("Failed to read JSON file");
@@ -52,41 +54,59 @@ mod tests {
                 FormatGridVersion::V6_2 => PhysicsGridVersion::V6_2,
             };
             let mut engine = EngineBuilder::new(version).build();
+            let mut ordered_lines: Vec<(u32, Box<dyn Hitbox>)> = Vec::new();
+
             for line in track.line_group().acceleration_lines() {
+                let p0 = Point::new(line.x1(), line.y1());
+                let p1 = Point::new(line.x2(), line.y2());
                 let acceleration_line = PhysicsAccelerationLine::new(
-                    (
-                        Point::new(line.x1(), line.y1()),
-                        Point::new(line.x2(), line.y2()),
-                    ),
+                    (p0, p1),
                     line.flipped(),
                     line.left_extension(),
                     line.right_extension(),
                     line.multiplier().unwrap_or(1.0),
                 );
-                engine.create_line(Box::new(acceleration_line));
+                ordered_lines.push((line.id(), Box::new(acceleration_line)));
             }
 
             for line in track.line_group().standard_lines() {
+                let p0 = Point::new(line.x1(), line.y1());
+                let p1 = Point::new(line.x2(), line.y2());
+
                 let normal_line = PhysicsNormalLine::new(
-                    (
-                        Point::new(line.x1(), line.y1()),
-                        Point::new(line.x2(), line.y2()),
-                    ),
+                    (p0, p1),
                     line.flipped(),
                     line.left_extension(),
                     line.right_extension(),
                 );
-                engine.create_line(Box::new(normal_line));
+                ordered_lines.push((line.id(), Box::new(normal_line)));
             }
 
-            // TODO figure out better versioning when reading track file
-            let remount_version = RemountVersion::None;
-            let default_skeleton_template_id = build_default_rider(&mut engine, remount_version);
+            ordered_lines.sort_by_key(|(key, _)| *key);
+
+            for line in ordered_lines {
+                engine.create_line(line.1);
+            }
+
+            let default_skeleton_template_id_none =
+                build_default_rider(&mut engine, RemountVersion::None);
+            let default_skeleton_template_id_comv1 =
+                build_default_rider(&mut engine, RemountVersion::ComV1);
+            let default_skeleton_template_id_comv2 =
+                build_default_rider(&mut engine, RemountVersion::ComV2);
+            let default_skeleton_template_id_lra =
+                build_default_rider(&mut engine, RemountVersion::LRA);
 
             if let Some(rider_group) = track.rider_group() {
                 for rider in rider_group.riders() {
                     let mut initial_properties = EntitySkeletonInitialProperties::new();
-                    let id = engine.add_skeleton(default_skeleton_template_id);
+                    let target_skeleton_template_id = match rider.remount_version() {
+                        FormatRemountVersion::None => default_skeleton_template_id_none,
+                        FormatRemountVersion::ComV1 => default_skeleton_template_id_comv1,
+                        FormatRemountVersion::ComV2 => default_skeleton_template_id_comv2,
+                        FormatRemountVersion::LRA => default_skeleton_template_id_lra,
+                    };
+                    let id = engine.add_skeleton(target_skeleton_template_id);
                     if let Some(initial_position) = rider.start_position() {
                         initial_properties.set_start_position(initial_position);
                     }
@@ -97,7 +117,7 @@ mod tests {
                 }
             } else {
                 let mut initial_properties = EntitySkeletonInitialProperties::new();
-                let id = engine.add_skeleton(default_skeleton_template_id);
+                let id = engine.add_skeleton(default_skeleton_template_id_none);
                 initial_properties.set_start_velocity(Vector2Df::new(0.4, 0.0));
                 engine.set_skeleton_initial_properties(id, initial_properties);
             }

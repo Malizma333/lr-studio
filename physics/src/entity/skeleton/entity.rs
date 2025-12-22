@@ -1,17 +1,17 @@
 use crate::{
     RemountVersion,
-    entity::registry::{EntityBoneId, EntityJointId, EntityPointId},
+    entity::registry::{EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId},
 };
 
 pub(crate) struct EntitySkeleton {
     pub(super) points: Vec<EntityPointId>,
     pub(super) bones: Vec<EntityBoneId>,
     pub(super) joints: Vec<EntityJointId>,
-    pub(super) remount_enabled: bool,
     pub(super) dismounted_timer: u32,
     pub(super) remounting_timer: u32,
     pub(super) mounted_timer: u32,
     pub(super) remount_version: RemountVersion,
+    pub(super) template_id: EntitySkeletonTemplateId,
 }
 
 impl EntitySkeleton {
@@ -25,10 +25,6 @@ impl EntitySkeleton {
 
     pub(crate) fn joints(&self) -> &[EntityJointId] {
         &self.joints
-    }
-
-    pub(crate) fn remount_enabled(&self) -> bool {
-        self.remount_enabled
     }
 
     pub(crate) fn dismounted_timer(&self) -> u32 {
@@ -45,5 +41,19 @@ impl EntitySkeleton {
 
     pub(crate) fn remount_version(&self) -> RemountVersion {
         self.remount_version
+    }
+
+    pub(crate) fn template_id(&self) -> EntitySkeletonTemplateId {
+        self.template_id
+    }
+
+    pub(crate) fn sled_points(&self) -> Vec<EntityPointId> {
+        // TODO properly do this
+        vec![
+            self.points[0],
+            self.points[1],
+            self.points[2],
+            self.points[3],
+        ]
     }
 }

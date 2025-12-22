@@ -19,7 +19,6 @@ pub struct EntitySkeletonBuilder<'a> {
     points: Vec<EntityPointTemplateId>,
     bones: Vec<EntityBoneTemplateId>,
     joints: Vec<EntityJointTemplateId>,
-    remount_enabled: bool,
     dismounted_timer: Option<u32>,
     remounting_timer: Option<u32>,
     mounted_timer: Option<u32>,
@@ -33,7 +32,6 @@ impl<'a> EntitySkeletonBuilder<'a> {
             points: Vec::new(),
             bones: Vec::new(),
             joints: Vec::new(),
-            remount_enabled: false,
             dismounted_timer: None,
             remounting_timer: None,
             mounted_timer: None,
@@ -92,11 +90,6 @@ impl<'a> EntitySkeletonBuilder<'a> {
         EntityJointBuilder::new(self, b1, b2)
     }
 
-    pub fn enable_remount(mut self) -> Self {
-        self.remount_enabled = true;
-        self
-    }
-
     pub fn dismounted_timer(mut self, duration: u32) -> Self {
         self.dismounted_timer = Some(duration);
         self
@@ -122,7 +115,6 @@ impl<'a> EntitySkeletonBuilder<'a> {
             points: self.points,
             bones: self.bones,
             joints: self.joints,
-            remount_enabled: self.remount_enabled,
             dismounted_timer: self.dismounted_timer.unwrap_or(0),
             remounting_timer: self.remounting_timer.unwrap_or(0),
             mounted_timer: self.mounted_timer.unwrap_or(0),
