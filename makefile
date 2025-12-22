@@ -33,5 +33,5 @@ test: ## Run unit tests (set PACKAGE for specific crate)
 	@if [ -z $(PACKAGE) ]; then\
 		cargo test --workspace;\
 	else\
-		cargo test -p $(PACKAGE);\
+		cargo test -p $(PACKAGE) -- --no-capture;\
 	fi

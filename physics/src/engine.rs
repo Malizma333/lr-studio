@@ -211,6 +211,7 @@ impl Engine {
 
                 for _ in 0..6 {
                     // bones
+                    // TODO Fairly slow part
                     for bone_id in skeleton.bones() {
                         let bone = self.registry.get_bone(*bone_id);
 
@@ -296,8 +297,10 @@ impl Engine {
                     for point_id in skeleton.points() {
                         let point = self.registry.get_point(*point_id);
                         let point_state = current_state.points_mut().get_mut(point_id).unwrap();
+                        // TODO Usually the slowest part
                         let interacting_lines =
                             self.grid.get_lines_near_point(point_state.position());
+                        // TODO Slowest part when there's a lot of lines being hit
                         for line_id in interacting_lines {
                             let line = &self.line_lookup[&line_id];
                             if let Some((new_position, new_previous_position)) =
