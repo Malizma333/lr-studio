@@ -201,17 +201,29 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
                 rider_builder.start_angle(angle);
             }
 
-            if let Some(remount) = &rider.remountable {
+            if let Some(remount_version) = &rider.remount_version {
+                let version = if *remount_version == 0 {
+                    RemountVersion::None
+                } else if *remount_version == 1 {
+                    RemountVersion::ComV1
+                } else if *remount_version == 2 {
+                    RemountVersion::ComV2
+                } else if *remount_version == 3 {
+                    RemountVersion::LRA
+                } else {
+                    RemountVersion::None
+                };
+                rider_builder.remount_version(version);
+            } else if let Some(remount) = &rider.remountable {
                 let (remount_bool, remount_version) = match remount {
                     FaultyBool::BoolRep(x) => (*x, RemountVersion::ComV1),
                     FaultyBool::IntRep(x) => (*x == 1, RemountVersion::ComV2),
                 };
-                rider_builder.can_remount(remount_bool);
-                rider_builder.remount_version(remount_version);
-            }
-
-            if json_track.lra.is_some_and(|f| f) {
-                rider_builder.remount_version(RemountVersion::LRA);
+                if remount_bool {
+                    rider_builder.remount_version(remount_version);
+                } else {
+                    rider_builder.remount_version(RemountVersion::None);
+                }
             }
         }
     }

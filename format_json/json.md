@@ -8,6 +8,13 @@
   "startPosition"?: { "x": f64, "y": f64 },
   "lineArray"?: [ // Legacy line array format, not in current web version
     [
+      // line type
+      // id
+      // x1, y1, x2, y2
+      // line extension bit flags
+      // flipped
+      // previous id, next id (from sol format)
+      // multiplier
       [0, u32, f64, f64, f64, f64, 0 | 1 | 2 | 3, bool],
       [1, u32, f64, f64, f64, f64, 0 | 1 | 2 | 3, bool, -1, -1, f64],
       [2, -u32, f64, f64, f64, f64],
@@ -27,6 +34,9 @@
       "startAngle"?: f64,
       // true/false for remount rider v1, 0/1 for remount rider v2
       "remountable"?: 0 | 1 | false | true,
+      // version marker for remount (no remount, remount v1, remount v2, remount lra)
+      // not present in any current version
+      "remountVersion"?: 0 | 1 | 2 | 3
     },
     ...
   ],

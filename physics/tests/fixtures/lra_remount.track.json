@@ -1,5 +1,4 @@
 {
-  "USE_LRA_MOUNT_PHYSICS": true,
   "label": "lra_remount",
   "duration": 0,
   "version": "6.2",
@@ -9,7 +8,7 @@
     {
       "startPosition": { "x": 0, "y": 0 },
       "startVelocity": { "x": 0.4, "y": 0 },
-      "remountable": true
+      "remountVersion": 3
     }
   ],
   "layers": [

@@ -125,8 +125,6 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
 
     let zero_start = track.metadata().zero_velocity_start_riders();
 
-    let mut lra = None;
-
     if let Some(rider_group) = track.rider_group() {
         for rider in rider_group.riders() {
             let start_position = if let Some(start_pos) = rider.start_position() {
@@ -161,17 +159,22 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
                         0
                     },
                 )),
-                RemountVersion::LRA => {
-                    lra = Some(true);
-                    Some(FaultyBool::IntRep(1))
-                }
+                RemountVersion::LRA => Some(FaultyBool::IntRep(1)),
             };
+
+            let remount_version: Option<u8> = Some(match rider.remount_version() {
+                RemountVersion::None => 0,
+                RemountVersion::ComV1 => 1,
+                RemountVersion::ComV2 => 2,
+                RemountVersion::LRA => 3,
+            });
 
             riders.push(JsonRider {
                 start_pos: start_position,
                 start_vel: start_velocity,
                 angle: rider.start_angle(),
                 remountable,
+                remount_version,
             });
         }
     } else {
@@ -186,6 +189,7 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
             start_vel,
             angle: Some(0.0),
             remountable: Some(FaultyBool::IntRep(1)),
+            remount_version: Some(2),
         });
     }
 
@@ -211,7 +215,6 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let duration = Some(track.metadata().duration().unwrap_or(1200));
 
     let track = JsonTrack {
-        lra,
         label,
         version,
         start_pos,

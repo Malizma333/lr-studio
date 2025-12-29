@@ -138,16 +138,12 @@ struct JsonRider {
     angle: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     remountable: Option<FaultyBool>,
+    #[serde(rename = "remountVersion", skip_serializing_if = "Option::is_none")]
+    remount_version: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct JsonTrack {
-    // TODO properly indicate lra version in this format
-    #[serde(
-        rename = "USE_LRA_MOUNT_PHYSICS",
-        skip_serializing_if = "Option::is_none"
-    )]
-    lra: Option<bool>,
     label: Option<String>,
     creator: Option<String>,
     description: Option<String>,

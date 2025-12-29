@@ -66,11 +66,6 @@ impl RiderBuilder {
         self
     }
 
-    pub fn can_remount(&mut self, can_remount: bool) -> &mut Self {
-        self.can_remount = Some(can_remount);
-        self
-    }
-
     pub fn remount_version(&mut self, remount_version: RemountVersion) -> &mut Self {
         self.remount_version = remount_version;
         self
