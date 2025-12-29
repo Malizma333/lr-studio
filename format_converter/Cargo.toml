@@ -1,17 +1,15 @@
 [package]
+edition = "2024"
 name = "format_converter"
 version = "1.1.0"
-edition = "2024"
-authors = ["Tobias Bessler"]
-description = "CLI for converting Line Rider file formats"
 
 [dependencies]
-clap = { version = "4.0", features = ["derive"] }
 anyhow = "1.0.97"
+clap = {version = "4.0", features = ["derive"]}
 dialoguer = "0.11"
-format_json = { path = "../format_json" }
-format_sol = { path = "../format_sol" }
-format_trk = { path = "../format_trk" }
+format_json = {path = "../format_json"}
+format_sol = {path = "../format_sol"}
+format_trk = {path = "../format_trk"}
 
 [[bin]]
 name = "format_converter"

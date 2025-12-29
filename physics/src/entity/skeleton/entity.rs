@@ -48,7 +48,6 @@ impl EntitySkeleton {
     }
 
     pub(crate) fn sled_points(&self) -> Vec<EntityPointId> {
-        // TODO properly do this
         vec![
             self.points[0],
             self.points[1],

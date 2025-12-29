@@ -2,6 +2,10 @@ use vector2d::Vector2Df;
 
 use crate::{Engine, RemountVersion, entity::registry::EntitySkeletonTemplateId};
 
+// Known bug: Default riders of different remount versions are not able to
+// cross-remount with each other because they come from different templates,
+// even though they normally would in linerider.com. This is such a niche case
+// that it's probably not worth fixing.
 pub fn build_default_rider(
     engine: &mut Engine,
     version: RemountVersion,
@@ -22,6 +26,7 @@ pub fn build_default_rider(
         _ => 1.0,
     };
 
+    // Remount version also affects physics processing order, which is why it's needed internally
     let mut skeleton = engine.build_skeleton().remount_version(version);
 
     skeleton = match version {
