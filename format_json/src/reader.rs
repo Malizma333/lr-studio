@@ -1,10 +1,11 @@
 use format_core::{
     track::{
-        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RGBColor, RemountVersion, Track, TrackBuilder,
+        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
+        LineType, RGBColor, RemountVersion, Track, TrackBuilder,
     },
     util::from_lra_zoom,
 };
+use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
 use crate::{FaultyBool, FaultyU32, JsonReadError, JsonTrack, LRAJsonArrayLine};
@@ -266,21 +267,13 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
             .gravity_well_size(gravity_well_size);
     }
 
-    let start_gravity_x = if let Some(x_gravity) = json_track.x_gravity {
-        f64::from(x_gravity)
-    } else {
-        0.0
-    };
-
-    let start_gravity_y = if let Some(y_gravity) = json_track.y_gravity {
-        f64::from(y_gravity)
-    } else {
-        1.0
-    };
-
-    let start_gravity = Vector2Df::new(start_gravity_x, start_gravity_y);
-
-    track_builder.metadata().start_gravity(start_gravity);
+    if let Some(x_gravity) = json_track.x_gravity
+        && let Some(y_gravity) = json_track.y_gravity
+    {
+        track_builder
+            .metadata()
+            .start_gravity(Vector2Df::new(f64::from(x_gravity), f64::from(y_gravity)));
+    }
 
     if let Some(start_zoom) = json_track.start_zoom {
         track_builder
@@ -288,51 +281,29 @@ pub fn read(data: Vec<u8>) -> Result<Track, JsonReadError> {
             .start_zoom(from_lra_zoom(start_zoom));
     }
 
-    let init_line_red = if let Some(init_red) = json_track.line_color_red {
-        u8::try_from(init_red)?
-    } else {
-        0
-    };
+    if let Some(init_red) = json_track.line_color_red
+        && let Some(init_green) = json_track.line_color_green
+        && let Some(init_blue) = json_track.line_color_blue
+    {
+        track_builder.metadata().start_line_color(RGBColor::new(
+            u8::try_from(init_red)?,
+            u8::try_from(init_green)?,
+            u8::try_from(init_blue)?,
+        ));
+    }
 
-    let init_line_green = if let Some(init_green) = json_track.line_color_green {
-        u8::try_from(init_green)?
-    } else {
-        0
-    };
-
-    let init_line_blue = if let Some(init_blue) = json_track.line_color_blue {
-        u8::try_from(init_blue)?
-    } else {
-        0
-    };
-
-    track_builder.metadata().start_line_color(RGBColor::new(
-        init_line_red,
-        init_line_green,
-        init_line_blue,
-    ));
-
-    let init_bg_red = if let Some(init_red) = json_track.background_color_red {
-        u8::try_from(init_red)?
-    } else {
-        244
-    };
-
-    let init_bg_green = if let Some(init_green) = json_track.background_color_green {
-        u8::try_from(init_green)?
-    } else {
-        245
-    };
-
-    let init_bg_blue = if let Some(init_blue) = json_track.background_color_blue {
-        u8::try_from(init_blue)?
-    } else {
-        249
-    };
-
-    track_builder
-        .metadata()
-        .start_background_color(RGBColor::new(init_bg_red, init_bg_green, init_bg_blue));
+    if let Some(init_red) = json_track.background_color_red
+        && let Some(init_green) = json_track.background_color_green
+        && let Some(init_blue) = json_track.background_color_blue
+    {
+        track_builder
+            .metadata()
+            .start_background_color(RGBColor::new(
+                u8::try_from(init_red)?,
+                u8::try_from(init_green)?,
+                u8::try_from(init_blue)?,
+            ));
+    }
 
     if let Some(line_triggers) = json_track.line_based_triggers {
         for trigger in line_triggers {

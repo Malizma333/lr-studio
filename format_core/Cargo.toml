@@ -4,4 +4,5 @@ name = "format_core"
 version = "0.1.0"
 
 [dependencies]
+spatial_grid = {path = "../spatial_grid"}
 vector2d = {path = "../vector2d"}

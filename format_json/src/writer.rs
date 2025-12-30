@@ -2,7 +2,8 @@ use crate::{
     FaultyBool, FaultyU32, JsonLayer, JsonLine, JsonRider, JsonTrack, JsonWriteError,
     LAYER_TYPE_FOLDER, LAYER_TYPE_LAYER, V2,
 };
-use format_core::track::{GridVersion, RemountVersion, Track};
+use format_core::track::{RemountVersion, Track};
+use spatial_grid::GridVersion;
 
 pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let version = match track.metadata().grid_version() {

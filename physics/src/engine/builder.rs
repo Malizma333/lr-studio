@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
+use spatial_grid::{Grid, GridVersion};
+
 use crate::{
-    Engine, GridVersion,
+    Engine,
     engine::{
         defaults::{default_get_gravity_at_time, default_get_skeleton_frozen_at_time},
         state::EngineState,
     },
     entity::registry::EntityRegistry,
-    grid::Grid,
 };
 
 pub struct EngineBuilder {

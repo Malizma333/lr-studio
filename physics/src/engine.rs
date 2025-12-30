@@ -12,10 +12,10 @@ use crate::{
             builder::EntitySkeletonBuilder, entity::EntitySkeleton, state::EntitySkeletonState,
         },
     },
-    grid::{Grid, LineId},
     line::Hitbox,
 };
 use geometry::Line;
+use spatial_grid::{Grid, GridLineId};
 use std::collections::HashMap;
 use vector2d::Vector2Df;
 mod builder;
@@ -31,7 +31,7 @@ const GRAVITY_MULTIPLIER: f64 = 0.175;
 
 pub struct Engine {
     grid: Grid,
-    line_lookup: HashMap<LineId, Box<dyn Hitbox>>,
+    line_lookup: HashMap<GridLineId, Box<dyn Hitbox>>,
     registry: EntityRegistry,
     // The initial state of the engine as a reference point
     initial_state: EngineState,
@@ -75,7 +75,7 @@ impl Engine {
         self.get_skeleton_frozen_at_time = function;
     }
 
-    pub fn create_line(&mut self, line: Box<dyn Hitbox>) -> LineId {
+    pub fn create_line(&mut self, line: Box<dyn Hitbox>) -> GridLineId {
         let line_points = &Line::from_tuple(line.properties().endpoints());
         let id = self.grid.add_line(line_points);
         self.line_lookup.insert(id, line);
@@ -83,7 +83,7 @@ impl Engine {
         id
     }
 
-    pub fn move_line(&mut self, line_id: LineId, new_points: Line) {
+    pub fn move_line(&mut self, line_id: GridLineId, new_points: Line) {
         let line = self.line_lookup.get(&line_id);
         if let Some(line) = line {
             let line_points = &Line::from_tuple(line.properties().endpoints());
@@ -92,7 +92,7 @@ impl Engine {
         }
     }
 
-    pub fn delete_line(&mut self, line_id: LineId) {
+    pub fn delete_line(&mut self, line_id: GridLineId) {
         let line = self.line_lookup.remove(&line_id);
         if let Some(line) = line {
             let line_points = &Line::from_tuple(line.properties().endpoints());

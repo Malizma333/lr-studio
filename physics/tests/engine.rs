@@ -1,14 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use format_core::track::{
-        GridVersion as FormatGridVersion, RemountVersion as FormatRemountVersion,
-    };
+    use format_core::track::RemountVersion as FormatRemountVersion;
     use format_json;
     use geometry::Point;
     use physics::{
         AccelerationLine as PhysicsAccelerationLine, EngineBuilder, EngineView,
-        EntitySkeletonInitialProperties, GridVersion as PhysicsGridVersion, Hitbox, MountPhase,
-        NormalLine as PhysicsNormalLine, RemountVersion, build_default_rider,
+        EntitySkeletonInitialProperties, Hitbox, MountPhase, NormalLine as PhysicsNormalLine,
+        RemountVersion, build_default_rider,
     };
     use serde::Deserialize;
     use std::fs;
@@ -48,12 +46,8 @@ mod tests {
             let file = fs::read(file_name).expect("Failed to read JSON file");
             let track = format_json::read(file).expect("Failed to parse track file");
 
-            let version = match track.metadata().grid_version() {
-                FormatGridVersion::V6_0 => PhysicsGridVersion::V6_0,
-                FormatGridVersion::V6_1 => PhysicsGridVersion::V6_1,
-                FormatGridVersion::V6_2 => PhysicsGridVersion::V6_2,
-            };
-            let mut engine = EngineBuilder::new(version).build();
+            let grid_version = track.metadata().grid_version();
+            let mut engine = EngineBuilder::new(grid_version).build();
             let mut ordered_lines: Vec<(u32, Box<dyn Hitbox>)> = Vec::new();
 
             for line in track.line_group().acceleration_lines() {

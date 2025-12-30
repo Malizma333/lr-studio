@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, WriteBytesExt};
+use spatial_grid::GridVersion;
 use std::{
     collections::HashMap,
     io::{Cursor, Seek, Write},
@@ -10,7 +11,7 @@ use crate::{
     amf0::{Amf0Value, serialize},
 };
 
-use format_core::track::{GridVersion, Track};
+use format_core::track::Track;
 
 pub fn write(track: &Track) -> Result<Vec<u8>, SolWriteError> {
     let mut cursor = Cursor::new(Vec::new());

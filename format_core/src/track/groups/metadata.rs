@@ -2,7 +2,7 @@ use vector2d::Vector2Df;
 
 use crate::track::{GridVersion, RGBColor};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Metadata {
     // Shared Properties
     grid_version: GridVersion,

@@ -1,22 +1,19 @@
-use crate::grid::grid_cell::{CELL_SIZE, CellKey, GridCell};
 use geometry::{Line, Point};
 use std::collections::{BTreeSet, HashMap};
 use vector2d::Vector2Df;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LineId(u32);
+use crate::{
+    GridVersion,
+    grid_cell::{CELL_SIZE, CellKey, GridCell},
+};
 
-#[derive(Clone)]
-pub enum GridVersion {
-    V6_0,
-    V6_1,
-    V6_2,
-}
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct GridLineId(u32);
 
 pub struct Grid {
     version: GridVersion,
-    cells: HashMap<CellKey, BTreeSet<LineId>>,
-    ids: BTreeSet<LineId>,
+    cells: HashMap<CellKey, BTreeSet<GridLineId>>,
+    ids: BTreeSet<GridLineId>,
 }
 
 impl Grid {
@@ -28,18 +25,18 @@ impl Grid {
         }
     }
 
-    fn get_next_id(&mut self) -> LineId {
-        let last_id = self.ids.last().unwrap_or(&LineId(0));
+    fn get_next_id(&mut self) -> GridLineId {
+        let last_id = self.ids.last().unwrap_or(&GridLineId(0));
         let next_id = last_id.0 + 1;
-        self.ids.insert(LineId(next_id));
-        LineId(next_id)
+        self.ids.insert(GridLineId(next_id));
+        GridLineId(next_id)
     }
 
-    fn free_id(&mut self, id: LineId) {
+    fn free_id(&mut self, id: GridLineId) {
         self.ids.remove(&id);
     }
 
-    fn register(&mut self, line_id: LineId, position: &GridCell) {
+    fn register(&mut self, line_id: GridLineId, position: &GridCell) {
         let cell_key = position.get_key();
         self.cells
             .entry(cell_key)
@@ -47,14 +44,14 @@ impl Grid {
             .insert(line_id);
     }
 
-    fn unregister(&mut self, line_id: LineId, position: &GridCell) {
+    fn unregister(&mut self, line_id: GridLineId, position: &GridCell) {
         let cell_key = position.get_key();
         if let Some(cell) = self.cells.get_mut(&cell_key) {
             cell.remove(&line_id);
         }
     }
 
-    pub fn add_line(&mut self, endpoints: &Line) -> LineId {
+    pub fn add_line(&mut self, endpoints: &Line) -> GridLineId {
         let id = self.get_next_id();
         let cell_positions = self.get_cell_positions_along(&endpoints);
         for position in cell_positions {
@@ -63,7 +60,7 @@ impl Grid {
         id
     }
 
-    pub fn remove_line(&mut self, id: LineId, endpoints: &Line) {
+    pub fn remove_line(&mut self, id: GridLineId, endpoints: &Line) {
         self.free_id(id);
         let cell_positions = self.get_cell_positions_along(&endpoints);
         for position in cell_positions {
@@ -71,7 +68,7 @@ impl Grid {
         }
     }
 
-    pub fn move_line(&mut self, id: LineId, old_endpoints: &Line, new_endpoints: &Line) {
+    pub fn move_line(&mut self, id: GridLineId, old_endpoints: &Line, new_endpoints: &Line) {
         let cell_positions = self.get_cell_positions_along(&old_endpoints);
         for position in cell_positions {
             self.unregister(id, &position);
@@ -217,8 +214,8 @@ impl Grid {
         cells
     }
 
-    pub fn get_lines_near_point(&self, point: Point) -> Vec<LineId> {
-        let mut line_ids: Vec<LineId> = Vec::new();
+    pub fn get_lines_near_point(&self, point: Point) -> Vec<GridLineId> {
+        let mut line_ids: Vec<GridLineId> = Vec::new();
         for i in -1..2 {
             for j in -1..2 {
                 let position = CELL_SIZE * Vector2Df::new(f64::from(i), f64::from(j)) + point;
@@ -241,7 +238,7 @@ mod tests {
     use std::fs;
     use vector2d::Vector2Df;
 
-    use crate::grid::{
+    use crate::{
         Grid,
         grid_cell::{CELL_SIZE, GridCell},
     };

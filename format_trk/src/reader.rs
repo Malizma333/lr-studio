@@ -15,14 +15,15 @@ use crate::{
 use byteorder::{LittleEndian, ReadBytesExt};
 use format_core::{
     track::{
-        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RGBColor, Track, TrackBuilder,
+        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
+        LineType, RGBColor, Track, TrackBuilder,
     },
     util::{
         bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
         string_parser::{Endianness, StringLength, parse_string},
     },
 };
+use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
 pub fn read(data: Vec<u8>) -> Result<Track, TrkReadError> {

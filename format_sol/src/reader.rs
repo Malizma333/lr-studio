@@ -1,11 +1,12 @@
 use byteorder::{BigEndian, ReadBytesExt};
+use spatial_grid::GridVersion;
 use std::io::{Cursor, Read};
 use vector2d::Vector2Df;
 
 use crate::{SolReadError, amf0::deserialize};
 
 use format_core::{
-    track::{GridVersion, LineType, Track, TrackBuilder},
+    track::{LineType, Track, TrackBuilder},
     util::{
         bytes_to_hex_string,
         string_parser::{Endianness, StringLength, parse_string},

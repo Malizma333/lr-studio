@@ -186,6 +186,7 @@ dependencies = [
 name = "format_core"
 version = "0.1.0"
 dependencies = [
+ "spatial_grid",
  "vector2d",
 ]
 
@@ -196,6 +197,7 @@ dependencies = [
  "format_core",
  "serde",
  "serde_json",
+ "spatial_grid",
  "thiserror",
  "vector2d",
 ]
@@ -206,6 +208,7 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "format_core",
+ "spatial_grid",
  "thiserror",
  "vector2d",
 ]
@@ -216,6 +219,7 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "format_core",
+ "spatial_grid",
  "thiserror",
  "vector2d",
 ]
@@ -296,6 +300,7 @@ dependencies = [
  "geometry",
  "serde",
  "serde_json",
+ "spatial_grid",
  "vector2d",
 ]
 
@@ -390,6 +395,16 @@ name = "shell-words"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+
+[[package]]
+name = "spatial_grid"
+version = "0.1.0"
+dependencies = [
+ "geometry",
+ "serde",
+ "serde_json",
+ "vector2d",
+]
 
 [[package]]
 name = "strsim"
