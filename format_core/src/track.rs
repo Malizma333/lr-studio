@@ -6,7 +6,7 @@ pub use groups::{layer, line, metadata, rider, trigger};
 pub use line_type::LineType;
 pub use primitives::{
     BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-    RGBColor, RemountVersion,
+    RemountVersion,
 };
 use spatial_grid::GridVersion;
 

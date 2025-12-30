@@ -1,4 +1,6 @@
-use crate::track::{RGBColor, primitives::events::Event};
+use color::RGBColor;
+
+use crate::track::primitives::events::Event;
 
 #[derive(Debug, Clone, Copy)]
 pub struct BackgroundColorEvent {

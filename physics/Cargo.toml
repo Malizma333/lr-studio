@@ -9,8 +9,8 @@ spatial_grid = {path = "../spatial_grid"}
 vector2d = {path = "../vector2d"}
 
 [dev-dependencies]
-format_core = {version = "0.1.0", path = "../format_core"}
-format_json = {version = "0.1.0", path = "../format_json"}
+format_core = {path = "../format_core"}
+format_json = {path = "../format_json"}
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 

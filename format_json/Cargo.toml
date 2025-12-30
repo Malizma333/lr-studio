@@ -4,7 +4,8 @@ name = "format_json"
 version = "0.1.0"
 
 [dependencies]
-format_core = {version = "0.1.0", path = "../format_core"}
+color = {path = "../color"}
+format_core = {path = "../format_core"}
 serde = {version = "1.0", features = ["derive"]}
 spatial_grid = {path = "../spatial_grid"}
 # Float roundtrip ensures floats get serialized/deserialized with exact precision (however, 2x slower)

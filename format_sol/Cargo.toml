@@ -5,7 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 byteorder = "1.0"
-format_core = {version = "0.1.0", path = "../format_core"}
+format_core = {path = "../format_core"}
 spatial_grid = {path = "../spatial_grid"}
 thiserror = "1.0"
 vector2d = {path = "../vector2d"}

@@ -7,6 +7,8 @@ members = [
   "format_json",
   "format_trk",
   "format_sol",
-  "format_converter", "spatial_grid",
+  "format_converter",
+  "spatial_grid",
+  "color",
 ]
 resolver = "3"

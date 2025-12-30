@@ -1,6 +1,6 @@
+use color::RGBColor;
+use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
-
-use crate::track::{GridVersion, RGBColor};
 
 #[derive(Debug, PartialEq)]
 pub struct Metadata {

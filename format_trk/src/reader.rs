@@ -13,10 +13,11 @@ use crate::{
 };
 
 use byteorder::{LittleEndian, ReadBytesExt};
+use color::RGBColor;
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-        LineType, RGBColor, Track, TrackBuilder,
+        LineType, Track, TrackBuilder,
     },
     util::{
         bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,

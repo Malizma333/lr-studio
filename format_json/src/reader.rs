@@ -1,7 +1,8 @@
+use color::RGBColor;
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-        LineType, RGBColor, RemountVersion, Track, TrackBuilder,
+        LineType, RemountVersion, Track, TrackBuilder,
     },
     util::from_lra_zoom,
 };
