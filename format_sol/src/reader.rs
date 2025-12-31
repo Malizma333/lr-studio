@@ -1,9 +1,9 @@
+use crate::SolReadError;
+use amf0::deserialize;
 use byteorder::{BigEndian, ReadBytesExt};
 use spatial_grid::GridVersion;
 use std::io::{Cursor, Read};
 use vector2d::Vector2Df;
-
-use crate::{SolReadError, amf0::deserialize};
 
 use format_core::{
     track::{LineType, Track, TrackBuilder},

@@ -1,17 +1,13 @@
+use crate::SolWriteError;
+use amf0::{Amf0Value, serialize};
 use byteorder::{BigEndian, WriteBytesExt};
+use format_core::track::Track;
 use spatial_grid::GridVersion;
 use std::{
     collections::HashMap,
     io::{Cursor, Seek, Write},
 };
 use vector2d::Vector2Df;
-
-use crate::{
-    SolWriteError,
-    amf0::{Amf0Value, serialize},
-};
-
-use format_core::track::Track;
 
 pub fn write(track: &Track) -> Result<Vec<u8>, SolWriteError> {
     let mut cursor = Cursor::new(Vec::new());

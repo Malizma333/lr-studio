@@ -6,7 +6,7 @@ use std::{
 use format_core::util::string_parser::ParseLengthPrefixedStringError;
 use thiserror::Error;
 
-use crate::{Amf0DeserializationError, Amf0SerializationError};
+use amf0::{Amf0DeserializationError, Amf0SerializationError};
 
 #[derive(Error, Debug)]
 pub enum SolReadError {

@@ -1,5 +1,5 @@
 //! <https://github.com/KallDrexx/rust-media-libs>
-//! License: See ./LICENSE-APACHE and ./LICENSE-MIT
+//! License: See ../LICENSE-APACHE and ../LICENSE-MIT
 //! Modifications Copyright 2025 Tobias Bessler
 
 use super::{Amf0Value, errors::Amf0DeserializationError, markers};
@@ -13,9 +13,7 @@ struct ObjectProperty {
 }
 
 // Turns any readable byte stream and converts it into an array of AMF0 values
-pub(crate) fn deserialize<R: Read>(
-    bytes: &mut R,
-) -> Result<Vec<Amf0Value>, Amf0DeserializationError> {
+pub fn deserialize<R: Read>(bytes: &mut R) -> Result<Vec<Amf0Value>, Amf0DeserializationError> {
     let mut references = vec![];
     let mut results = vec![];
 

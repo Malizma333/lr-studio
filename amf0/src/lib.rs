@@ -1,20 +1,20 @@
 //! <https://github.com/KallDrexx/rust-media-libs>
-//! License: See ./LICENSE-APACHE and ./LICENSE-MIT
+//! License: See ../LICENSE-APACHE and ../LICENSE-MIT
 //! Modifications Copyright 2025 Tobias Bessler
 
 mod deserialization;
 mod errors;
 mod serialization;
 
-pub(crate) use deserialization::deserialize;
+pub use deserialization::deserialize;
 pub use errors::{Amf0DeserializationError, Amf0SerializationError};
-pub(crate) use serialization::serialize;
+pub use serialization::serialize;
 
 use std::collections::HashMap;
 
 // An Enum representing the different supported types of Amf0 values
 #[derive(PartialEq, Debug, Clone)]
-pub(super) enum Amf0Value {
+pub enum Amf0Value {
     Number(f64),
     Boolean(bool),
     Utf8String(String),

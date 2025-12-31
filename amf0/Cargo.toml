@@ -1,10 +1,9 @@
 [package]
 edition = "2024"
-name = "format_sol"
+name = "amf0"
 version = "0.1.0"
 
 [dependencies]
-amf0 = {path = "../amf0"}
 byteorder = "1"
 format_core = {path = "../format_core"}
 spatial_grid = {path = "../spatial_grid"}

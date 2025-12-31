@@ -1,5 +1,5 @@
 //! <https://github.com/KallDrexx/rust-media-libs>
-//! License: See ./LICENSE-APACHE and ./LICENSE-MIT
+//! License: See ../LICENSE-APACHE and ../LICENSE-MIT
 //! Modifications Copyright 2025 Tobias Bessler
 
 use super::{Amf0Value, errors::Amf0SerializationError, markers};
@@ -7,7 +7,7 @@ use byteorder::{BigEndian, WriteBytesExt};
 use std::collections::HashMap;
 
 // Serializes values into an amf0 encoded vector of bytes
-pub(crate) fn serialize(values: &Vec<Amf0Value>) -> Result<Vec<u8>, Amf0SerializationError> {
+pub fn serialize(values: &Vec<Amf0Value>) -> Result<Vec<u8>, Amf0SerializationError> {
     let mut bytes = vec![];
     for value in values {
         serialize_value(value, &mut bytes)?;
