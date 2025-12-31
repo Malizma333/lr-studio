@@ -10,5 +10,6 @@ members = [
   "format_converter",
   "spatial_grid",
   "color",
+  "lcg_random",
 ]
 resolver = "3"
