@@ -31,7 +31,7 @@ impl RiderGroupBuilder {
         &mut self.riders
     }
 
-    pub fn build(&self) -> Option<RiderGroup> {
+    pub(crate) fn build(&self) -> Option<RiderGroup> {
         let mut riders: Vec<Rider> = vec![];
 
         for rider_builder in &self.riders {

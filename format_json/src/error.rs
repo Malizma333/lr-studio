@@ -4,7 +4,8 @@ use std::{
     string::FromUtf8Error,
 };
 
-use format_core::util::string_parser::ParseLengthPrefixedStringError;
+use format_core::{track::RemountVersion, util::string_parser::ParseLengthPrefixedStringError};
+use spatial_grid::GridVersion;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -35,6 +36,8 @@ pub enum JsonWriteError {
     IntConversion(#[from] TryFromIntError),
     #[error("{0}")]
     SerdeJson(#[from] serde_json::Error),
-    #[error("Invalid value for `{name}`: {value}")]
-    InvalidData { name: &'static str, value: String },
+    #[error("{0}")]
+    InvalidGridVersion(GridVersion),
+    #[error("{0}")]
+    InvalidRemountVersion(RemountVersion),
 }

@@ -25,7 +25,7 @@ impl<E: Event, T: Trigger> TriggeredEventBuilder<E, T> {
         TriggeredEventBuilder { event, trigger }
     }
 
-    pub fn build(&self) -> TriggeredEvent<E, T> {
+    pub(crate) fn build(&self) -> TriggeredEvent<E, T> {
         TriggeredEvent {
             event: self.event.clone(),
             trigger: self.trigger.clone(),

@@ -588,6 +588,7 @@
     "test": "sled does not break after dismount in lra",
     "frame": 64,
     "file": "lra_dismount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -613,6 +614,7 @@
     "test": "shoulder fakie breaks sled in lra",
     "frame": 48,
     "file": "lra_shoulder_fakie",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1638,6 +1640,7 @@
     "test": "rider should be dismounting",
     "frame": 1,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1663,6 +1666,7 @@
     "test": "end of rider dismounting",
     "frame": 31,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1688,6 +1692,7 @@
     "test": "rider should be dismounted",
     "frame": 32,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1713,6 +1718,7 @@
     "test": "end of rider dismounted",
     "frame": 53,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1738,6 +1744,7 @@
     "test": "rider should be remounting",
     "frame": 54,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1763,6 +1770,7 @@
     "test": "end of rider remounting",
     "frame": 57,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1788,6 +1796,7 @@
     "test": "rider should be mounted",
     "frame": 58,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1813,6 +1822,7 @@
     "test": "checkpoint 1",
     "frame": 183,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1838,6 +1848,7 @@
     "test": "checkpoint 2",
     "frame": 359,
     "file": "lra_remount",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1863,6 +1874,7 @@
     "test": "successful remount 1",
     "frame": 2708,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1888,6 +1900,7 @@
     "test": "successful remount 2",
     "frame": 4256,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1913,6 +1926,7 @@
     "test": "successful remount 3",
     "frame": 4692,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1938,6 +1952,7 @@
     "test": "successful remount 4",
     "frame": 4748,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1963,6 +1978,7 @@
     "test": "successful remount 5",
     "frame": 4872,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -1988,6 +2004,7 @@
     "test": "final dismount",
     "frame": 5299,
     "file": "fakie_park_autumn",
+    "lra": true,
     "state": {
       "entities": [
         {
@@ -2036,6 +2053,7 @@
     "test": "should remount correctly",
     "frame": 69,
     "file": "lra_tail_fakie_remount",
+    "lra": true,
     "state": {
       "entities": [
         {

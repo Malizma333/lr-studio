@@ -57,7 +57,12 @@ impl LayerGroupBuilder {
         &mut self.layer_folders
     }
 
-    pub fn build(&self) -> Option<LayerGroup> {
+    pub fn enable_layer_folders(&mut self) -> &mut Self {
+        self.layer_folders.get_or_insert_with(Vec::new);
+        self
+    }
+
+    pub(crate) fn build(&self) -> Option<LayerGroup> {
         let mut layers: Vec<Layer> = vec![];
         let mut layer_folders: Option<Vec<LayerFolder>> = None;
 

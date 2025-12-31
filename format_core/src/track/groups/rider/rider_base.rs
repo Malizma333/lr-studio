@@ -2,6 +2,7 @@ use vector2d::Vector2Df;
 
 use crate::track::RemountVersion;
 
+#[derive(Debug, PartialEq)]
 pub struct Rider {
     start_position: Option<Vector2Df>,
     start_velocity: Option<Vector2Df>,
@@ -71,7 +72,7 @@ impl RiderBuilder {
         self
     }
 
-    pub fn build(&self) -> Rider {
+    pub(crate) fn build(&self) -> Rider {
         Rider {
             start_position: self.start_position,
             start_velocity: self.start_velocity,

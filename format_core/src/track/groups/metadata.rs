@@ -270,7 +270,7 @@ impl MetadataBuilder {
         self
     }
 
-    pub fn build(&self) -> Metadata {
+    pub(crate) fn build(&self) -> Metadata {
         Metadata {
             grid_version: self.grid_version,
             start_position: self.start_position,

@@ -1,4 +1,4 @@
-# Line Rider Core (In Rust)
+# Line Rider Core Libraries (In Rust)
 
 > [!WARNING]
 > This project is in an unfinished state. Use at your own risk.

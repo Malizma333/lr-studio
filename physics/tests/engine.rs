@@ -28,6 +28,7 @@ mod tests {
     struct EngineTestCase {
         test: String,
         frame: u32,
+        lra: Option<bool>,
         file: String,
         state: EngineTestCaseState,
     }
@@ -94,11 +95,15 @@ mod tests {
             if let Some(rider_group) = track.rider_group() {
                 for rider in rider_group.riders() {
                     let mut initial_properties = EntitySkeletonInitialProperties::new();
-                    let target_skeleton_template_id = match rider.remount_version() {
-                        FormatRemountVersion::None => default_skeleton_template_id_none,
-                        FormatRemountVersion::ComV1 => default_skeleton_template_id_comv1,
-                        FormatRemountVersion::ComV2 => default_skeleton_template_id_comv2,
-                        FormatRemountVersion::LRA => default_skeleton_template_id_lra,
+                    let target_skeleton_template_id = if test.lra.is_some_and(|f| f) {
+                        default_skeleton_template_id_lra
+                    } else {
+                        match rider.remount_version() {
+                            FormatRemountVersion::None => default_skeleton_template_id_none,
+                            FormatRemountVersion::ComV1 => default_skeleton_template_id_comv1,
+                            FormatRemountVersion::ComV2 => default_skeleton_template_id_comv2,
+                            FormatRemountVersion::LRA => default_skeleton_template_id_lra,
+                        }
                     };
                     let id = engine.add_skeleton(target_skeleton_template_id);
                     if let Some(initial_position) = rider.start_position() {

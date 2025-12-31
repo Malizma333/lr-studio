@@ -74,7 +74,7 @@ impl LayerFolderBuilder {
         self
     }
 
-    pub fn build(&self) -> LayerFolder {
+    pub(crate) fn build(&self) -> LayerFolder {
         LayerFolder {
             id: self.id,
             index: self.index,

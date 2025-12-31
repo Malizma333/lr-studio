@@ -88,7 +88,7 @@ impl AccelerationLineBuilder {
         self
     }
 
-    pub fn build(&self) -> AccelerationLine {
+    pub(crate) fn build(&self) -> AccelerationLine {
         AccelerationLine {
             id: self.id,
             endpoints: self.endpoints,

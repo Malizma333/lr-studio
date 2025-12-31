@@ -1,3 +1,4 @@
+#[derive(Debug, PartialEq)]
 pub struct Layer {
     id: u32,
     index: usize,
@@ -74,7 +75,7 @@ impl LayerBuilder {
         self
     }
 
-    pub fn build(&self) -> Layer {
+    pub(crate) fn build(&self) -> Layer {
         Layer {
             id: self.id,
             index: self.index,

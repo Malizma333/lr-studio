@@ -82,7 +82,7 @@ impl LineGroupBuilder {
         &mut self.scenery_lines
     }
 
-    pub fn build(&self) -> LineGroup {
+    pub(crate) fn build(&self) -> LineGroup {
         let mut standard_lines: Vec<StandardLine> = vec![];
         let mut acceleration_lines: Vec<AccelerationLine> = vec![];
         let mut scenery_lines: Vec<SceneryLine> = vec![];

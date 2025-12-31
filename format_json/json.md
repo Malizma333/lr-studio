@@ -32,9 +32,6 @@
       "startAngle"?: f64,
       // true/false for remount rider v1, 0/1 for remount rider v2
       "remountable"?: 0 | 1 | false | true,
-      // version marker for remount (no remount, remount v1, remount v2, remount lra)
-      // not present in any current version
-      "remountVersion"?: 0 | 1 | 2 | 3
     },
     ...
   ],

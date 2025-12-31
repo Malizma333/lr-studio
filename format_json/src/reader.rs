@@ -167,6 +167,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                     if let FaultyU32::Valid(valid_folder_id) = folder_id {
                         layer_builder.folder_id(*valid_folder_id);
                     }
+                    track_builder.layer_group().enable_layer_folders();
                 }
             } else {
                 let layer_folder_builder = track_builder
@@ -201,20 +202,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 rider_builder.start_angle(angle);
             }
 
-            if let Some(remount_version) = &rider.remount_version {
-                let version = if *remount_version == 0 {
-                    RemountVersion::None
-                } else if *remount_version == 1 {
-                    RemountVersion::ComV1
-                } else if *remount_version == 2 {
-                    RemountVersion::ComV2
-                } else if *remount_version == 3 {
-                    RemountVersion::LRA
-                } else {
-                    RemountVersion::None
-                };
-                rider_builder.remount_version(version);
-            } else if let Some(remount) = &rider.remountable {
+            if let Some(remount) = &rider.remountable {
                 let (remount_bool, remount_version) = match remount {
                     FaultyBool::BoolRep(x) => (*x, RemountVersion::ComV1),
                     FaultyBool::IntRep(x) => (*x == 1, RemountVersion::ComV2),

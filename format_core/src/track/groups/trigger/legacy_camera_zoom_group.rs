@@ -41,7 +41,7 @@ impl LegacyCameraZoomGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> Option<LegacyCameraZoomGroup> {
+    pub(crate) fn build(&self) -> Option<LegacyCameraZoomGroup> {
         let mut triggers: Vec<LegacyCameraZoomTrigger> = vec![];
 
         for trigger_builder in &self.triggers {

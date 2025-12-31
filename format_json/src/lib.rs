@@ -138,8 +138,6 @@ struct JsonRider {
     angle: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     remountable: Option<FaultyBool>,
-    #[serde(rename = "remountVersion", skip_serializing_if = "Option::is_none")]
-    remount_version: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

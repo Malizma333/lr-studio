@@ -45,7 +45,7 @@ impl SceneryLineBuilder {
         self
     }
 
-    pub fn build(&self) -> SceneryLine {
+    pub(crate) fn build(&self) -> SceneryLine {
         SceneryLine {
             endpoints: self.endpoints,
             width: self.width,

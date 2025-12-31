@@ -41,7 +41,7 @@ impl LineColorGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> Option<LineColorGroup> {
+    pub(crate) fn build(&self) -> Option<LineColorGroup> {
         let mut triggers: Vec<LineColorTrigger> = vec![];
 
         for trigger_builder in &self.triggers {

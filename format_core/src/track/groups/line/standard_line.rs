@@ -76,7 +76,7 @@ impl StandardLineBuilder {
         self
     }
 
-    pub fn build(&self) -> StandardLine {
+    pub(crate) fn build(&self) -> StandardLine {
         StandardLine {
             id: self.id,
             endpoints: self.endpoints,

@@ -42,7 +42,7 @@ impl BackgroundColorGroupBuilder {
         &mut self.triggers
     }
 
-    pub fn build(&self) -> Option<BackgroundColorGroup> {
+    pub(crate) fn build(&self) -> Option<BackgroundColorGroup> {
         let mut triggers: Vec<BackgroundColorTrigger> = vec![];
 
         for trigger_builder in &self.triggers {
