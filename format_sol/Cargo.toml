@@ -4,8 +4,8 @@ name = "format_sol"
 version = "0.1.0"
 
 [dependencies]
-byteorder = "1.0"
+byteorder = "1"
 format_core = {path = "../format_core"}
 spatial_grid = {path = "../spatial_grid"}
-thiserror = "1.0"
+thiserror = "2"
 vector2d = {path = "../vector2d"}
