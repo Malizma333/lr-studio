@@ -9,10 +9,7 @@ use spatial_grid::GridVersion;
 
 pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let version = match track.metadata().grid_version() {
-        GridVersion::V6_0 => Err(JsonWriteError::InvalidData {
-            name: "grid_version",
-            value: "6.0".to_string(),
-        })?,
+        GridVersion::V6_0 => Err(JsonWriteError::InvalidGridVersion(GridVersion::V6_0))?,
         GridVersion::V6_1 => String::from("6.1"),
         GridVersion::V6_2 => String::from("6.2"),
     };
@@ -168,19 +165,11 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
                 RemountVersion::LRA => Some(FaultyBool::IntRep(1)),
             };
 
-            let remount_version: Option<u8> = Some(match rider.remount_version() {
-                RemountVersion::None => 0,
-                RemountVersion::ComV1 => 1,
-                RemountVersion::ComV2 => 2,
-                RemountVersion::LRA => 3,
-            });
-
             riders.push(JsonRider {
                 start_pos: start_position,
                 start_vel: start_velocity,
                 angle: rider.start_angle(),
                 remountable,
-                remount_version,
             });
         }
     } else {
@@ -195,7 +184,6 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
             start_vel,
             angle: Some(0.0),
             remountable: Some(FaultyBool::IntRep(1)),
-            remount_version: Some(2),
         });
     }
 
