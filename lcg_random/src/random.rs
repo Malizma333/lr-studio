@@ -14,7 +14,6 @@ pub enum RandomError {
     EmptySlice,
 }
 
-/// Implementation of a Linear Congruential Generator for basic pseudo-random number generation
 pub struct Random {
     state: u64,
 }
