@@ -12,3 +12,6 @@ spatial_grid = {path = "../spatial_grid"}
 serde_json = {version = "1.0", features = ["float_roundtrip"]}
 thiserror = "1.0"
 vector2d = {path = "../vector2d"}
+
+[dev-dependencies]
+lcg_random = {path = "../lcg_random"}

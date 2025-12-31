@@ -4,8 +4,8 @@
 {
   // Shared properties
   "label"?: string,
-  "version": "6.0" | "6.1" | "6.2",
-  "startPosition"?: { "x": f64, "y": f64 },
+  "version": "6.0" | "6.1" | "6.2", // 6.0 is invalid in web
+  "startPosition"?: { "x": f64, "y": f64 }, // start position must be present in web
   "lineArray"?: [ // Legacy line array format, not in current web version
     [
       // line type
@@ -27,7 +27,7 @@
   "description"?: string,
   "script"?: string,
   "duration"?: u32,
-  "riders": [
+  "riders"?: [
     {
       "startPosition": { "x": f64, "y": f64 },
       "startVelocity": { "x": f64, "y": f64 },
@@ -61,7 +61,7 @@
     },
     ...
   ],
-  "lines"?: [
+  "lines": [
     {
       "id": u32,
       "type": 0,

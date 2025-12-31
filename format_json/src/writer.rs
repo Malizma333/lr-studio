@@ -7,7 +7,10 @@ use spatial_grid::GridVersion;
 
 pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
     let version = match track.metadata().grid_version() {
-        GridVersion::V6_0 => String::from("6.0"),
+        GridVersion::V6_0 => Err(JsonWriteError::InvalidData {
+            name: "grid_version",
+            value: "6.0".to_string(),
+        })?,
         GridVersion::V6_1 => String::from("6.1"),
         GridVersion::V6_2 => String::from("6.2"),
     };
@@ -203,17 +206,11 @@ pub fn write(track: &Track) -> Result<Vec<u8>, JsonWriteError> {
         Some(V2 { x: 0.0, y: 0.0 })
     };
 
-    let label = Some(track.metadata().title().clone().unwrap_or("".to_string()));
-    let creator = Some(track.metadata().artist().clone().unwrap_or("".to_string()));
-    let description = Some(
-        track
-            .metadata()
-            .description()
-            .clone()
-            .unwrap_or("".to_string()),
-    );
-    let script = Some(track.metadata().script().clone().unwrap_or("".to_string()));
-    let duration = Some(track.metadata().duration().unwrap_or(1200));
+    let label = track.metadata().title().clone();
+    let creator = track.metadata().artist().clone();
+    let description = track.metadata().description().clone();
+    let script = track.metadata().script().clone();
+    let duration = track.metadata().duration();
 
     let track = JsonTrack {
         label,

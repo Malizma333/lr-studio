@@ -1,6 +1,0 @@
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn fuzz_tests() {}
-}
