@@ -98,7 +98,10 @@ mod test {
         assert_eq!(result, expected);
 
         let result = format_sol::read(&file, Some(2));
-        assert!(result.is_err(), "There should only be two tracks present")
+        assert!(result.is_err(), "There should only be two tracks present");
+
+        let count = format_sol::get_track_count(&file);
+        assert_eq!(count, 2, "Count should match number of tracks present");
     }
 
     #[test]

@@ -36,20 +36,16 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut magic_number)?;
 
     if magic_number != [b'T', b'R', b'K', 0xF2] {
-        return Err(TrkReadError::InvalidData {
-            name: "magic number".to_string(),
-            value: bytes_to_hex_string(&magic_number),
-        });
+        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+            &magic_number,
+        )));
     }
 
     // Version
     let version = cursor.read_u8()?;
 
     if version > 1 {
-        return Err(TrkReadError::InvalidData {
-            name: "version".to_string(),
-            value: version.to_string(),
-        });
+        return Err(TrkReadError::UnsupportedTrackVersion(version.to_string()));
     }
 
     let feature_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
@@ -93,10 +89,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             .collect();
 
         if song_data.len() != 2 {
-            return Err(TrkReadError::InvalidData {
-                name: "song data".to_string(),
-                value: song_data.join(","),
-            });
+            return Err(TrkReadError::InvalidSongFormat(song_data.join(",")));
         }
 
         let name = song_data[0];
@@ -124,10 +117,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             2 => LineType::Acceleration,
             0 => LineType::Scenery,
             other => {
-                return Err(TrkReadError::InvalidData {
-                    name: "line type".to_string(),
-                    value: other.to_string(),
-                });
+                return Err(TrkReadError::UnsupportedLineType(other.to_string()));
             }
         };
 
@@ -244,10 +234,9 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut meta_magic_number)?;
 
     if &meta_magic_number != b"META" {
-        return Err(TrkReadError::InvalidData {
-            name: "metadata magic number".to_string(),
-            value: bytes_to_hex_string(&meta_magic_number),
-        });
+        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+            &meta_magic_number,
+        )));
     }
 
     let num_entries = cursor.read_u16::<LittleEndian>()?;
@@ -268,10 +257,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         let key_value_pair: Vec<&str> = meta_string.split("=").filter(|s| !s.is_empty()).collect();
 
         if key_value_pair.len() != 2 {
-            return Err(TrkReadError::InvalidData {
-                name: "metadata key value pair".to_string(),
-                value: key_value_pair.join(","),
-            });
+            return Err(TrkReadError::InvalidKeyValue(key_value_pair.join(",")));
         }
 
         let key = key_value_pair[0];
@@ -309,14 +295,11 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 start_line_color_blue = u8::try_from(value.parse::<i32>()?)?;
             }
             FEATURE_TRIGGERS => {
-                for (i, trigger) in value.split('&').filter(|s| !s.is_empty()).enumerate() {
+                for trigger in value.split('&').filter(|s| !s.is_empty()) {
                     let values: Vec<&str> = trigger.split(':').filter(|s| !s.is_empty()).collect();
 
                     if values.is_empty() {
-                        return Err(TrkReadError::InvalidData {
-                            name: "size of trigger data".to_string(),
-                            value: "0".to_string(),
-                        });
+                        return Err(TrkReadError::EmptyTriggerData);
                     }
 
                     match values[0] {
@@ -360,10 +343,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                                 .add_trigger(line_color_event, frame_bounds);
                         }
                         other => {
-                            return Err(TrkReadError::InvalidData {
-                                name: format!("triggers {} type", i),
-                                value: other.to_string(),
-                            });
+                            return Err(TrkReadError::UnsupportedTriggerType(other.to_string()));
                         }
                     }
                 }
