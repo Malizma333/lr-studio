@@ -3,6 +3,7 @@ use crate::track::{
     rider::rider_base::{Rider, RiderBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct RiderGroup {
     riders: Vec<Rider>,
 }

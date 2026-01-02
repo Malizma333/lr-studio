@@ -23,6 +23,7 @@ use crate::track::{
     },
 };
 
+#[derive(PartialEq, Debug)]
 pub struct Track {
     metadata: Metadata,
     line_group: LineGroup,

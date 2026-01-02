@@ -1,5 +1,6 @@
 use crate::track::primitives::{Event, Trigger};
 
+#[derive(PartialEq, Debug)]
 pub struct TriggeredEvent<E: Event, T: Trigger> {
     event: E,
     trigger: T,

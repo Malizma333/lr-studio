@@ -1,6 +1,6 @@
 use crate::track::primitives::triggers::Trigger;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LineHitTrigger {
     id: u32,
     frame_length: u32,

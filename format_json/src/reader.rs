@@ -375,16 +375,16 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
 
 fn extract_u8(value: &Option<FaultyU32>, field: &'static str) -> Result<u8, JsonReadError> {
     match value {
-        Some(bg_red_value) => match bg_red_value {
-            FaultyU32::Valid(red) => {
-                u8::try_from(*red).map_err(|_err| JsonReadError::InvalidData {
+        Some(value) => match value {
+            FaultyU32::Valid(value) => {
+                u8::try_from(*value).map_err(|_err| JsonReadError::InvalidData {
                     name: field,
-                    value: red.to_string(),
+                    value: value.to_string(),
                 })
             }
-            FaultyU32::Invalid(red) => Err(JsonReadError::InvalidData {
+            FaultyU32::Invalid(value) => Err(JsonReadError::InvalidData {
                 name: field,
-                value: red.to_string(),
+                value: value.to_string(),
             }),
         },
         None => Err(JsonReadError::InvalidData {

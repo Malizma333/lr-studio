@@ -1,6 +1,6 @@
 use crate::track::primitives::triggers::Trigger;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FrameBoundsTrigger {
     start: u32,
     end: u32,

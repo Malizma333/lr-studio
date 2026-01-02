@@ -1,5 +1,6 @@
 use vector2d::Vector2Df;
 
+#[derive(PartialEq, Debug)]
 pub struct AccelerationLine {
     id: u32,
     endpoints: (Vector2Df, Vector2Df),

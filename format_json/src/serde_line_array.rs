@@ -1,5 +1,7 @@
 use core::fmt;
 
+use crate::FaultyU32;
+
 use super::LRAJsonArrayLine;
 use serde::{
     Deserialize, Deserializer, Serialize,
@@ -118,9 +120,10 @@ impl<'de> Visitor<'de> for LRAJsonArrayLineVisitor {
                 ))
             }
             2 => {
-                let id: u32 = seq
-                    .next_element()?
-                    .ok_or_else(|| DeError::invalid_length(1, &self))?;
+                let id = FaultyU32::from(
+                    seq.next_element()?
+                        .ok_or_else(|| DeError::invalid_length(1, &self))?,
+                );
                 let x1: f64 = seq
                     .next_element()?
                     .ok_or_else(|| DeError::invalid_length(2, &self))?;

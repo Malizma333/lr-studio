@@ -1,5 +1,6 @@
 use vector2d::Vector2Df;
 
+#[derive(PartialEq, Debug)]
 pub struct SceneryLine {
     endpoints: (Vector2Df, Vector2Df),
     width: Option<f64>,

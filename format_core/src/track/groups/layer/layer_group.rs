@@ -5,6 +5,7 @@ use crate::track::layer::{
     layer_folder::{LayerFolder, LayerFolderBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct LayerGroup {
     layers: Vec<Layer>,
     layer_folders: Option<Vec<LayerFolder>>,

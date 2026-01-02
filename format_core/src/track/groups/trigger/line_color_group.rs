@@ -6,6 +6,7 @@ use crate::track::{
 pub type LineColorTrigger = TriggeredEvent<LineColorEvent, FrameBoundsTrigger>;
 pub type LineColorTriggerBuilder = TriggeredEventBuilder<LineColorEvent, FrameBoundsTrigger>;
 
+#[derive(PartialEq, Debug)]
 pub struct LineColorGroup {
     triggers: Vec<LineColorTrigger>,
 }

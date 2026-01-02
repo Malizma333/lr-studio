@@ -6,6 +6,7 @@ use crate::track::line::{
     standard_line::{StandardLine, StandardLineBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct LineGroup {
     standard_lines: Vec<StandardLine>,
     acceleration_lines: Vec<AccelerationLine>,

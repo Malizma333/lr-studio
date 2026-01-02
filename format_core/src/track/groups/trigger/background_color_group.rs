@@ -7,6 +7,7 @@ pub type BackgroundColorTrigger = TriggeredEvent<BackgroundColorEvent, FrameBoun
 pub type BackgroundColorTriggerBuilder =
     TriggeredEventBuilder<BackgroundColorEvent, FrameBoundsTrigger>;
 
+#[derive(PartialEq, Debug)]
 pub struct BackgroundColorGroup {
     triggers: Vec<BackgroundColorTrigger>,
 }

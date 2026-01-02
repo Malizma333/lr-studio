@@ -1,3 +1,4 @@
+#[derive(PartialEq, Debug)]
 pub struct LayerFolder {
     id: u32,
     index: usize,
