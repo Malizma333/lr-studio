@@ -3,11 +3,9 @@
 mod error;
 mod reader;
 mod serde_line_array;
-mod writer;
 
 pub use error::{JsonReadError, JsonWriteError};
 pub use reader::read;
-pub use writer::write;
 
 use serde::{Deserialize, Serialize};
 
@@ -110,9 +108,6 @@ struct JsonLine {
     #[serde(skip_serializing_if = "Option::is_none")]
     width: Option<f64>,
 }
-
-const LAYER_TYPE_LAYER: u8 = 0;
-const LAYER_TYPE_FOLDER: u8 = 1;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct JsonLayer {

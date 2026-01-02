@@ -2,11 +2,9 @@
 
 mod error;
 mod reader;
-mod writer;
 
 pub use error::{SolReadError, SolWriteError};
 pub use reader::read;
-pub use writer::write;
 
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Cursor, Seek};
