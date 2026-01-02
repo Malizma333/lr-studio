@@ -4,8 +4,8 @@ use crate::Vector2Di;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector2Df {
-    pub x: f64,
-    pub y: f64,
+    x: f64,
+    y: f64,
 }
 
 impl Add for Vector2Df {
@@ -54,7 +54,15 @@ impl Vector2Df {
     }
 
     pub fn from(v1: &Vector2Di) -> Vector2Df {
-        Vector2Df::new(f64::from(v1.x), f64::from(v1.y))
+        Vector2Df::new(f64::from(v1.x()), f64::from(v1.y()))
+    }
+
+    pub fn x(&self) -> f64 {
+        self.x
+    }
+
+    pub fn y(&self) -> f64 {
+        self.y
     }
 
     /** The zero vector (0.0, 0.0) */

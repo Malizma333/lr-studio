@@ -9,10 +9,10 @@ pub struct Rectangle {
 
 impl Rectangle {
     pub fn new(corner0: Point, corner1: Point) -> Rectangle {
-        let min_x = corner0.x.min(corner1.x);
-        let max_x = corner0.x.max(corner1.x);
-        let min_y = corner0.y.min(corner1.y);
-        let max_y = corner0.y.max(corner1.y);
+        let min_x = corner0.x().min(corner1.x());
+        let max_x = corner0.x().max(corner1.x());
+        let min_y = corner0.y().min(corner1.y());
+        let max_y = corner0.y().max(corner1.y());
         Rectangle {
             origin: Point::new(min_x, min_y),
             size: Vector2Df::new(max_x - min_x, max_y - min_y),
@@ -29,22 +29,22 @@ impl Rectangle {
 
     /** Returns the point at the bottom left of this rectangle */
     pub fn bottom_left(&self) -> Point {
-        Point::new(self.origin.x, self.origin.y)
+        self.origin
     }
 
     /** Returns the point at the bottom right of this rectangle */
     pub fn bottom_right(&self) -> Point {
-        Point::new(self.origin.x + self.size.x, self.origin.y)
+        self.origin + Vector2Df::new(self.size.x(), 0.0)
     }
 
     /** Returns the point at the top left of this rectangle */
     pub fn top_left(&self) -> Point {
-        Point::new(self.origin.x, self.origin.y + self.size.y)
+        self.origin + Vector2Df::new(0.0, self.size.y())
     }
 
     /** Returns the point at the top right of this rectangle */
     pub fn top_right(&self) -> Point {
-        Point::new(self.origin.x + self.size.x, self.origin.y + self.size.y)
+        self.origin + self.size
     }
 
     /** Returns the line segment that represents the bottom side of this rectangle */
@@ -68,10 +68,10 @@ impl Rectangle {
     }
 
     pub fn contains_point(&self, point: Point) -> bool {
-        self.origin.x <= point.x
-            && point.x <= self.origin.x + self.size.x
-            && self.origin.y <= point.y
-            && point.y <= self.origin.y + self.size.y
+        self.origin.x() <= point.x()
+            && point.x() <= self.origin.x() + self.size.x()
+            && self.origin.y() <= point.y()
+            && point.y() <= self.origin.y() + self.size.y()
     }
 
     /** Whether this rectangle includes part of a line, including lines with endpoints outside of the rectangle that intersect it */
