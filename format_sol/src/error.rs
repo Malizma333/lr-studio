@@ -20,6 +20,7 @@ pub enum SolReadError {
     FloatConversion(#[from] ParseFloatError),
     #[error("{0}")]
     StringParsing(#[from] ParseLengthPrefixedStringError),
+    // TODO change this
     #[error("Invalid value for `{name}`: {value}")]
     InvalidData { name: String, value: String },
     #[error("{0}")]

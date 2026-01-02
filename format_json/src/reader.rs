@@ -187,19 +187,35 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
         }
     }
 
+    let rider_global_offset = if let Some(start_pos) = json_track.start_pos {
+        Vector2Df::new(start_pos.x, start_pos.y)
+    } else {
+        Vector2Df::zero()
+    };
+
+    let zero_start = json_track
+        .zero_start
+        .is_some_and(|zero_start: bool| zero_start);
+
     if let Some(riders) = json_track.riders {
         for rider in riders.iter() {
             let start_position = Vector2Df::new(rider.start_pos.x, rider.start_pos.y);
-            let start_velocity = Vector2Df::new(rider.start_vel.x, rider.start_vel.y);
+            let start_velocity = if zero_start {
+                Vector2Df::zero()
+            } else {
+                Vector2Df::new(rider.start_vel.x, rider.start_vel.y)
+            };
 
             let rider_builder = track_builder
                 .rider_group()
                 .add_rider(RemountVersion::None)
-                .start_position(start_position)
+                .start_position(start_position + rider_global_offset)
                 .start_velocity(start_velocity);
 
             if let Some(angle) = rider.angle {
                 rider_builder.start_angle(angle);
+            } else {
+                rider_builder.start_angle(0.0);
             }
 
             if let Some(remount) = &rider.remountable {
@@ -214,12 +230,18 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 }
             }
         }
-    }
-
-    if let Some(start_pos) = json_track.start_pos {
+    } else {
+        let start_velocity = if zero_start {
+            Vector2Df::zero()
+        } else {
+            Vector2Df::new(0.4, 0.0)
+        };
         track_builder
-            .metadata()
-            .start_position(Vector2Df::new(start_pos.x, start_pos.y));
+            .rider_group()
+            .add_rider(RemountVersion::LRA)
+            .start_angle(0.0)
+            .start_position(rider_global_offset)
+            .start_velocity(start_velocity);
     }
 
     if let Some(label) = json_track.label {
@@ -240,12 +262,6 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
 
     if let Some(script) = json_track.script {
         track_builder.metadata().script(script);
-    }
-
-    if let Some(zero_start) = json_track.zero_start {
-        if zero_start {
-            track_builder.metadata().zero_velocity_start_riders(true);
-        }
     }
 
     if let Some(gravity_well_size) = json_track.gravity_well_size {

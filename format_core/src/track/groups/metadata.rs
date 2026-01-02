@@ -2,44 +2,42 @@ use color::RGBColor;
 use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
+// way to store all data that previous versions have in their preserved form
+// solver for converting between the data in those versions
+// have a new version that's a summary of that data
+// since this is an application, just read from old formats and parse them into the overall format
+// the purpose of specs is to be able to create accurate writers, not old code
+
 #[derive(Debug, PartialEq)]
 pub struct Metadata {
     // Shared Properties
     grid_version: GridVersion,
-    start_position: Option<Vector2Df>,
 
     // Linerider.com Properties
     title: Option<String>,
     artist: Option<String>,
     description: Option<String>,
     duration: Option<u32>,
+
+    // TODO deprecated
     script: Option<String>,
 
     // LRA+ Properties
     gravity_well_size: Option<f64>,
     audio_filename: Option<String>,
-    audio_offset_until_start: Option<f64>,
+    audio_offset: Option<f64>, // Offset (in seconds) until the song starts
+    // TODO group properties
     start_gravity: Option<Vector2Df>,
     start_zoom: Option<f64>,
     start_line_color: Option<RGBColor>,
     start_background_color: Option<RGBColor>,
-    lra_remount: Option<bool>,
-    legacy_lra_fakie: Option<bool>,
+    // TODO deprecated
     zero_friction_riders: bool,
-    zero_velocity_start_riders: bool,
-    remount_riders: Option<bool>,
-
-    // Flash Properties
-    start_line: Option<u32>,
 }
 
 impl Metadata {
     pub fn grid_version(&self) -> GridVersion {
         self.grid_version
-    }
-
-    pub fn start_position(&self) -> Option<Vector2Df> {
-        self.start_position
     }
 
     pub fn title(&self) -> &Option<String> {
@@ -71,7 +69,7 @@ impl Metadata {
     }
 
     pub fn audio_offset_until_start(&self) -> Option<f64> {
-        self.audio_offset_until_start
+        self.audio_offset
     }
 
     pub fn start_gravity(&self) -> Option<Vector2Df> {
@@ -90,35 +88,14 @@ impl Metadata {
         self.start_background_color
     }
 
-    pub fn lra_remount(&self) -> Option<bool> {
-        self.lra_remount
-    }
-
-    pub fn legacy_lra_fakie(&self) -> Option<bool> {
-        self.legacy_lra_fakie
-    }
-
     pub fn zero_friction_riders(&self) -> bool {
         self.zero_friction_riders
-    }
-
-    pub fn zero_velocity_start_riders(&self) -> bool {
-        self.zero_velocity_start_riders
-    }
-
-    pub fn remount_riders(&self) -> Option<bool> {
-        self.remount_riders
-    }
-
-    pub fn start_line(&self) -> Option<u32> {
-        self.start_line
     }
 }
 
 pub struct MetadataBuilder {
     // Shared Properties
     grid_version: GridVersion,
-    start_position: Option<Vector2Df>,
     // Linerider.com Properties
     title: Option<String>,
     artist: Option<String>,
@@ -129,26 +106,18 @@ pub struct MetadataBuilder {
     // LRA+ Properties
     gravity_well_size: Option<f64>,
     audio_filename: Option<String>,
-    audio_offset_until_start: Option<f64>,
+    audio_offset: Option<f64>,
     start_gravity: Option<Vector2Df>,
     start_zoom: Option<f64>,
     start_line_color: Option<RGBColor>,
     start_background_color: Option<RGBColor>,
-    lra_remount: Option<bool>,
-    legacy_lra_fakie: Option<bool>,
     zero_friction_riders: bool,
-    zero_velocity_start_riders: bool,
-    remount_riders: Option<bool>,
-
-    // Flash Properties
-    start_line: Option<u32>,
 }
 
 impl MetadataBuilder {
     pub fn new(grid_version: GridVersion) -> Self {
         MetadataBuilder {
             grid_version,
-            start_position: None,
             title: None,
             artist: None,
             description: None,
@@ -156,27 +125,17 @@ impl MetadataBuilder {
             script: None,
             gravity_well_size: None,
             audio_filename: None,
-            audio_offset_until_start: None,
+            audio_offset: None,
             start_gravity: None,
             start_zoom: None,
             start_line_color: None,
             start_background_color: None,
-            lra_remount: None,
-            legacy_lra_fakie: None,
             zero_friction_riders: false,
-            zero_velocity_start_riders: false,
-            remount_riders: None,
-            start_line: None,
         }
     }
 
     pub fn grid_version(&mut self, grid_version: GridVersion) -> &mut Self {
         self.grid_version = grid_version;
-        self
-    }
-
-    pub fn start_position(&mut self, start_position: Vector2Df) -> &mut Self {
-        self.start_position = Some(start_position);
         self
     }
 
@@ -216,7 +175,7 @@ impl MetadataBuilder {
     }
 
     pub fn audio_offset_until_start(&mut self, audio_offset_until_start: f64) -> &mut Self {
-        self.audio_offset_until_start = Some(audio_offset_until_start);
+        self.audio_offset = Some(audio_offset_until_start);
         self
     }
 
@@ -240,40 +199,14 @@ impl MetadataBuilder {
         self
     }
 
-    pub fn lra_remount(&mut self, lra_remount: bool) -> &mut Self {
-        self.lra_remount = Some(lra_remount);
-        self
-    }
-
-    pub fn legacy_lra_fakie(&mut self, legacy_lra_fakie: bool) -> &mut Self {
-        self.legacy_lra_fakie = Some(legacy_lra_fakie);
-        self
-    }
-
     pub fn zero_friction_riders(&mut self, zero_friction_riders: bool) -> &mut Self {
         self.zero_friction_riders = zero_friction_riders;
-        self
-    }
-
-    pub fn zero_velocity_start_riders(&mut self, zero_velocity_start_riders: bool) -> &mut Self {
-        self.zero_velocity_start_riders = zero_velocity_start_riders;
-        self
-    }
-
-    pub fn remount_riders(&mut self, remount_riders: bool) -> &mut Self {
-        self.remount_riders = Some(remount_riders);
-        self
-    }
-
-    pub fn start_line(&mut self, start_line: u32) -> &mut Self {
-        self.start_line = Some(start_line);
         self
     }
 
     pub(crate) fn build(&self) -> Metadata {
         Metadata {
             grid_version: self.grid_version,
-            start_position: self.start_position,
             title: self.title.clone(),
             artist: self.artist.clone(),
             description: self.description.clone(),
@@ -281,17 +214,12 @@ impl MetadataBuilder {
             script: self.script.clone(),
             gravity_well_size: self.gravity_well_size,
             audio_filename: self.audio_filename.clone(),
-            audio_offset_until_start: self.audio_offset_until_start,
+            audio_offset: self.audio_offset,
             start_gravity: self.start_gravity,
             start_zoom: self.start_zoom,
             start_line_color: self.start_line_color,
             start_background_color: self.start_background_color,
-            lra_remount: self.lra_remount,
-            legacy_lra_fakie: self.legacy_lra_fakie,
             zero_friction_riders: self.zero_friction_riders,
-            zero_velocity_start_riders: self.zero_velocity_start_riders,
-            remount_riders: self.remount_riders,
-            start_line: self.start_line,
         }
     }
 }

@@ -17,7 +17,7 @@ use color::RGBColor;
 use format_core::{
     track::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-        LineType, Track, TrackBuilder,
+        LineType, RemountVersion, Track, TrackBuilder,
     },
     util::{
         bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
@@ -109,9 +109,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
     let start_pos_x = cursor.read_f64::<LittleEndian>()?;
     let start_pos_y = cursor.read_f64::<LittleEndian>()?;
-    track_builder
-        .metadata()
-        .start_position(Vector2Df::new(start_pos_x, start_pos_y));
+    let start_position = Vector2Df::new(start_pos_x, start_pos_y);
 
     let line_count = cursor.read_u32::<LittleEndian>()?;
 
@@ -213,14 +211,24 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         track_builder.metadata().zero_friction_riders(true);
     }
 
-    if included_features.contains(FEATURE_REMOUNT) {
-        track_builder.metadata().remount_riders(true);
-        track_builder.metadata().lra_remount(true);
-    }
+    let remount_version = if included_features.contains(FEATURE_REMOUNT) {
+        RemountVersion::LRA
+    } else {
+        RemountVersion::None
+    };
 
-    if included_features.contains(FEATURE_ZERO_START) {
-        track_builder.metadata().zero_velocity_start_riders(true);
-    }
+    let start_velocity = if included_features.contains(FEATURE_ZERO_START) {
+        Vector2Df::zero()
+    } else {
+        Vector2Df::new(0.4, 0.0)
+    };
+
+    track_builder
+        .rider_group()
+        .add_rider(remount_version)
+        .start_angle(0.0)
+        .start_position(start_position)
+        .start_velocity(start_velocity);
 
     let current = cursor.stream_position()?;
     let end = cursor.seek(SeekFrom::End(0))?;

@@ -6,7 +6,7 @@ use std::io::{Cursor, Read};
 use vector2d::Vector2Df;
 
 use format_core::{
-    track::{LineType, Track, TrackBuilder},
+    track::{LineType, RemountVersion, Track, TrackBuilder},
     util::{
         bytes_to_hex_string,
         string_parser::{Endianness, StringLength, parse_string},
@@ -136,7 +136,7 @@ pub fn read(data: &Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadEr
         track_builder.metadata().grid_version(GridVersion::V6_0);
     }
 
-    if let Some(val) = target_track.get("startLine") {
+    let start_position = if let Some(val) = target_track.get("startLine") {
         let start_position =
             val.clone()
                 .get_object_properties()
@@ -169,14 +169,23 @@ pub fn read(data: &Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadEr
                 value: format!("{:?}", start_y_amf),
             })?;
 
-        track_builder
-            .metadata()
-            .start_position(Vector2Df::new(start_pos_x, start_pos_y));
-    }
+        Vector2Df::new(start_pos_x, start_pos_y)
+    } else {
+        Vector2Df::zero()
+    };
 
-    if target_track.contains_key("trackData") {
-        track_builder.metadata().zero_velocity_start_riders(true);
-    }
+    let start_velocity = if target_track.contains_key("trackData") {
+        Vector2Df::zero()
+    } else {
+        Vector2Df::new(0.4, 0.0)
+    };
+
+    track_builder
+        .rider_group()
+        .add_rider(RemountVersion::None)
+        .start_angle(0.0)
+        .start_position(start_position)
+        .start_velocity(start_velocity);
 
     if let Some(val) = target_track.get("data") {
         let lines_list = val
