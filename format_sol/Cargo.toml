@@ -10,3 +10,6 @@ format_core = {path = "../format_core"}
 spatial_grid = {path = "../spatial_grid"}
 thiserror = "2"
 vector2d = {path = "../vector2d"}
+
+[dev-dependencies]
+pretty_assertions = "1"

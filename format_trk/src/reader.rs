@@ -36,20 +36,16 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut magic_number)?;
 
     if magic_number != [b'T', b'R', b'K', 0xF2] {
-        return Err(TrkReadError::InvalidData {
-            name: "magic number".to_string(),
-            value: bytes_to_hex_string(&magic_number),
-        });
+        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+            &magic_number,
+        )));
     }
 
     // Version
     let version = cursor.read_u8()?;
 
     if version > 1 {
-        return Err(TrkReadError::InvalidData {
-            name: "version".to_string(),
-            value: version.to_string(),
-        });
+        return Err(TrkReadError::UnsupportedTrackVersion(version.to_string()));
     }
 
     let feature_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
@@ -93,10 +89,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             .collect();
 
         if song_data.len() != 2 {
-            return Err(TrkReadError::InvalidData {
-                name: "song data".to_string(),
-                value: song_data.join(","),
-            });
+            return Err(TrkReadError::InvalidSongFormat(song_data.join(",")));
         }
 
         let name = song_data[0];
@@ -104,7 +97,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         track_builder
             .metadata()
             .audio_filename(name.to_string())
-            .audio_offset_until_start(-seconds_offset);
+            .audio_offset(-seconds_offset);
     }
 
     let start_pos_x = cursor.read_f64::<LittleEndian>()?;
@@ -124,10 +117,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             2 => LineType::Acceleration,
             0 => LineType::Scenery,
             other => {
-                return Err(TrkReadError::InvalidData {
-                    name: "line type".to_string(),
-                    value: other.to_string(),
-                });
+                return Err(TrkReadError::UnsupportedLineType(other.to_string()));
             }
         };
 
@@ -147,14 +137,6 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 line_scenery_width = from_lra_scenery_width(cursor.read_u8()?);
             }
         } else {
-            line_id = cursor.read_u32::<LittleEndian>()?;
-            max_id = max_id.max(line_id);
-
-            if line_ext != 0 {
-                _ = cursor.read_i32::<LittleEndian>()?; // Prev line id or -1
-                _ = cursor.read_i32::<LittleEndian>()?; // Next line id or -1
-            }
-
             if included_features.contains(FEATURE_IGNORABLE_TRIGGER) {
                 let has_zoom_trigger = cursor.read_u8()?;
                 if has_zoom_trigger == 1 {
@@ -166,6 +148,14 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                         .legacy_camera_zoom_group()
                         .add_trigger(zoom_event, line_hit);
                 }
+            }
+
+            line_id = cursor.read_u32::<LittleEndian>()?;
+            max_id = max_id.max(line_id);
+
+            if line_ext != 0 {
+                _ = cursor.read_i32::<LittleEndian>()?; // Prev line id or -1
+                _ = cursor.read_i32::<LittleEndian>()?; // Next line id or -1
             }
         }
 
@@ -225,7 +215,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
     track_builder
         .rider_group()
-        .add_rider(remount_version)
+        .add_rider(remount_version, 0)
         .start_angle(0.0)
         .start_position(start_position)
         .start_velocity(start_velocity);
@@ -244,34 +234,30 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut meta_magic_number)?;
 
     if &meta_magic_number != b"META" {
-        return Err(TrkReadError::InvalidData {
-            name: "metadata magic number".to_string(),
-            value: bytes_to_hex_string(&meta_magic_number),
-        });
+        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+            &meta_magic_number,
+        )));
     }
 
     let num_entries = cursor.read_u16::<LittleEndian>()?;
 
-    let mut start_zoom = from_lra_zoom(4.0);
-    let mut start_gravity_x = 0.0;
-    let mut start_gravity_y = 1.0;
-    let mut gravity_well_size = 10.0;
-    let mut start_line_color_red = 0;
-    let mut start_line_color_green = 0;
-    let mut start_line_color_blue = 0;
-    let mut start_bg_color_red = 244;
-    let mut start_bg_color_green = 245;
-    let mut start_bg_color_blue = 249;
+    let mut start_zoom = None;
+    let mut start_gravity_x = None;
+    let mut start_gravity_y = None;
+    let mut gravity_well_size = None;
+    let mut start_line_color_red = None;
+    let mut start_line_color_green = None;
+    let mut start_line_color_blue = None;
+    let mut start_bg_color_red = None;
+    let mut start_bg_color_green = None;
+    let mut start_bg_color_blue = None;
 
     for _ in 0..num_entries {
         let meta_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
         let key_value_pair: Vec<&str> = meta_string.split("=").filter(|s| !s.is_empty()).collect();
 
         if key_value_pair.len() != 2 {
-            return Err(TrkReadError::InvalidData {
-                name: "metadata key value pair".to_string(),
-                value: key_value_pair.join(","),
-            });
+            return Err(TrkReadError::InvalidKeyValue(key_value_pair.join(",")));
         }
 
         let key = key_value_pair[0];
@@ -279,44 +265,41 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
         match key {
             FEATURE_START_ZOOM => {
-                start_zoom = from_lra_zoom(value.parse::<f32>()?);
+                start_zoom = Some(from_lra_zoom(value.parse::<f32>()?));
             }
             FEATURE_X_GRAVITY => {
-                start_gravity_x = f64::from(value.parse::<f32>()?);
+                start_gravity_x = Some(f64::from(value.parse::<f32>()?));
             }
             FEATURE_Y_GRAVITY => {
-                start_gravity_y = f64::from(value.parse::<f32>()?);
+                start_gravity_y = Some(-f64::from(value.parse::<f32>()?));
             }
             FEATURE_GRAVITY_WELL_SIZE => {
-                gravity_well_size = value.parse::<f64>()?;
+                gravity_well_size = Some(value.parse::<f64>()?);
             }
             FEATURE_BACKGROUND_COLOR_R => {
-                start_bg_color_red = u8::try_from(value.parse::<i32>()?)?;
+                start_bg_color_red = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_BACKGROUND_COLOR_G => {
-                start_bg_color_green = u8::try_from(value.parse::<i32>()?)?;
+                start_bg_color_green = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_BACKGROUND_COLOR_B => {
-                start_bg_color_blue = u8::try_from(value.parse::<i32>()?)?;
+                start_bg_color_blue = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_LINE_COLOR_R => {
-                start_line_color_red = u8::try_from(value.parse::<i32>()?)?;
+                start_line_color_red = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_LINE_COLOR_G => {
-                start_line_color_green = u8::try_from(value.parse::<i32>()?)?;
+                start_line_color_green = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_LINE_COLOR_B => {
-                start_line_color_blue = u8::try_from(value.parse::<i32>()?)?;
+                start_line_color_blue = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_TRIGGERS => {
-                for (i, trigger) in value.split('&').filter(|s| !s.is_empty()).enumerate() {
+                for trigger in value.split('&').filter(|s| !s.is_empty()) {
                     let values: Vec<&str> = trigger.split(':').filter(|s| !s.is_empty()).collect();
 
                     if values.is_empty() {
-                        return Err(TrkReadError::InvalidData {
-                            name: "size of trigger data".to_string(),
-                            value: "0".to_string(),
-                        });
+                        return Err(TrkReadError::EmptyTriggerData);
                     }
 
                     match values[0] {
@@ -360,10 +343,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                                 .add_trigger(line_color_event, frame_bounds);
                         }
                         other => {
-                            return Err(TrkReadError::InvalidData {
-                                name: format!("triggers {} type", i),
-                                value: other.to_string(),
-                            });
+                            return Err(TrkReadError::UnsupportedTriggerType(other.to_string()));
                         }
                     }
                 }
@@ -372,24 +352,33 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         }
     }
 
-    track_builder.metadata().start_zoom(start_zoom);
+    // Default values assigned because LRA:CE and LRO don't write on absent features (eg gravity Y gets written when gravity X may not be)
+
     track_builder
         .metadata()
-        .start_gravity(Vector2Df::new(start_gravity_x, start_gravity_y));
+        .start_zoom(start_zoom.unwrap_or(from_lra_zoom(4.0)));
+
+    track_builder.metadata().start_gravity(Vector2Df::new(
+        start_gravity_x.unwrap_or(0.0),
+        start_gravity_y.unwrap_or(-1.0),
+    ));
+
     track_builder
         .metadata()
-        .gravity_well_size(gravity_well_size);
+        .gravity_well_size(gravity_well_size.unwrap_or(10.0));
+
     track_builder
         .metadata()
         .start_background_color(RGBColor::new(
-            start_bg_color_red,
-            start_bg_color_green,
-            start_bg_color_blue,
+            start_bg_color_red.unwrap_or(244),
+            start_bg_color_green.unwrap_or(245),
+            start_bg_color_blue.unwrap_or(249),
         ));
+
     track_builder.metadata().start_line_color(RGBColor::new(
-        start_line_color_red,
-        start_line_color_green,
-        start_line_color_blue,
+        start_line_color_red.unwrap_or(0),
+        start_line_color_green.unwrap_or(0),
+        start_line_color_blue.unwrap_or(0),
     ));
 
     Ok(track_builder.build())

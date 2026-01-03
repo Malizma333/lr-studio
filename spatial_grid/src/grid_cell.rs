@@ -13,8 +13,8 @@ impl GridCell {
     pub fn new(world_position: Point) -> GridCell {
         let scaled_position = world_position / f64::from(CELL_SIZE);
         let position = Vector2Di::new(
-            scaled_position.x.floor() as i32,
-            scaled_position.y.floor() as i32,
+            scaled_position.x().floor() as i32,
+            scaled_position.y().floor() as i32,
         );
         let remainder = world_position - f64::from(CELL_SIZE) * Vector2Df::from(&position);
         GridCell {
@@ -32,16 +32,16 @@ impl GridCell {
     }
 
     pub fn get_key(&self) -> CellKey {
-        let x_comp = if self.position.x >= 0 {
-            2 * self.position.x
+        let x_comp = if self.position.x() >= 0 {
+            2 * self.position.x()
         } else {
-            -2 * self.position.x - 1
+            -2 * self.position.x() - 1
         };
 
-        let y_comp = if self.position.y >= 0 {
-            2 * self.position.y
+        let y_comp = if self.position.y() >= 0 {
+            2 * self.position.y()
         } else {
-            -2 * self.position.y - 1
+            -2 * self.position.y() - 1
         };
 
         let hash = if x_comp >= y_comp {

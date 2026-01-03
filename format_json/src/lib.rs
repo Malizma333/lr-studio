@@ -42,7 +42,7 @@ struct V2 {
 enum LRAJsonArrayLine {
     Standard(u32, f64, f64, f64, f64, u8, bool),
     Acceleration(u32, f64, f64, f64, f64, u8, bool, (), (), u32),
-    Scenery(u32, f64, f64, f64, f64),
+    Scenery(FaultyU32, f64, f64, f64, f64),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,11 +64,11 @@ struct LRAJsonTrigger {
     end: u32,
     #[serde(rename = "zoomTarget")]
     zoom_target: f32,
-    #[serde(rename = "backgroundRed")]
+    #[serde(rename = "backgroundred")]
     background_red: Option<FaultyU32>,
-    #[serde(rename = "backgroundGreen")]
+    #[serde(rename = "backgroundgreen")]
     background_green: Option<FaultyU32>,
-    #[serde(rename = "backgroundBlue")]
+    #[serde(rename = "backgroundblue")]
     background_blue: Option<FaultyU32>,
     #[serde(rename = "lineRed")]
     line_red: Option<FaultyU32>,

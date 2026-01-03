@@ -2,7 +2,7 @@ use color::RGBColor;
 
 use crate::track::primitives::events::Event;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LineColorEvent {
     color: RGBColor,
 }

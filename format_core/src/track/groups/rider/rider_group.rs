@@ -3,6 +3,7 @@ use crate::track::{
     rider::rider_base::{Rider, RiderBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct RiderGroup {
     riders: Vec<Rider>,
 }
@@ -22,8 +23,8 @@ impl RiderGroupBuilder {
         RiderGroupBuilder { riders: Vec::new() }
     }
 
-    pub fn add_rider(&mut self, remount_version: RemountVersion) -> &mut RiderBuilder {
-        self.riders.push(RiderBuilder::new(remount_version));
+    pub fn add_rider(&mut self, remount_version: RemountVersion, index: u32) -> &mut RiderBuilder {
+        self.riders.push(RiderBuilder::new(remount_version, index));
         self.riders.last_mut().unwrap()
     }
 
@@ -42,6 +43,7 @@ impl RiderGroupBuilder {
         if riders.len() == 0 {
             None
         } else {
+            riders.sort_by_key(|rider| rider.index());
             Some(RiderGroup { riders })
         }
     }

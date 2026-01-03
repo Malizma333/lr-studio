@@ -6,7 +6,7 @@ Original format used in [Beta 2 and other flash builds](https://github.com/kevan
 
 ### TRK
 
-Created for [LRA](https://github.com/jealouscloud/linerider-advanced), with continued use in derivative builds ([LRA:CE](https://github.com/RatherBeLunar/LRA-Community-Edition), [LRTran](https://github.com/Tran-Foxxo/LRTran), [LRO](https://github.com/LunaKampling/LROverhaul)). A detailed specification can be found [here](https://github.com/Conqu3red/TRK-Docs/blob/master/The-TRK-Format.md).
+Created for [LRA](https://github.com/jealouscloud/linerider-advanced), with continued use in derivative builds ([LRA:CE](https://github.com/RatherBeLunar/LRA-Community-Edition), [LRTran](https://github.com/Tran-Foxxo/LRTran), [LRO](https://github.com/LunaKampling/LROverhaul)). A detailed specification can be found [here](../format_trk/trk.md).
 
 ### JSON (.track.json)
 

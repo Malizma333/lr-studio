@@ -4,6 +4,7 @@ use crate::track::RemountVersion;
 
 #[derive(Debug, PartialEq)]
 pub struct Rider {
+    index: u32,
     start_position: Option<Vector2Df>,
     start_velocity: Option<Vector2Df>,
     start_angle: Option<f64>,
@@ -31,9 +32,14 @@ impl Rider {
     pub fn remount_version(&self) -> RemountVersion {
         self.remount_version
     }
+
+    pub fn index(&self) -> u32 {
+        self.index
+    }
 }
 
 pub struct RiderBuilder {
+    index: u32,
     start_position: Option<Vector2Df>,
     start_velocity: Option<Vector2Df>,
     start_angle: Option<f64>,
@@ -42,8 +48,9 @@ pub struct RiderBuilder {
 }
 
 impl RiderBuilder {
-    pub fn new(remount_version: RemountVersion) -> Self {
+    pub fn new(remount_version: RemountVersion, index: u32) -> Self {
         RiderBuilder {
+            index,
             start_position: None,
             start_velocity: None,
             start_angle: None,
@@ -74,6 +81,7 @@ impl RiderBuilder {
 
     pub(crate) fn build(&self) -> Rider {
         Rider {
+            index: self.index,
             start_position: self.start_position,
             start_velocity: self.start_velocity,
             start_angle: self.start_angle,

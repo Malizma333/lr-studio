@@ -1,6 +1,6 @@
 use crate::track::primitives::events::Event;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CameraZoomEvent {
     zoom: f64,
 }

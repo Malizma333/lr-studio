@@ -4,7 +4,7 @@
 - Assume all values are BigEndian per the AMF0 spec
 - This format specification does not detail every flash mod, only Beta 2 v6.0 - v6.2 and LRA
 
-# Header
+## Headers
 
 - **0x00:** Magic number 0x00BF, version of SOL
 - **0x02:** Unsigned 32 bit integer, number of bytes that follow
@@ -16,7 +16,7 @@
 - **0x20:** Unsigned 16 bit integer, data name length (0x09)
 - **0x22:** Data name "trackList"
 
-# Data
+## Data
 
 - `label`
   - Title of the track object

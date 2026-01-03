@@ -1,8 +1,11 @@
+use color::RGBColor;
+
 #[derive(Debug, PartialEq)]
 pub struct Layer {
     id: u32,
     index: usize,
     name: Option<String>,
+    color: Option<RGBColor>,
     visible: Option<bool>,
     editable: Option<bool>,
     folder_id: Option<u32>,
@@ -19,6 +22,10 @@ impl Layer {
 
     pub fn name(&self) -> &Option<String> {
         &self.name
+    }
+
+    pub fn color(&self) -> Option<RGBColor> {
+        self.color
     }
 
     pub fn visible(&self) -> Option<bool> {
@@ -38,6 +45,7 @@ pub struct LayerBuilder {
     id: u32,
     index: usize,
     name: Option<String>,
+    color: Option<RGBColor>,
     visible: Option<bool>,
     editable: Option<bool>,
     folder_id: Option<u32>,
@@ -49,6 +57,7 @@ impl LayerBuilder {
             id,
             index,
             name: None,
+            color: None,
             visible: None,
             editable: None,
             folder_id: None,
@@ -57,6 +66,11 @@ impl LayerBuilder {
 
     pub fn name(&mut self, name: String) -> &mut Self {
         self.name = Some(name);
+        self
+    }
+
+    pub fn color(&mut self, color: RGBColor) -> &mut Self {
+        self.color = Some(color);
         self
     }
 
@@ -80,6 +94,7 @@ impl LayerBuilder {
             id: self.id,
             index: self.index,
             name: self.name.clone(),
+            color: self.color,
             editable: self.editable,
             visible: self.visible,
             folder_id: self.folder_id,

@@ -17,6 +17,12 @@ Clone this repository
 git clone git@github.com:Malizma333/lr-core-rs.git
 ```
 
+Install dependencies
+
+```sh
+make install
+```
+
 Run tests
 
 ```sh

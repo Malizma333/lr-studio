@@ -41,6 +41,7 @@
       // "editable" was a feature added later
       "id": u32,
       "type"?: 0,
+      // may be prefixed with an rgb color string like #000000
       "name": string,
       "visible": boolean,
       "editable"?: boolean,

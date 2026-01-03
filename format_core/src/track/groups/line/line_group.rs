@@ -6,6 +6,7 @@ use crate::track::line::{
     standard_line::{StandardLine, StandardLineBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct LineGroup {
     standard_lines: Vec<StandardLine>,
     acceleration_lines: Vec<AccelerationLine>,
@@ -102,6 +103,8 @@ impl LineGroupBuilder {
             scenery_lines.push(scenery_line);
         }
 
+        standard_lines.sort_by_key(|line| line.id());
+        acceleration_lines.sort_by_key(|line| line.id());
         LineGroup {
             standard_lines,
             acceleration_lines,

@@ -49,17 +49,17 @@ impl Line {
 
         let collinear_checks = (
             orientations.0 == Orientation::Collinear
-                && between(self.0.x, other.0.x, self.1.x)
-                && between(self.0.y, other.0.y, self.1.y),
+                && between(self.0.x(), other.0.x(), self.1.x())
+                && between(self.0.y(), other.0.y(), self.1.y()),
             orientations.1 == Orientation::Collinear
-                && between(self.0.x, other.1.x, self.1.x)
-                && between(self.0.y, other.1.y, self.1.y),
+                && between(self.0.x(), other.1.x(), self.1.x())
+                && between(self.0.y(), other.1.y(), self.1.y()),
             orientations.2 == Orientation::Collinear
-                && between(other.0.x, self.0.x, other.1.x)
-                && between(other.0.y, self.0.y, other.1.y),
+                && between(other.0.x(), self.0.x(), other.1.x())
+                && between(other.0.y(), self.0.y(), other.1.y()),
             orientations.3 == Orientation::Collinear
-                && between(other.0.x, self.1.x, other.1.x)
-                && between(other.0.y, self.1.y, other.1.y),
+                && between(other.0.x(), self.1.x(), other.1.x())
+                && between(other.0.y(), self.1.y(), other.1.y()),
         );
 
         orientations.0 != orientations.1 && orientations.2 != orientations.3
@@ -70,8 +70,8 @@ impl Line {
     }
 
     fn orientation(points: (Point, Point, Point)) -> Orientation {
-        let cross = (points.1.y - points.0.y) * (points.2.x - points.1.x)
-            - (points.1.x - points.0.x) * (points.2.y - points.1.y);
+        let cross = (points.1.y() - points.0.y()) * (points.2.x() - points.1.x())
+            - (points.1.x() - points.0.x()) * (points.2.y() - points.1.y());
 
         if cross == 0.0 {
             Orientation::Collinear

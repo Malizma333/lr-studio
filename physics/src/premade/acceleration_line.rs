@@ -1,4 +1,5 @@
 use geometry::Point;
+use vector2d::Vector2Df;
 
 use crate::{
     ComputedLineProperties, ComputedProperties, Hitbox,
@@ -54,16 +55,25 @@ impl Hitbox for AccelerationLine {
     ) -> (Point, Point) {
         let new_position = point_state.position() - (self.normal_unit() * distance_from_line_top);
 
-        let mut friction_vector =
+        let friction_x_flipped = if point_state.previous_position().x() >= new_position.x() {
+            -1.0
+        } else {
+            1.0
+        };
+
+        let friction_y_flipped = if point_state.previous_position().y() < new_position.y() {
+            -1.0
+        } else {
+            1.0
+        };
+
+        let initial_friction_vector =
             (self.normal_unit().rotate_cw() * point.contact_friction()) * distance_from_line_top;
 
-        if point_state.previous_position().x >= new_position.x {
-            friction_vector.x *= -1.0;
-        }
-
-        if point_state.previous_position().y < new_position.y {
-            friction_vector.y *= -1.0;
-        }
+        let friction_vector = Vector2Df::new(
+            friction_x_flipped * initial_friction_vector.x(),
+            friction_y_flipped * initial_friction_vector.y(),
+        );
 
         let acceleration_vector = self.unit() * (self.acceleration * ACCELERATION_FACTOR);
 

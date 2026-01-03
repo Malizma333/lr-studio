@@ -19,12 +19,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
         "6.0" => GridVersion::V6_0,
         "6.1" => GridVersion::V6_1,
         "6.2" => GridVersion::V6_2,
-        other => {
-            return Err(JsonReadError::InvalidData {
-                name: "grid version",
-                value: other.to_string(),
-            });
-        }
+        other => Err(JsonReadError::InvalidData {
+            name: "grid version",
+            value: other.to_string(),
+        })?,
     };
 
     let track_builder = &mut TrackBuilder::new(grid_version);
@@ -35,12 +33,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 0 => LineType::Standard,
                 1 => LineType::Acceleration,
                 2 => LineType::Scenery,
-                other => {
-                    return Err(JsonReadError::InvalidData {
-                        name: "line type",
-                        value: other.to_string(),
-                    });
-                }
+                other => Err(JsonReadError::InvalidData {
+                    name: "line type",
+                    value: other.to_string(),
+                })?,
             };
 
             let endpoints = (
@@ -63,7 +59,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 };
                 (left_ext_bool, right_ext_bool)
             } else {
-                (false, false)
+                Err(JsonReadError::InvalidData {
+                    name: "line extension",
+                    value: "None".to_string(),
+                })?
             };
 
             let flipped = match line.flipped {
@@ -153,11 +152,32 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
             let layer_is_folder = layer.size.is_some();
 
             if !layer_is_folder {
+                let (layer_color, layer_name) =
+                    if layer.name.len() < 7 || !layer.name.starts_with('#') {
+                        (None, layer.name.clone())
+                    } else {
+                        let hex = &layer.name[..7];
+                        let r = u8::from_str_radix(&hex[1..3], 16).ok();
+                        let g = u8::from_str_radix(&hex[3..5], 16).ok();
+                        let b = u8::from_str_radix(&hex[5..7], 16).ok();
+
+                        match (r, g, b) {
+                            (Some(r), Some(g), Some(b)) => {
+                                (Some(RGBColor::new(r, g, b)), layer.name[7..].to_string())
+                            }
+                            _ => (None, layer.name.clone()),
+                        }
+                    };
+
                 let layer_builder = track_builder
                     .layer_group()
                     .add_layer(layer.id, index)
-                    .name(layer.name.to_string())
+                    .name(layer_name)
                     .visible(layer.visible);
+
+                if let Some(color) = layer_color {
+                    layer_builder.color(color);
+                }
 
                 if let Some(editable) = layer.editable {
                     layer_builder.editable(editable);
@@ -198,24 +218,18 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
         .is_some_and(|zero_start: bool| zero_start);
 
     if let Some(riders) = json_track.riders {
-        for rider in riders.iter() {
+        for (index, rider) in riders.iter().enumerate() {
             let start_position = Vector2Df::new(rider.start_pos.x, rider.start_pos.y);
-            let start_velocity = if zero_start {
-                Vector2Df::zero()
-            } else {
-                Vector2Df::new(rider.start_vel.x, rider.start_vel.y)
-            };
+            let start_velocity = Vector2Df::new(rider.start_vel.x, rider.start_vel.y);
 
             let rider_builder = track_builder
                 .rider_group()
-                .add_rider(RemountVersion::None)
+                .add_rider(RemountVersion::None, index as u32)
                 .start_position(start_position + rider_global_offset)
                 .start_velocity(start_velocity);
 
             if let Some(angle) = rider.angle {
                 rider_builder.start_angle(angle);
-            } else {
-                rider_builder.start_angle(0.0);
             }
 
             if let Some(remount) = &rider.remountable {
@@ -238,7 +252,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
         };
         track_builder
             .rider_group()
-            .add_rider(RemountVersion::LRA)
+            .add_rider(RemountVersion::LRA, 0)
             .start_angle(0.0)
             .start_position(rider_global_offset)
             .start_velocity(start_velocity);
@@ -360,12 +374,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                         .line_color_group()
                         .add_trigger(line_color_event, frame_bounds);
                 }
-                other => {
-                    return Err(JsonReadError::InvalidData {
-                        name: "trigger type",
-                        value: other.to_string(),
-                    });
-                }
+                other => Err(JsonReadError::InvalidData {
+                    name: "trigger type",
+                    value: other.to_string(),
+                })?,
             }
         }
     }
@@ -375,16 +387,16 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
 
 fn extract_u8(value: &Option<FaultyU32>, field: &'static str) -> Result<u8, JsonReadError> {
     match value {
-        Some(bg_red_value) => match bg_red_value {
-            FaultyU32::Valid(red) => {
-                u8::try_from(*red).map_err(|_err| JsonReadError::InvalidData {
+        Some(value) => match value {
+            FaultyU32::Valid(value) => {
+                u8::try_from(*value).map_err(|_err| JsonReadError::InvalidData {
                     name: field,
-                    value: red.to_string(),
+                    value: value.to_string(),
                 })
             }
-            FaultyU32::Invalid(red) => Err(JsonReadError::InvalidData {
+            FaultyU32::Invalid(value) => Err(JsonReadError::InvalidData {
                 name: field,
-                value: red.to_string(),
+                value: value.to_string(),
             }),
         },
         None => Err(JsonReadError::InvalidData {

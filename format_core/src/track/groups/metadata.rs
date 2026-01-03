@@ -174,8 +174,8 @@ impl MetadataBuilder {
         self
     }
 
-    pub fn audio_offset_until_start(&mut self, audio_offset_until_start: f64) -> &mut Self {
-        self.audio_offset = Some(audio_offset_until_start);
+    pub fn audio_offset(&mut self, audio_offset: f64) -> &mut Self {
+        self.audio_offset = Some(audio_offset);
         self
     }
 

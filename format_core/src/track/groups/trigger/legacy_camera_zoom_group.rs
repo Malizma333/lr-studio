@@ -6,6 +6,7 @@ use crate::track::{
 pub type LegacyCameraZoomTrigger = TriggeredEvent<CameraZoomEvent, LineHitTrigger>;
 pub type LegacyCameraZoomTriggerBuilder = TriggeredEventBuilder<CameraZoomEvent, LineHitTrigger>;
 
+#[derive(PartialEq, Debug)]
 pub struct LegacyCameraZoomGroup {
     triggers: Vec<LegacyCameraZoomTrigger>,
 }

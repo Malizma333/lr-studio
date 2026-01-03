@@ -4,6 +4,11 @@
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: install
+install: ## Install development dependencies
+# Code coverage
+	cargo install cargo-tarpaulin
+
 .PHONY: init-lib
 init-lib: ## Create a new library crate
 	@if [ -n "$(NAME)" ]; then \
@@ -29,11 +34,19 @@ lint: ## Lint files with clippy
 	cargo clippy --all-targets --all-features -- -Aclippy::style
 
 .PHONY: test
-test: ## Run unit tests (set PACKAGE for specific crate)
-	@if [ -z $(PACKAGE) ]; then\
+test: ## Run tests (set CRATE for a specific crate)
+	@if [ -z $(CRATE) ]; then\
 		cargo test --workspace;\
 	else\
-		cargo test -p $(PACKAGE) -- --no-capture;\
+		cargo test -p $(CRATE) -- --no-capture;\
+	fi
+
+.PHONY: coverage
+coverage: ## Run coverage on tests (set CRATE for a specific crate)
+	@if [ -z $(CRATE) ]; then\
+		cargo tarpaulin --workspace -o Html --output-dir coverage;\
+	else\
+		cargo tarpaulin -p $(CRATE) -o Html --output-dir coverage;\
 	fi
 
 .PHONY: benchmark-physics

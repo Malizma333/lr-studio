@@ -5,6 +5,7 @@ use crate::track::layer::{
     layer_folder::{LayerFolder, LayerFolderBuilder},
 };
 
+#[derive(PartialEq, Debug)]
 pub struct LayerGroup {
     layers: Vec<Layer>,
     layer_folders: Option<Vec<LayerFolder>>,
@@ -87,6 +88,10 @@ impl LayerGroupBuilder {
         {
             None
         } else {
+            layers.sort_by_key(|layer| layer.index());
+            layer_folders.as_mut().map(|layer_folders| {
+                layer_folders.sort_by_key(|layer_folder| layer_folder.index())
+            });
             Some(LayerGroup {
                 layers,
                 layer_folders,

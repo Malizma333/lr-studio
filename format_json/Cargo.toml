@@ -15,3 +15,4 @@ vector2d = {path = "../vector2d"}
 
 [dev-dependencies]
 lcg_random = {path = "../lcg_random"}
+pretty_assertions = "1"

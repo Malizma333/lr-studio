@@ -18,6 +18,18 @@ pub enum TrkReadError {
     FloatConversion(#[from] ParseFloatError),
     #[error("{0}")]
     StringParsing(#[from] ParseLengthPrefixedStringError),
-    #[error("Invalid value for `{name}`: {value}")]
-    InvalidData { name: String, value: String },
+    #[error("invalid magic number: {0}")]
+    InvalidMagicNumber(String),
+    #[error("unsupported track version: {0}")]
+    UnsupportedTrackVersion(String),
+    #[error("invalid song data format: {0}")]
+    InvalidSongFormat(String),
+    #[error("unsupported line type: {0}")]
+    UnsupportedLineType(String),
+    #[error("invalid key value format: {0}")]
+    InvalidKeyValue(String),
+    #[error("empty trigger data")]
+    EmptyTriggerData,
+    #[error("unsupported trigger type: {0}")]
+    UnsupportedTriggerType(String),
 }

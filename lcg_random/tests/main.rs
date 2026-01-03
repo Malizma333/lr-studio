@@ -22,6 +22,13 @@ mod tests {
     }
 
     #[test]
+    fn rand_from_time() {
+        let mut rng = Random::new();
+        let mut rng2 = Random::new();
+        assert_ne!(rng.rand(), rng2.rand());
+    }
+
+    #[test]
     fn rand_choice() {
         let mut rng = Random::from_seed(1);
 

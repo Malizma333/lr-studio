@@ -27,7 +27,7 @@ pub use builder::EngineBuilder;
 pub use moment::PhysicsMoment;
 pub use view::EngineView;
 
-const GRAVITY_MULTIPLIER: f64 = 0.175;
+const GRAVITY_MULTIPLIER: f64 = -0.175;
 
 pub struct Engine {
     grid: Grid,
