@@ -19,8 +19,9 @@ use format_core::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
         LineType, RemountVersion, Track, TrackBuilder,
     },
+    unit_conversion::{from_lra_gravity, from_lra_scenery_width, from_lra_zoom},
     util::{
-        bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
+        bytes_to_hex_string,
         string_parser::{Endianness, StringLength, parse_string},
     },
 };
@@ -271,7 +272,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 start_gravity_x = Some(f64::from(value.parse::<f32>()?));
             }
             FEATURE_Y_GRAVITY => {
-                start_gravity_y = Some(-f64::from(value.parse::<f32>()?));
+                start_gravity_y = Some(f64::from(value.parse::<f32>()?));
             }
             FEATURE_GRAVITY_WELL_SIZE => {
                 gravity_well_size = Some(value.parse::<f64>()?);
@@ -358,10 +359,12 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         .metadata()
         .start_zoom(start_zoom.unwrap_or(from_lra_zoom(4.0)));
 
-    track_builder.metadata().start_gravity(Vector2Df::new(
-        start_gravity_x.unwrap_or(0.0),
-        start_gravity_y.unwrap_or(-1.0),
-    ));
+    track_builder
+        .metadata()
+        .start_gravity(from_lra_gravity(Vector2Df::new(
+            start_gravity_x.unwrap_or(0.0),
+            start_gravity_y.unwrap_or(1.0),
+        )));
 
     track_builder
         .metadata()
