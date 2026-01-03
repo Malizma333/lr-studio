@@ -3,7 +3,7 @@
 mod error;
 mod reader;
 
-pub use error::{SolReadError, SolWriteError};
+pub use error::SolReadError;
 pub use reader::read;
 
 use byteorder::{BigEndian, ReadBytesExt};

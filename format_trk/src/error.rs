@@ -1,9 +1,9 @@
 use std::{
     io,
     num::{ParseFloatError, ParseIntError, TryFromIntError},
+    string::FromUtf8Error,
 };
 
-use format_core::util::string_parser::ParseLengthPrefixedStringError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -17,7 +17,7 @@ pub enum TrkReadError {
     #[error("{0}")]
     FloatConversion(#[from] ParseFloatError),
     #[error("{0}")]
-    StringParsing(#[from] ParseLengthPrefixedStringError),
+    FromUTF8(#[from] FromUtf8Error),
     #[error("invalid magic number: {0}")]
     InvalidMagicNumber(String),
     #[error("unsupported track version: {0}")]

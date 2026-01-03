@@ -5,9 +5,9 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: install
-install: ## Install development dependencies
-# Code coverage
-	cargo install cargo-tarpaulin
+install: ## Install development tooling locally at .cargo
+	# Test coverage
+	cargo install cargo-tarpaulin --version 0.35.0 --locked --root .cargo
 
 .PHONY: init-lib
 init-lib: ## Create a new library crate
@@ -42,13 +42,18 @@ test: ## Run tests (set CRATE for a specific crate)
 	fi
 
 .PHONY: coverage
-coverage: ## Run coverage on tests (set CRATE for a specific crate)
+coverage: ## Run coverage on tests, with report outputted to target/coverage (set CRATE for a specific crate)
 	@if [ -z $(CRATE) ]; then\
-		cargo tarpaulin --workspace -o Html --output-dir coverage;\
+		.cargo/bin/cargo-tarpaulin --workspace -o Html --output-dir target/coverage;\
 	else\
-		cargo tarpaulin -p $(CRATE) -o Html --output-dir coverage;\
+		.cargo/bin/cargo-tarpaulin -p $(CRATE) -o Html --output-dir target/coverage;\
 	fi
 
-.PHONY: benchmark-physics
-benchmark-physics: ## Benchmark the physics engine by running all tests with delay breakdown
-	cargo test -p physics tests::engine_fixtures --features benchmark -- --no-capture;\
+.PHONY: benchmark
+benchmark: ## Run benchmarks, with report outputted to target/benchmarks (set CRATE for a specific crate)
+	@if [ -z $(CRATE) ]; then\
+		cargo bench --workspace;\
+	else\
+		cargo bench -p $(CRATE);\
+	fi
+	mv target/criterion target/benchmarks

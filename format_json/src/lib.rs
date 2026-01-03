@@ -4,17 +4,26 @@ mod error;
 mod reader;
 mod serde_line_array;
 
-pub use error::{JsonReadError, JsonWriteError};
+pub use error::JsonReadError;
 pub use reader::read;
 
 use serde::{Deserialize, Serialize};
 
 // A u32 value that can take the range of a normal u32, or negative for invalid (for parsing some json fields)
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 #[serde(untagged)]
 enum FaultyU32 {
     Valid(u32),
     Invalid(i32),
+}
+
+impl From<FaultyU32> for Option<u32> {
+    fn from(value: FaultyU32) -> Self {
+        match value {
+            FaultyU32::Valid(v) => Some(v),
+            FaultyU32::Invalid(_) => None,
+        }
+    }
 }
 
 // A bool value that take on either a boolean representation or int representation
@@ -23,6 +32,15 @@ enum FaultyU32 {
 enum FaultyBool {
     BoolRep(bool),
     IntRep(u8),
+}
+
+impl From<FaultyBool> for bool {
+    fn from(value: FaultyBool) -> Self {
+        match value {
+            FaultyBool::BoolRep(value) => value,
+            FaultyBool::IntRep(value) => value != 0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

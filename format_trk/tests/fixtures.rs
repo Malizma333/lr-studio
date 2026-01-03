@@ -8,7 +8,7 @@ mod test {
             BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent,
             LineHitTrigger, RemountVersion, TrackBuilder,
         },
-        util::from_lra_zoom,
+        unit_conversion::{from_lra_gravity, from_lra_zoom},
     };
     use pretty_assertions::assert_eq;
     use spatial_grid::GridVersion;
@@ -83,7 +83,7 @@ mod test {
             .audio_offset(-1.5)
             .gravity_well_size(5.0)
             .start_background_color(RGBColor::new(1, 2, 3))
-            .start_gravity(Vector2Df::new(1.0, 0.0))
+            .start_gravity(from_lra_gravity(Vector2Df::new(1.0, 0.0)))
             .start_line_color(RGBColor::new(4, 5, 6))
             .zero_friction_riders(true);
         expected_builder

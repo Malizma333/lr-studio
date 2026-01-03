@@ -4,25 +4,24 @@ use format_core::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
         LineType, RemountVersion, Track, TrackBuilder,
     },
-    util::from_lra_zoom,
+    unit_conversion::from_lra_zoom,
 };
 use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
-use crate::{FaultyBool, FaultyU32, JsonReadError, JsonTrack, LRAJsonArrayLine};
+use crate::{
+    FaultyBool, JsonReadError, JsonTrack, LRAJsonArrayLine, error::InvalidTriggerFormatError,
+};
 
-pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
-    let json_string = String::from_utf8(data.to_vec())?;
+pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
+    let json_string = String::from_utf8(bytes.to_vec())?;
     let json_track: JsonTrack = serde_json::from_str(&json_string)?;
 
     let grid_version = match json_track.version.as_str() {
         "6.0" => GridVersion::V6_0,
         "6.1" => GridVersion::V6_1,
         "6.2" => GridVersion::V6_2,
-        other => Err(JsonReadError::InvalidData {
-            name: "grid version",
-            value: other.to_string(),
-        })?,
+        other => Err(JsonReadError::UnsupportedGridVersion(other.to_string()))?,
     };
 
     let track_builder = &mut TrackBuilder::new(grid_version);
@@ -33,10 +32,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 0 => LineType::Standard,
                 1 => LineType::Acceleration,
                 2 => LineType::Scenery,
-                other => Err(JsonReadError::InvalidData {
-                    name: "line type",
-                    value: other.to_string(),
-                })?,
+                other => Err(JsonReadError::UnsupportedLineType(other.to_string()))?,
             };
 
             let endpoints = (
@@ -49,26 +45,14 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
             } else if let Some(ext) = line.extended {
                 (ext & 1 != 0, ext & 2 != 0)
             } else if let (Some(left_ext), Some(right_ext)) = (line.left_ext, line.right_ext) {
-                let left_ext_bool = match left_ext {
-                    FaultyBool::BoolRep(x) => x,
-                    FaultyBool::IntRep(x) => x == 1,
-                };
-                let right_ext_bool = match right_ext {
-                    FaultyBool::BoolRep(x) => x,
-                    FaultyBool::IntRep(x) => x == 1,
-                };
-                (left_ext_bool, right_ext_bool)
+                (bool::from(left_ext), bool::from(right_ext))
             } else {
-                Err(JsonReadError::InvalidData {
-                    name: "line extension",
-                    value: "None".to_string(),
-                })?
+                (false, false)
             };
 
             let flipped = match line.flipped {
                 None => false,
-                Some(FaultyBool::BoolRep(x)) => x,
-                Some(FaultyBool::IntRep(x)) => x == 1,
+                Some(flipped) => bool::from(flipped),
             };
 
             match line_type {
@@ -184,8 +168,9 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 }
 
                 if let Some(folder_id) = &layer.folder_id {
-                    if let FaultyU32::Valid(valid_folder_id) = folder_id {
-                        layer_builder.folder_id(*valid_folder_id);
+                    let folder_id = Option::<u32>::from(*folder_id);
+                    if let Some(folder_id) = folder_id {
+                        layer_builder.folder_id(folder_id);
                     }
                     track_builder.layer_group().enable_layer_folders();
                 }
@@ -235,7 +220,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
             if let Some(remount) = &rider.remountable {
                 let (remount_bool, remount_version) = match remount {
                     FaultyBool::BoolRep(x) => (*x, RemountVersion::ComV1),
-                    FaultyBool::IntRep(x) => (*x == 1, RemountVersion::ComV2),
+                    FaultyBool::IntRep(x) => (*x != 0, RemountVersion::ComV2),
                 };
                 if remount_bool {
                     rider_builder.remount_version(remount_version);
@@ -336,6 +321,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
 
     if let Some(time_triggers) = json_track.time_based_triggers {
         for trigger in time_triggers {
+            let err = InvalidTriggerFormatError(format!("{:?}", trigger));
             match trigger.trigger_type {
                 0 => {
                     // Zoom
@@ -350,9 +336,18 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 }
                 1 => {
                     // Background Color
-                    let red = extract_u8(&trigger.background_red, "background red")?;
-                    let green = extract_u8(&trigger.background_green, "background green")?;
-                    let blue = extract_u8(&trigger.background_blue, "background blue")?;
+                    let red = u8::try_from(
+                        Option::<u32>::from(trigger.background_red.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
+                    let green = u8::try_from(
+                        Option::<u32>::from(trigger.background_green.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
+                    let blue = u8::try_from(
+                        Option::<u32>::from(trigger.background_blue.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
                     let start_frame = trigger.start;
                     let end_frame = trigger.end;
                     let bg_color_event = BackgroundColorEvent::new(RGBColor::new(red, green, blue));
@@ -363,9 +358,18 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                 }
                 2 => {
                     // Line Color
-                    let red = extract_u8(&trigger.line_red, "line red")?;
-                    let green = extract_u8(&trigger.line_green, "line green")?;
-                    let blue = extract_u8(&trigger.line_blue, "line blue")?;
+                    let red = u8::try_from(
+                        Option::<u32>::from(trigger.line_red.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
+                    let green = u8::try_from(
+                        Option::<u32>::from(trigger.line_green.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
+                    let blue = u8::try_from(
+                        Option::<u32>::from(trigger.line_blue.ok_or(err.clone())?)
+                            .ok_or(err.clone())?,
+                    )?;
                     let start_frame = trigger.start;
                     let end_frame = trigger.end;
                     let line_color_event = LineColorEvent::new(RGBColor::new(red, green, blue));
@@ -374,34 +378,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, JsonReadError> {
                         .line_color_group()
                         .add_trigger(line_color_event, frame_bounds);
                 }
-                other => Err(JsonReadError::InvalidData {
-                    name: "trigger type",
-                    value: other.to_string(),
-                })?,
+                other => Err(JsonReadError::UnsupportedTriggerType(other.to_string()))?,
             }
         }
     }
 
     Ok(track_builder.build())
-}
-
-fn extract_u8(value: &Option<FaultyU32>, field: &'static str) -> Result<u8, JsonReadError> {
-    match value {
-        Some(value) => match value {
-            FaultyU32::Valid(value) => {
-                u8::try_from(*value).map_err(|_err| JsonReadError::InvalidData {
-                    name: field,
-                    value: value.to_string(),
-                })
-            }
-            FaultyU32::Invalid(value) => Err(JsonReadError::InvalidData {
-                name: field,
-                value: value.to_string(),
-            }),
-        },
-        None => Err(JsonReadError::InvalidData {
-            name: field,
-            value: "None".to_string(),
-        }),
-    }
 }

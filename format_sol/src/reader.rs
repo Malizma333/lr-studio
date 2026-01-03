@@ -5,63 +5,66 @@ use spatial_grid::GridVersion;
 use std::io::{Cursor, Read};
 use vector2d::Vector2Df;
 
-use format_core::{
-    track::{LineType, RemountVersion, Track, TrackBuilder},
-    util::{
-        bytes_to_hex_string,
-        string_parser::{Endianness, StringLength, parse_string},
-    },
-};
+use format_core::track::{LineType, RemountVersion, Track, TrackBuilder};
 
-pub fn read(data: &Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadError> {
+pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError> {
     let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
     let data_size = u64::try_from(data.len())?;
-    let mut cursor = Cursor::new(data);
+    let mut bytes = Cursor::new(data);
 
     // Magic number
     let mut magic_number = [0u8; 2];
-    cursor.read_exact(&mut magic_number)?;
+    bytes.read_exact(&mut magic_number)?;
 
     if magic_number != [0x00, 0xBF] {
-        return Err(SolReadError::InvalidMagicNumber(bytes_to_hex_string(
+        Err(SolReadError::InvalidMagicNumber(format!(
+            "{:02X?}",
             &magic_number,
-        )));
+        )))?
     }
 
     // Header
-    let _file_size = cursor.read_u32::<BigEndian>()? + 6;
+    let _file_size = bytes.read_u32::<BigEndian>()? + 6;
 
     let mut tag = [0u8; 4];
-    cursor.read_exact(&mut tag)?;
+    bytes.read_exact(&mut tag)?;
 
     if tag != [b'T', b'C', b'S', b'O'] {
-        return Err(SolReadError::InvalidMagicNumber(bytes_to_hex_string(&tag)));
+        Err(SolReadError::InvalidMagicNumber(format!("{:02X?}", &tag)))?
     }
 
     let mut marker = [0u8; 6];
-    cursor.read_exact(&mut marker)?;
+    bytes.read_exact(&mut marker)?;
     if marker != [0x00, 0x04, 0x00, 0x00, 0x00, 0x00] {
-        return Err(SolReadError::InvalidMagicNumber(bytes_to_hex_string(
+        Err(SolReadError::InvalidMagicNumber(format!(
+            "{:02X?}",
             &marker,
-        )));
+        )))?
     }
 
-    let sol_name = parse_string(&mut cursor, StringLength::U16, Endianness::Big)?;
-    if sol_name.as_str() != "savedLines" {
-        return Err(SolReadError::InvalidMagicNumber(sol_name.to_string()));
+    let sol_string_length = bytes.read_u16::<BigEndian>()?;
+    let mut sol_name = vec![0; usize::from(sol_string_length)];
+    bytes.read_exact(&mut sol_name)?;
+    if str::from_utf8(&sol_name)? != "savedLines" {
+        Err(SolReadError::InvalidMagicNumber(format!(
+            "{:02X?}",
+            &sol_name,
+        )))?
     }
 
-    let _padding = cursor.read_u32::<BigEndian>()?;
+    let _padding = bytes.read_u32::<BigEndian>()?;
 
-    let data_name = parse_string(&mut cursor, StringLength::U16, Endianness::Big)?;
-    if data_name.as_str() != "trackList" {
-        return Err(SolReadError::MissingTrackList);
+    let data_string_length = bytes.read_u16::<BigEndian>()?;
+    let mut data_name = vec![0; usize::from(data_string_length)];
+    bytes.read_exact(&mut data_name)?;
+    if str::from_utf8(&data_name)? != "trackList" {
+        Err(SolReadError::MissingTrackList)?
     }
 
     // Track Data
-    let current_pos = cursor.position();
+    let current_pos = bytes.position();
     // Slice from current position to last byte - 1 contains valid AMF0 format
-    let mut trimmed_cursor = cursor.take(data_size.saturating_sub(1) - current_pos);
+    let mut trimmed_cursor = bytes.take(data_size.saturating_sub(1) - current_pos);
     let result = &deserialize(&mut trimmed_cursor)?;
 
     let track_list_amf = &result[0];
@@ -114,9 +117,7 @@ pub fn read(data: &Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadEr
             "6.0" => GridVersion::V6_0,
             "6.1" => GridVersion::V6_1,
             "6.2" => GridVersion::V6_2,
-            other => {
-                return Err(SolReadError::UnsupportedGridVersion(other.to_string()));
-            }
+            other => Err(SolReadError::UnsupportedGridVersion(other.to_string()))?,
         };
         track_builder.metadata().grid_version(grid_version);
     } else {
@@ -262,31 +263,23 @@ pub fn read(data: &Vec<u8>, track_index: Option<u32>) -> Result<Track, SolReadEr
 
             let id = match unsafe_id {
                 Some(val) => val,
-                None => {
-                    return Err(SolReadError::InvalidLine(format!("{:?}", line_amf)));
-                }
+                None => Err(SolReadError::InvalidLine(format!("{:?}", line_amf)))?,
             };
 
             let line_type_amf = line
                 .get("9")
                 .ok_or(SolReadError::InvalidLine(format!("{:?}", line_amf)))?;
 
-            let line_type_numeric =
-                line_type_amf
-                    .clone()
-                    .get_number()
-                    .ok_or(SolReadError::InvalidLineType(format!(
-                        "{:?}",
-                        line_type_amf
-                    )))?;
+            let line_type_numeric = line_type_amf
+                .clone()
+                .get_number()
+                .ok_or(SolReadError::InvalidLine(format!("{:?}", line_amf)))?;
 
             let line_type = match line_type_numeric {
                 0.0 => LineType::Standard,
                 1.0 => LineType::Acceleration,
                 2.0 => LineType::Scenery,
-                other => {
-                    return Err(SolReadError::UnsupportedLineType(other.to_string()));
-                }
+                other => Err(SolReadError::UnsupportedLineType(other.to_string()))?,
             };
 
             let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));

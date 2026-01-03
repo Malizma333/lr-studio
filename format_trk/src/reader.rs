@@ -19,10 +19,7 @@ use format_core::{
         BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
         LineType, RemountVersion, Track, TrackBuilder,
     },
-    util::{
-        bytes_to_hex_string, from_lra_scenery_width, from_lra_zoom,
-        string_parser::{Endianness, StringLength, parse_string},
-    },
+    unit_conversion::{from_lra_gravity, from_lra_scenery_width, from_lra_zoom},
 };
 use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
@@ -36,19 +33,23 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut magic_number)?;
 
     if magic_number != [b'T', b'R', b'K', 0xF2] {
-        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+        Err(TrkReadError::InvalidMagicNumber(format!(
+            "{:02X?}",
             &magic_number,
-        )));
+        )))?
     }
 
     // Version
     let version = cursor.read_u8()?;
 
     if version > 1 {
-        return Err(TrkReadError::UnsupportedTrackVersion(version.to_string()));
+        Err(TrkReadError::UnsupportedTrackVersion(version.to_string()))?
     }
 
-    let feature_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
+    let feature_string_length = cursor.read_u16::<LittleEndian>()?;
+    let mut buffer = vec![0; usize::from(feature_string_length)];
+    cursor.read_exact(&mut buffer)?;
+    let feature_string = String::from_utf8(buffer)?;
     let mut included_features: HashSet<&str> = Default::default();
 
     for feature in feature_string.split(';').filter(|s| !s.is_empty()) {
@@ -78,18 +79,16 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             bit_shift += 7;
         }
 
-        let song_string = parse_string(
-            &mut cursor,
-            StringLength::Fixed(song_string_length),
-            Endianness::Little,
-        )?;
+        let mut buffer = vec![0; song_string_length];
+        cursor.read_exact(&mut buffer)?;
+        let song_string = String::from_utf8(buffer)?;
         let song_data: Vec<&str> = song_string
             .split("\r\n")
             .filter(|s| !s.is_empty())
             .collect();
 
         if song_data.len() != 2 {
-            return Err(TrkReadError::InvalidSongFormat(song_data.join(",")));
+            Err(TrkReadError::InvalidSongFormat(song_data.join(",")))?
         }
 
         let name = song_data[0];
@@ -116,9 +115,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
             1 => LineType::Standard,
             2 => LineType::Acceleration,
             0 => LineType::Scenery,
-            other => {
-                return Err(TrkReadError::UnsupportedLineType(other.to_string()));
-            }
+            other => Err(TrkReadError::UnsupportedLineType(other.to_string()))?,
         };
 
         let flipped = (flags >> 7) != 0;
@@ -234,9 +231,10 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     cursor.read_exact(&mut meta_magic_number)?;
 
     if &meta_magic_number != b"META" {
-        return Err(TrkReadError::InvalidMagicNumber(bytes_to_hex_string(
+        Err(TrkReadError::InvalidMagicNumber(format!(
+            "{:02X?}",
             &meta_magic_number,
-        )));
+        )))?
     }
 
     let num_entries = cursor.read_u16::<LittleEndian>()?;
@@ -253,11 +251,14 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     let mut start_bg_color_blue = None;
 
     for _ in 0..num_entries {
-        let meta_string = parse_string(&mut cursor, StringLength::U16, Endianness::Little)?;
+        let meta_string_length = cursor.read_u16::<LittleEndian>()?;
+        let mut buffer = vec![0; usize::from(meta_string_length)];
+        cursor.read_exact(&mut buffer)?;
+        let meta_string = String::from_utf8(buffer)?;
         let key_value_pair: Vec<&str> = meta_string.split("=").filter(|s| !s.is_empty()).collect();
 
         if key_value_pair.len() != 2 {
-            return Err(TrkReadError::InvalidKeyValue(key_value_pair.join(",")));
+            Err(TrkReadError::InvalidKeyValue(key_value_pair.join(",")))?
         }
 
         let key = key_value_pair[0];
@@ -271,7 +272,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 start_gravity_x = Some(f64::from(value.parse::<f32>()?));
             }
             FEATURE_Y_GRAVITY => {
-                start_gravity_y = Some(-f64::from(value.parse::<f32>()?));
+                start_gravity_y = Some(f64::from(value.parse::<f32>()?));
             }
             FEATURE_GRAVITY_WELL_SIZE => {
                 gravity_well_size = Some(value.parse::<f64>()?);
@@ -299,7 +300,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                     let values: Vec<&str> = trigger.split(':').filter(|s| !s.is_empty()).collect();
 
                     if values.is_empty() {
-                        return Err(TrkReadError::EmptyTriggerData);
+                        Err(TrkReadError::EmptyTriggerData)?
                     }
 
                     match values[0] {
@@ -342,9 +343,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                                 .line_color_group()
                                 .add_trigger(line_color_event, frame_bounds);
                         }
-                        other => {
-                            return Err(TrkReadError::UnsupportedTriggerType(other.to_string()));
-                        }
+                        other => Err(TrkReadError::UnsupportedTriggerType(other.to_string()))?,
                     }
                 }
             }
@@ -358,10 +357,12 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         .metadata()
         .start_zoom(start_zoom.unwrap_or(from_lra_zoom(4.0)));
 
-    track_builder.metadata().start_gravity(Vector2Df::new(
-        start_gravity_x.unwrap_or(0.0),
-        start_gravity_y.unwrap_or(-1.0),
-    ));
+    track_builder
+        .metadata()
+        .start_gravity(from_lra_gravity(Vector2Df::new(
+            start_gravity_x.unwrap_or(0.0),
+            start_gravity_y.unwrap_or(1.0),
+        )));
 
     track_builder
         .metadata()

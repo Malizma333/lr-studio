@@ -9,7 +9,7 @@ mod test {
             BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent,
             LineHitTrigger, RemountVersion, TrackBuilder,
         },
-        util::from_lra_zoom,
+        unit_conversion::from_lra_zoom,
     };
     use spatial_grid::GridVersion;
     use vector2d::Vector2Df;
