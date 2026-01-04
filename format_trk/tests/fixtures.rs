@@ -5,13 +5,12 @@ mod test {
     use color::RGBColor;
     use format_core::{
         track::{
-            BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent,
+            BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
             LineHitTrigger, RemountVersion, TrackBuilder,
         },
         unit_conversion::{from_lra_gravity, from_lra_zoom},
     };
     use pretty_assertions::assert_eq;
-    use spatial_grid::GridVersion;
     use vector2d::Vector2Df;
 
     #[test]

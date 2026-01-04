@@ -16,12 +16,11 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use color::RGBColor;
 use format_core::{
     track::{
-        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-        LineType, RemountVersion, Track, TrackBuilder,
+        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
+        LineHitTrigger, LineType, RemountVersion, Track, TrackBuilder,
     },
     unit_conversion::{from_lra_gravity, from_lra_scenery_width, from_lra_zoom},
 };
-use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
 pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {

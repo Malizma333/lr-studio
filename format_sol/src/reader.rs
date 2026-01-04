@@ -1,11 +1,10 @@
 use crate::SolReadError;
 use amf0::deserialize;
 use byteorder::{BigEndian, ReadBytesExt};
-use spatial_grid::GridVersion;
 use std::io::{Cursor, Read};
 use vector2d::Vector2Df;
 
-use format_core::track::{LineType, RemountVersion, Track, TrackBuilder};
+use format_core::track::{GridVersion, LineType, RemountVersion, Track, TrackBuilder};
 
 pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError> {
     let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);

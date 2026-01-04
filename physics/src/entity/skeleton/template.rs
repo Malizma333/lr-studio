@@ -1,14 +1,13 @@
 use std::collections::HashMap;
 
-use crate::{
-    RemountVersion,
-    entity::{
-        registry::{
-            EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId,
-            EntityPointId, EntityPointTemplateId, EntitySkeletonTemplateId,
-        },
-        skeleton::entity::EntitySkeleton,
+use format_core::track::RemountVersion;
+
+use crate::entity::{
+    registry::{
+        EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId, EntityPointId,
+        EntityPointTemplateId, EntitySkeletonTemplateId,
     },
+    skeleton::entity::EntitySkeleton,
 };
 
 pub(crate) struct EntitySkeletonTemplate {

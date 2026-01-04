@@ -1,17 +1,15 @@
+use format_core::track::RemountVersion;
 use vector2d::Vector2Df;
 
-use crate::{
-    RemountVersion,
-    entity::{
-        bone::{builder::EntityBoneBuilder, template::EntityBoneTemplate},
-        joint::{builder::EntityJointBuilder, template::EntityJointTemplate},
-        point::{builder::EntityPointBuilder, template::EntityPointTemplate},
-        registry::{
-            EntityBoneTemplateId, EntityJointTemplateId, EntityPointTemplateId, EntityRegistry,
-            EntitySkeletonTemplateId,
-        },
-        skeleton::template::EntitySkeletonTemplate,
+use crate::entity::{
+    bone::{builder::EntityBoneBuilder, template::EntityBoneTemplate},
+    joint::{builder::EntityJointBuilder, template::EntityJointTemplate},
+    point::{builder::EntityPointBuilder, template::EntityPointTemplate},
+    registry::{
+        EntityBoneTemplateId, EntityJointTemplateId, EntityPointTemplateId, EntityRegistry,
+        EntitySkeletonTemplateId,
     },
+    skeleton::template::EntitySkeletonTemplate,
 };
 
 pub struct EntitySkeletonBuilder<'a> {

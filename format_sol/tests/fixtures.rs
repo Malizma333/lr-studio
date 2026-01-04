@@ -2,9 +2,8 @@
 mod test {
     use std::fs;
 
-    use format_core::track::{RemountVersion, TrackBuilder};
+    use format_core::track::{GridVersion, RemountVersion, TrackBuilder};
     use pretty_assertions::assert_eq;
-    use spatial_grid::GridVersion;
     use vector2d::Vector2Df;
 
     #[test]

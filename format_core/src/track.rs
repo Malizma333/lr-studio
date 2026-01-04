@@ -5,10 +5,9 @@ mod primitives;
 pub use groups::{layer, line, metadata, rider, trigger};
 pub use line_type::LineType;
 pub use primitives::{
-    BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, LineColorEvent, LineHitTrigger,
-    RemountVersion,
+    BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
+    LineHitTrigger, RemountVersion,
 };
-use spatial_grid::GridVersion;
 
 use crate::track::{
     layer::layer_group::{LayerGroup, LayerGroupBuilder},

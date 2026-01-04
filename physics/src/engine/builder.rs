@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use spatial_grid::{Grid, GridVersion};
+use format_core::track::GridVersion;
+use spatial_grid::Grid;
 
 use crate::{
     Engine,

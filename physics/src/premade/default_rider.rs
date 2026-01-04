@@ -1,6 +1,7 @@
+use format_core::track::RemountVersion;
 use vector2d::Vector2Df;
 
-use crate::{Engine, RemountVersion, entity::registry::EntitySkeletonTemplateId};
+use crate::{Engine, entity::registry::EntitySkeletonTemplateId};
 
 // Known bug: Default riders of different remount versions are not able to
 // cross-remount with each other because they come from different templates,

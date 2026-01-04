@@ -1,5 +1,5 @@
 use crate::{
-    EntitySkeletonInitialProperties, MountPhase, RemountVersion,
+    EntitySkeletonInitialProperties, MountPhase,
     engine::state::EngineState,
     entity::{
         joint::entity::EntityJoint,
@@ -11,6 +11,7 @@ use crate::{
     },
     line::Hitbox,
 };
+use format_core::track::RemountVersion;
 use geometry::Line;
 use spatial_grid::{Grid, GridLineId};
 use std::collections::HashMap;
@@ -382,7 +383,6 @@ impl Engine {
                                 .unwrap()
                                 .set_mount_phase(next_mount_phase);
 
-                            // LRA also breaks sled on mount joint break
                             match skeleton.remount_version() {
                                 RemountVersion::LRA => current_state
                                     .skeletons_mut()

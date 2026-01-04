@@ -3,11 +3,11 @@ use std::hint::black_box;
 use criterion::{
     BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main, measurement::WallTime,
 };
+use format_core::track::GridVersion;
 use geometry::Line;
-use spatial_grid::{Grid, GridVersion};
+use spatial_grid::Grid;
 use vector2d::Vector2Df;
 
-#[inline]
 fn get_lines(flags: u8) -> Vec<Line> {
     let range = (-140..140).step_by(7);
     let mut lines = Vec::new();

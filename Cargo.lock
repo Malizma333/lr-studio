@@ -228,7 +228,6 @@ name = "format_core"
 version = "0.1.0"
 dependencies = [
  "color",
- "spatial_grid",
  "vector2d",
 ]
 
@@ -557,6 +556,7 @@ name = "spatial_grid"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "format_core",
  "geometry",
  "serde",
  "serde_json",

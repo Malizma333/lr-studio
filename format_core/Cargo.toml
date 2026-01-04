@@ -5,5 +5,4 @@ version = "0.1.0"
 
 [dependencies]
 color = {path = "../color"}
-spatial_grid = {path = "../spatial_grid"}
 vector2d = {path = "../vector2d"}

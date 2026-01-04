@@ -1,11 +1,9 @@
+use format_core::track::GridVersion;
 use geometry::{Line, Point};
 use std::collections::{BTreeSet, HashMap};
 use vector2d::Vector2Df;
 
-use crate::{
-    GridVersion,
-    grid_cell::{CELL_SIZE, CellKey, GridCell},
-};
+use crate::grid_cell::{CELL_SIZE, CellKey, GridCell};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct GridLineId(u32);

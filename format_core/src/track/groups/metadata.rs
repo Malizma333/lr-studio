@@ -1,5 +1,5 @@
+use crate::track::GridVersion;
 use color::RGBColor;
-use spatial_grid::GridVersion;
 use vector2d::Vector2Df;
 
 // way to store all data that previous versions have in their preserved form

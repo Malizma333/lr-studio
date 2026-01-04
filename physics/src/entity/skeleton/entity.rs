@@ -1,6 +1,7 @@
-use crate::{
-    RemountVersion,
-    entity::registry::{EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId},
+use format_core::track::RemountVersion;
+
+use crate::entity::registry::{
+    EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId,
 };
 
 pub(crate) struct EntitySkeleton {
