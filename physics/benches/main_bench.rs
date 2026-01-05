@@ -16,15 +16,15 @@ const BENCHMARKS: &[EngineBenchmark] = &[
     },
     EngineBenchmark {
         file: "heavy_red_multiline",
-        target_frame: 10,
+        target_frame: 5,
     },
     EngineBenchmark {
         file: "free_fall_multirider",
-        target_frame: 400,
+        target_frame: 3,
     },
     EngineBenchmark {
         file: "multirider_with_track",
-        target_frame: 400,
+        target_frame: 100,
     },
 ];
 
@@ -37,6 +37,7 @@ fn bench_view_frame(
     group.bench_function(id, |b| {
         b.iter(|| {
             black_box(engine.view_frame(black_box(target_frame)));
+            engine.clear_cache();
         });
     });
 }

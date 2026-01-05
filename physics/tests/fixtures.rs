@@ -156,11 +156,17 @@ mod tests {
 
     // TODO custom skeleton tests
     // Skeleton with no mount bones
-    // Skeleton with single mount bone connected to self
-    // Skeleton with multiple mount bones connected to self
-    // Skeleton with three separate mountable connections coming together
-    // Skeleton with three separate mountable connections coming together partial
+    // Skeleton with multiple mount bones connected to self should break off one at time
+    // Skeleton with three separate mountable connections break apart should break entire connection
+    // Skeleton with three separate mountable connections break apart should be able to come back together
+    // Two skeletons with three separate mountable connections coming together partially
     // Skeleton with all mount bones
+    // Skeleton with multiple joints at two separate parts
+    // Skeleton with multiple joints at the same part
+    // Skeleton with multiple joints at part and mount connection
+    // Skeleton with multiple joints at two same mount connections
+    // Skeleton with multiple joints at two separate mount connections
+    // Skeleton with
 
     // TODO api tests
     // Custom gravity

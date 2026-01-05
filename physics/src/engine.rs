@@ -129,6 +129,12 @@ impl Engine {
         engine
     }
 
+    // TODO mark this as test-only
+    pub fn clear_cache(&mut self) {
+        self.state_snapshots.truncate(0);
+        self.state_snapshots.push(self.initial_state.clone());
+    }
+
     pub fn view_frame(&mut self, frame: u32) -> EngineView {
         self.fill_snapshots_up_to_frame(frame);
         let state = self
