@@ -23,7 +23,6 @@ pub struct Metadata {
     gravity_well_size: Option<f64>,
     audio_filename: Option<String>,
     audio_offset: Option<f64>, // Offset (in seconds) until the song starts
-    // TODO group properties
     start_gravity: Option<Vector2Df>,
     start_zoom: Option<f64>,
     start_line_color: Option<RGBColor>,

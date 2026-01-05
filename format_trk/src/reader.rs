@@ -194,7 +194,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     }
 
     if included_features.contains(FEATURE_FRICTIONLESS) {
-        // TODO set custom rider props
+        // ignore for now
     }
 
     let remount_version = if included_features.contains(FEATURE_REMOUNT) {

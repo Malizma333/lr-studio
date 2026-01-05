@@ -91,7 +91,6 @@ impl Engine {
             engine.create_line(line.1);
         }
 
-        // TODO this part should be refactored?
         let template_none = build_default_rider(&mut engine, RemountVersion::None);
         let template_comv1 = build_default_rider(&mut engine, RemountVersion::ComV1);
         let template_comv2 = build_default_rider(&mut engine, RemountVersion::ComV2);
@@ -129,7 +128,6 @@ impl Engine {
         engine
     }
 
-    // TODO mark this as test-only
     pub fn clear_cache(&mut self) {
         self.state_snapshots.truncate(0);
         self.state_snapshots.push(self.initial_state.clone());
