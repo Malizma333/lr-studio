@@ -258,10 +258,6 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         track_builder.metadata().duration(duration);
     }
 
-    if let Some(script) = json_track.script {
-        track_builder.metadata().script(script);
-    }
-
     if let Some(gravity_well_size) = json_track.gravity_well_size {
         track_builder
             .metadata()

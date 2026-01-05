@@ -163,7 +163,7 @@ struct JsonTrack {
     lines: Option<Vec<JsonLine>>,
     layers: Option<Vec<JsonLayer>>,
     riders: Option<Vec<JsonRider>>,
-    script: Option<String>,
+    script: Option<String>, // Unused
     #[serde(rename = "startPosition")]
     start_pos: Option<V2>,
     #[serde(rename = "linesArray", skip_serializing_if = "Option::is_none")]

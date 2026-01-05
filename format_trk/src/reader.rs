@@ -194,7 +194,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     }
 
     if included_features.contains(FEATURE_FRICTIONLESS) {
-        track_builder.metadata().zero_friction_riders(true);
+        // TODO set custom rider props
     }
 
     let remount_version = if included_features.contains(FEATURE_REMOUNT) {

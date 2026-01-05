@@ -83,8 +83,7 @@ mod test {
             .gravity_well_size(5.0)
             .start_background_color(RGBColor::new(1, 2, 3))
             .start_gravity(from_lra_gravity(Vector2Df::new(1.0, 0.0)))
-            .start_line_color(RGBColor::new(4, 5, 6))
-            .zero_friction_riders(true);
+            .start_line_color(RGBColor::new(4, 5, 6));
         expected_builder
             .rider_group()
             .add_rider(RemountVersion::LRA, 0)

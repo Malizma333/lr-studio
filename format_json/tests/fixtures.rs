@@ -24,7 +24,6 @@ mod test {
             .title(String::new())
             .artist(String::new())
             .description(String::new())
-            .script(String::new())
             .duration(1200);
         expected_builder
             .rider_group()
