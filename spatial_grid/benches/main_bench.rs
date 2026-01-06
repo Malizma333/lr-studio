@@ -70,7 +70,7 @@ fn bench_add_lines(group: &mut BenchmarkGroup<'_, WallTime>, lines: &[Line]) {
             let mut index = 0;
             b.iter(|| {
                 let mut grid = Grid::new(version);
-                grid.add_line(black_box(&lines[index % lines.len()]));
+                grid.add_line(black_box(lines[index % lines.len()]));
                 index += 1;
                 black_box(grid)
             })

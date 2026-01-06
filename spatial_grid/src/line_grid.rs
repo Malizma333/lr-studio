@@ -1,17 +1,17 @@
 use format_core::track::GridVersion;
 use geometry::{Line, Point};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use vector2d::Vector2Df;
 
 use crate::grid_cell::{CELL_SIZE, CellKey, GridCell};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct GridLineId(u32);
 
 pub struct Grid {
     version: GridVersion,
     cells: HashMap<CellKey, BTreeSet<GridLineId>>,
-    ids: BTreeSet<GridLineId>,
+    lines: BTreeMap<GridLineId, Line>,
 }
 
 impl Grid {
@@ -19,19 +19,98 @@ impl Grid {
         Grid {
             version,
             cells: HashMap::new(),
-            ids: BTreeSet::new(),
+            lines: BTreeMap::new(),
         }
     }
 
-    fn get_next_id(&mut self) -> GridLineId {
-        let last_id = self.ids.last().unwrap_or(&GridLineId(0));
-        let next_id = last_id.0 + 1;
-        self.ids.insert(GridLineId(next_id));
-        GridLineId(next_id)
+    /// Adds a new line to the grid
+    pub fn add_line(&mut self, endpoints: Line) -> GridLineId {
+        let last_id = self.lines.keys().last();
+
+        let next_id = if let Some(last_id) = last_id {
+            last_id.0 + 1
+        } else {
+            0
+        };
+
+        let id = GridLineId(next_id);
+        let cell_positions = self.get_cell_positions_along(&endpoints);
+
+        for position in cell_positions {
+            self.register(id, &position);
+        }
+
+        self.lines.insert(id, endpoints);
+
+        id
     }
 
-    fn free_id(&mut self, id: GridLineId) {
-        self.ids.remove(&id);
+    /// Updates a line within the grid by preserving its id, returning the old line
+    pub fn update_line(&mut self, id: GridLineId, new_line: Line) -> Option<Line> {
+        let old_line = self.lines.insert(id, new_line);
+
+        if let Some(old_line) = old_line {
+            let cell_positions = self.get_cell_positions_along(&old_line);
+            for position in cell_positions {
+                self.unregister(id, &position);
+            }
+        }
+
+        let new_cell_positions = self.get_cell_positions_along(&new_line);
+        for position in new_cell_positions {
+            self.register(id, &position);
+        }
+
+        old_line
+    }
+
+    /// Removes a line from the grid, returning the removed line if it exists
+    pub fn remove_line(&mut self, id: GridLineId) -> Option<Line> {
+        let line = self.lines.remove(&id);
+
+        if let Some(line) = line {
+            let cell_positions = self.get_cell_positions_along(&line);
+            for position in cell_positions {
+                self.unregister(id, &position);
+            }
+        }
+
+        line
+    }
+
+    /// Gets the list of lines intersecting a 3x3 box of cells around the point
+    pub fn get_lines_near_point(&self, point: Point) -> Vec<GridLineId> {
+        let mut line_ids: Vec<GridLineId> = Vec::new();
+        for i in -1..2 {
+            for j in -1..2 {
+                let position = CELL_SIZE * Vector2Df::new(f64::from(i), f64::from(j)) + point;
+                let cell_key = GridCell::new(position).get_key();
+                if let Some(cell) = self.cells.get(&cell_key) {
+                    for line_id in cell.iter().rev() {
+                        line_ids.push(*line_id);
+                    }
+                }
+            }
+        }
+        line_ids
+    }
+
+    /// Updates the grid's version by re-registering all lines
+    pub fn update_version(&mut self, new_version: GridVersion) {
+        self.cells.clear();
+        self.version = new_version;
+
+        let mut lines_to_register = Vec::new();
+        for (id, line) in &self.lines {
+            let cell_positions = self.get_cell_positions_along(line);
+            for position in cell_positions {
+                lines_to_register.push((*id, position));
+            }
+        }
+
+        for (line_id, cell) in lines_to_register {
+            self.register(line_id, &cell);
+        }
     }
 
     fn register(&mut self, line_id: GridLineId, position: &GridCell) {
@@ -46,35 +125,6 @@ impl Grid {
         let cell_key = position.get_key();
         if let Some(cell) = self.cells.get_mut(&cell_key) {
             cell.remove(&line_id);
-        }
-    }
-
-    pub fn add_line(&mut self, endpoints: &Line) -> GridLineId {
-        let id = self.get_next_id();
-        let cell_positions = self.get_cell_positions_along(&endpoints);
-        for position in cell_positions {
-            self.register(id, &position);
-        }
-        id
-    }
-
-    pub fn remove_line(&mut self, id: GridLineId, endpoints: &Line) {
-        self.free_id(id);
-        let cell_positions = self.get_cell_positions_along(&endpoints);
-        for position in cell_positions {
-            self.unregister(id, &position);
-        }
-    }
-
-    pub fn move_line(&mut self, id: GridLineId, old_endpoints: &Line, new_endpoints: &Line) {
-        let cell_positions = self.get_cell_positions_along(&old_endpoints);
-        for position in cell_positions {
-            self.unregister(id, &position);
-        }
-
-        let new_cell_positions = self.get_cell_positions_along(&new_endpoints);
-        for position in new_cell_positions {
-            self.register(id, &position);
         }
     }
 
@@ -217,26 +267,11 @@ impl Grid {
 
         cells
     }
-
-    pub fn get_lines_near_point(&self, point: Point) -> Vec<GridLineId> {
-        let mut line_ids: Vec<GridLineId> = Vec::new();
-        for i in -1..2 {
-            for j in -1..2 {
-                let position = CELL_SIZE * Vector2Df::new(f64::from(i), f64::from(j)) + point;
-                let cell_key = GridCell::new(position).get_key();
-                if let Some(cell) = self.cells.get(&cell_key) {
-                    for line_id in cell.iter().rev() {
-                        line_ids.push(*line_id);
-                    }
-                }
-            }
-        }
-        line_ids
-    }
 }
 
 #[cfg(test)]
 mod tests {
+    use format_core::track::GridVersion;
     use geometry::{Line, Point};
     use serde::Deserialize;
     use std::fs;
@@ -256,7 +291,7 @@ mod tests {
 
     #[test]
     fn add_move_remove_lines() {
-        let mut grid = Grid::new(super::GridVersion::V6_2);
+        let mut grid = Grid::new(GridVersion::V6_2);
         let line0 = Line::new(Point::zero(), Point::one() * CELL_SIZE);
         let line1 = Line::new(
             Point::one() * 2.0 * CELL_SIZE,
@@ -266,8 +301,8 @@ mod tests {
 
         assert!(grid.cells.is_empty(), "new grid should have no cells");
 
-        let line0_id = grid.add_line(&line0);
-        let line1_id = grid.add_line(&line0);
+        let line0_id = grid.add_line(line0);
+        let line1_id = grid.add_line(line0);
 
         assert!(
             grid.cells
@@ -276,7 +311,7 @@ mod tests {
             "first cell should have both line ids"
         );
 
-        grid.remove_line(line1_id, &line0);
+        grid.remove_line(line1_id);
 
         assert!(
             grid.cells
@@ -285,7 +320,7 @@ mod tests {
             "first cell should only have one line ids after remove"
         );
 
-        grid.move_line(line0_id, &line0, &line1);
+        grid.update_line(line0_id, line1);
 
         assert!(
             grid.cells
@@ -294,7 +329,7 @@ mod tests {
             "first cell should have no line ids after move"
         );
 
-        grid.remove_line(line0_id, &line1);
+        grid.remove_line(line0_id);
 
         assert!(
             !grid.cells.is_empty(),
@@ -304,13 +339,13 @@ mod tests {
 
     #[test]
     fn select_near_point() {
-        let mut grid = Grid::new(super::GridVersion::V6_2);
+        let mut grid = Grid::new(GridVersion::V6_2);
         let line0 = Line::new(Point::new(10.0, 10.0), Point::new(17.0, 10.0));
         let line1 = Line::new(Point::new(10.0, 10.0), Point::new(10.0, 17.0));
         let line2 = Line::new(Point::new(34.0, 34.0), Point::new(50.0, 36.0));
-        let line0_id = grid.add_line(&line0);
-        let line1_id = grid.add_line(&line1);
-        let line2_id = grid.add_line(&line2);
+        let line0_id = grid.add_line(line0);
+        let line1_id = grid.add_line(line1);
+        let line2_id = grid.add_line(line2);
         let lines_near_point = grid.get_lines_near_point(Point::new(-3.0, -1.0));
         assert_eq!(
             lines_near_point,
@@ -365,7 +400,7 @@ mod tests {
 
     #[test]
     fn cell_positions_of_line_60() {
-        let grid = Grid::new(super::GridVersion::V6_0);
+        let grid = Grid::new(GridVersion::V6_0);
         let data = fs::read_to_string("../fixtures/spatial_grid/grid_60_tests.json")
             .expect("Failed to read JSON file");
         run_grid_tests(grid, data);
@@ -373,7 +408,7 @@ mod tests {
 
     #[test]
     fn cell_positions_of_line_61() {
-        let grid = Grid::new(super::GridVersion::V6_1);
+        let grid = Grid::new(GridVersion::V6_1);
         let data = fs::read_to_string("../fixtures/spatial_grid/grid_61_tests.json")
             .expect("Failed to read JSON file");
         run_grid_tests(grid, data);
@@ -381,7 +416,7 @@ mod tests {
 
     #[test]
     fn cell_positions_of_line_62() {
-        let grid = Grid::new(super::GridVersion::V6_2);
+        let grid = Grid::new(GridVersion::V6_2);
         let data = fs::read_to_string("../fixtures/spatial_grid/grid_62_tests.json")
             .expect("Failed to read JSON file");
         run_grid_tests(grid, data);
