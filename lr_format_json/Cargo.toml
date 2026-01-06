@@ -1,0 +1,16 @@
+[package]
+edition = "2024"
+name = "lr_format_json"
+version = "0.1.0"
+
+[dependencies]
+color = {path = "../color"}
+lr_types = {path = "../lr_types"}
+serde = {version = "1", features = ["derive"]}
+# Float roundtrip ensures floats get serialized/deserialized with exact precision (however, 2x slower)
+serde_json = {version = "1", features = ["float_roundtrip"]}
+thiserror = "2"
+vector2d = {path = "../vector2d"}
+
+[dev-dependencies]
+pretty_assertions = "1"

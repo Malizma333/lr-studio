@@ -1,0 +1,21 @@
+[package]
+edition = "2024"
+name = "lr_physics_engine"
+version = "0.1.0"
+
+[dependencies]
+geometry = {path = "../geometry"}
+lr_physics_grid = {path = "../lr_physics_grid"}
+lr_types = {path = "../lr_types"}
+vector2d = {path = "../vector2d"}
+
+[dev-dependencies]
+criterion = {version = "0.8.0", features = ["html_reports"]}
+lr_format_json = {path = "../lr_format_json"}
+serde = {version = "1", features = ["derive"]}
+serde_json = "1"
+
+# Criterion configuration
+[[bench]]
+harness = false
+name = "main_bench"

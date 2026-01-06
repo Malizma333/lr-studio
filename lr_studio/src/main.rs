@@ -1,5 +1,5 @@
 use eframe::egui;
-use physics::Engine;
+use lr_physics_engine::Engine;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();

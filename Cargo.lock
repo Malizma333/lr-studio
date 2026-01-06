@@ -150,8 +150,7 @@ name = "amf0"
 version = "0.1.0"
 dependencies = [
  "byteorder",
- "format_core",
- "spatial_grid",
+ "lr_types",
  "thiserror 2.0.17",
  "vector2d",
 ]
@@ -1272,51 +1271,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "format_core"
-version = "0.1.0"
-dependencies = [
- "color",
- "vector2d",
-]
-
-[[package]]
-name = "format_json"
-version = "0.1.0"
-dependencies = [
- "color",
- "format_core",
- "pretty_assertions",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "vector2d",
-]
-
-[[package]]
-name = "format_sol"
-version = "0.1.0"
-dependencies = [
- "amf0",
- "byteorder",
- "format_core",
- "pretty_assertions",
- "thiserror 2.0.17",
- "vector2d",
-]
-
-[[package]]
-name = "format_trk"
-version = "0.1.0"
-dependencies = [
- "byteorder",
- "color",
- "format_core",
- "pretty_assertions",
- "thiserror 2.0.17",
- "vector2d",
-]
-
-[[package]]
 name = "futures-core"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1866,11 +1820,82 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "lr_format_json"
+version = "0.1.0"
+dependencies = [
+ "color",
+ "lr_types",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "vector2d",
+]
+
+[[package]]
+name = "lr_format_sol"
+version = "0.1.0"
+dependencies = [
+ "amf0",
+ "byteorder",
+ "lr_types",
+ "pretty_assertions",
+ "thiserror 2.0.17",
+ "vector2d",
+]
+
+[[package]]
+name = "lr_format_trk"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "color",
+ "lr_types",
+ "pretty_assertions",
+ "thiserror 2.0.17",
+ "vector2d",
+]
+
+[[package]]
+name = "lr_physics_engine"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "geometry",
+ "lr_format_json",
+ "lr_physics_grid",
+ "lr_types",
+ "serde",
+ "serde_json",
+ "vector2d",
+]
+
+[[package]]
+name = "lr_physics_grid"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "geometry",
+ "lr_types",
+ "serde",
+ "serde_json",
+ "vector2d",
+]
+
+[[package]]
 name = "lr_studio"
 version = "0.1.0"
 dependencies = [
  "eframe",
- "physics",
+ "lr_physics_engine",
+]
+
+[[package]]
+name = "lr_types"
+version = "0.1.0"
+dependencies = [
+ "color",
+ "vector2d",
 ]
 
 [[package]]
@@ -2428,20 +2453,6 @@ name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
-
-[[package]]
-name = "physics"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "format_core",
- "format_json",
- "geometry",
- "serde",
- "serde_json",
- "spatial_grid",
- "vector2d",
-]
 
 [[package]]
 name = "pin-project"
@@ -3011,18 +3022,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "spatial_grid"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "format_core",
- "geometry",
- "serde",
- "serde_json",
- "vector2d",
 ]
 
 [[package]]

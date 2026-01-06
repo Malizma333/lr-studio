@@ -1,10 +1,8 @@
 [package]
 edition = "2024"
-name = "amf0"
+name = "lr_types"
 version = "0.1.0"
 
 [dependencies]
-byteorder = "1"
-lr_types = {path = "../lr_types"}
-thiserror = "2"
+color = {path = "../color"}
 vector2d = {path = "../vector2d"}

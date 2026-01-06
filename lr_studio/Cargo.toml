@@ -5,4 +5,4 @@ version = "0.1.0"
 
 [dependencies]
 eframe = {version = "0.33.3", features = ["wgpu"]}
-physics = {path = "../physics"}
+lr_physics_engine = {path = "../lr_physics_engine"}

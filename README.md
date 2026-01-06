@@ -1,4 +1,4 @@
-# Line Rider Core Libraries (In Rust)
+# Line Rider Studio
 
 > [!WARNING]
 > This project is in an unfinished state. Use at your own risk.
@@ -23,13 +23,13 @@ Install dependencies
 make install
 ```
 
-Run tests
+Start program
 
 ```sh
-make test
+make run
 ```
 
-See all available commands
+List available commands
 
 ```sh
 make help
