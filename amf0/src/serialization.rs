@@ -4,7 +4,7 @@
 
 use quick_byte::QuickWrite;
 
-use super::{Amf0Value, errors::SerializationError, markers};
+use super::{Amf0Value, error::SerializationError, markers};
 use std::collections::HashMap;
 
 // Serializes values into an amf0 encoded vector of bytes

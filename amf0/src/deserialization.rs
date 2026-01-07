@@ -4,7 +4,7 @@
 
 use quick_byte::QuickRead;
 
-use super::{Amf0Value, errors::DeserializationError, markers};
+use super::{Amf0Value, error::DeserializationError, markers};
 use std::collections::HashMap;
 use std::io::Read;
 

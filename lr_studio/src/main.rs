@@ -1,5 +1,4 @@
 use eframe::egui;
-use lr_physics_engine::Engine;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
@@ -11,18 +10,16 @@ fn main() {
 }
 
 #[derive(Default)]
-struct LineRiderStudioApp {
-    physics_engine: Engine,
-}
+struct LineRiderStudioApp {}
 
 impl LineRiderStudioApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self::default()
     }
 }
 
 impl eframe::App for LineRiderStudioApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {});
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| ui.label("Hello world!"));
     }
 }

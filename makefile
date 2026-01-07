@@ -9,12 +9,12 @@ install: ## Install development tooling locally at .cargo
 	# Test coverage
 	cargo install cargo-tarpaulin --version 0.35.0 --locked --root .cargo
 
-.PHONY: init-crate
-init-crate: ## Create a new library crate
+.PHONY: new
+new: ## Create a new library crate
 	@if [ -n "$(CRATE)" ]; then \
 		cargo init --lib --vcs none $(CRATE); \
 	else \
-		echo "Usage: make init-lib CRATE=[name]"; \
+		echo "Usage: make new CRATE=[name]"; \
 	fi
 
 .PHONY: format

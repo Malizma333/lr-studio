@@ -3,11 +3,11 @@
 // Modifications Copyright 2026 Tobias Bessler
 
 mod deserialization;
-mod errors;
+mod error;
 mod serialization;
 
 pub use deserialization::deserialize;
-pub use errors::{DeserializationError, SerializationError};
+pub use error::{DeserializationError, SerializationError};
 pub use serialization::serialize;
 
 use std::collections::HashMap;

@@ -1877,7 +1877,6 @@ name = "lr_studio"
 version = "0.1.0"
 dependencies = [
  "eframe",
- "lr_physics_engine",
 ]
 
 [[package]]
