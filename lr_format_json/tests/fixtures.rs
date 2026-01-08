@@ -74,7 +74,6 @@ mod test {
         let mut expected_track = Track::new(GridVersion::V6_2);
 
         expected_track.set_title("test".to_string());
-        // expected_track.set_start_zoom(from_lra_zoom(4.0));
 
         let mut rider = Rider::new(RemountVersion::LRA);
         rider.set_start_offset(Vector2Df::zero());
@@ -97,11 +96,6 @@ mod test {
         let line = SceneryLine::new(Line::new(Point::new(36.0, 19.0), Point::new(88.0, 21.0)));
         expected_track.scenery_lines_mut().push(line);
 
-        // expected_track.legacy_camera_zoom_group().add_trigger(
-        //     CameraZoomEvent::new(from_lra_zoom(4.0)),
-        //     LineHitTrigger::new(1, 20),
-        // );
-
         assert_eq!(result, expected_track);
     }
 
@@ -113,10 +107,6 @@ mod test {
         let mut expected_track = Track::new(GridVersion::V6_2);
 
         expected_track.set_title("test".to_string());
-        // expected_track.set_start_zoom(from_lra_zoom(4.0))
-        // expected_track.set_start_background_color(RGBColor::new(255, 255, 255))
-        // expected_track.set_start_line_color(RGBColor::new(0, 0, 0))
-        // expected_track.set_start_gravity(Vector2Df::up())
 
         let mut rider = Rider::new(RemountVersion::LRA);
         rider.set_start_offset(Vector2Df::zero());
@@ -142,19 +132,6 @@ mod test {
 
         let line = SceneryLine::new(Line::new(Point::new(-33.0, -33.0), Point::new(-3.0, -32.0)));
         expected_track.scenery_lines_mut().push(line);
-
-        // expected_track.camera_zoom_group().add_trigger(
-        //     CameraZoomEvent::new(from_lra_zoom(4.0)),
-        //     FrameBoundsTrigger::new(0, 40),
-        // );
-        // expected_track.background_color_group().add_trigger(
-        //     BackgroundColorEvent::new(RGBColor::new(255, 255, 255)),
-        //     FrameBoundsTrigger::new(1, 41),
-        // );
-        // expected_track.line_color_group().add_trigger(
-        //     LineColorEvent::new(RGBColor::new(0, 0, 0)),
-        //     FrameBoundsTrigger::new(1, 41),
-        // );
 
         assert_eq!(result, expected_track);
     }

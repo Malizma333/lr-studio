@@ -1,4 +1,3 @@
-// TODO figure out triggers
 mod grid_version;
 mod layer;
 mod layer_folder;

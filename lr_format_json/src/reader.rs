@@ -1,11 +1,18 @@
+use crate::{FaultyBool, JsonReadError, JsonTrack, json_array_line::LRAJsonArrayLine};
 use color::RGBColor;
 use geometry::{Line, Point};
 use lr_format_core::{
     GridVersion, Layer, LayerFolder, RemountVersion, Rider, SceneryLine, StandardLine, Track,
+    unit_conversion::{from_lra_gravity, from_lra_zoom},
 };
 use vector2d::Vector2Df;
 
-use crate::{FaultyBool, JsonReadError, JsonTrack, json_array_line::LRAJsonArrayLine};
+#[derive(PartialEq)]
+enum LineType {
+    Standard,
+    Acceleration,
+    Scenery,
+}
 
 pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
     let json_string = str::from_utf8(bytes)?;
@@ -24,15 +31,16 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
 
     if let Some(line_list) = json_track.lines {
         for line in line_list {
-            let is_standard_line = match line.line_type {
-                0 | 1 => true,
-                2 => false,
+            let line_type = match line.line_type {
+                0 => LineType::Standard,
+                1 => LineType::Acceleration,
+                2 => LineType::Scenery,
                 other => Err(JsonReadError::UnsupportedLineType(other.to_string()))?,
             };
 
             let endpoints = Line::new(Point::new(line.x1, line.y1), Point::new(line.x2, line.y2));
 
-            let (left_extension, right_extension) = if !is_standard_line {
+            let (left_extension, right_extension) = if line_type == LineType::Scenery {
                 (false, false)
             } else if let Some(ext) = line.extended {
                 (ext & 1 != 0, ext & 2 != 0)
@@ -47,7 +55,7 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                 Some(flipped) => bool::from(flipped),
             };
 
-            let multiplier = if line.line_type == 1 {
+            let multiplier = if line_type == LineType::Acceleration {
                 if let Some(multiplier) = line.multiplier {
                     multiplier
                 } else {
@@ -57,7 +65,7 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                 0.0
             };
 
-            let width = if line.line_type == 2 {
+            let width = if line_type == LineType::Scenery {
                 if let Some(width) = line.width {
                     width
                 } else {
@@ -67,7 +75,7 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                 1.0
             };
 
-            if is_standard_line {
+            if line_type != LineType::Scenery {
                 let mut standard_line = StandardLine::new(endpoints);
                 standard_line.set_flipped(flipped);
                 standard_line.set_left_extension(left_extension);
@@ -256,115 +264,80 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         }
     }
 
-    /*
-       if let Some(x_gravity) = json_track.x_gravity
-           && let Some(y_gravity) = json_track.y_gravity
-       {
-           track
-               .metadata()
-               .start_gravity(Vector2Df::new(f64::from(x_gravity), f64::from(y_gravity)));
-       }
+    let _start_zoom = json_track
+        .start_zoom
+        .map(f64::from)
+        .unwrap_or(from_lra_zoom(4.0));
 
-       if let Some(start_zoom) = json_track.start_zoom {
-           track.metadata().start_zoom(from_lra_zoom(start_zoom));
-       }
+    let _start_gravity = from_lra_gravity(Vector2Df::new(
+        f64::from(json_track.start_gravity_x.unwrap_or(0.0)),
+        f64::from(json_track.start_gravity_y.unwrap_or(1.0)),
+    ));
 
-       if let Some(init_red) = json_track.line_color_red
-           && let Some(init_green) = json_track.line_color_green
-           && let Some(init_blue) = json_track.line_color_blue
-       {
-           track.metadata().start_line_color(RGBColor::new(
-               u8::try_from(init_red)?,
-               u8::try_from(init_green)?,
-               u8::try_from(init_blue)?,
-           ));
-       }
+    let _start_background_color = RGBColor::new(
+        u8::try_from(json_track.start_bg_color_red.unwrap_or(244))?,
+        u8::try_from(json_track.start_bg_color_green.unwrap_or(245))?,
+        u8::try_from(json_track.start_bg_color_blue.unwrap_or(249))?,
+    );
 
-       if let Some(init_red) = json_track.background_color_red
-           && let Some(init_green) = json_track.background_color_green
-           && let Some(init_blue) = json_track.background_color_blue
-       {
-           track.metadata().start_background_color(RGBColor::new(
-               u8::try_from(init_red)?,
-               u8::try_from(init_green)?,
-               u8::try_from(init_blue)?,
-           ));
-       }
+    let _start_line_color = RGBColor::new(
+        u8::try_from(json_track.start_line_color_red.unwrap_or(0))?,
+        u8::try_from(json_track.start_line_color_green.unwrap_or(0))?,
+        u8::try_from(json_track.start_line_color_blue.unwrap_or(0))?,
+    );
 
-       if let Some(line_triggers) = json_track.line_based_triggers {
-           for trigger in line_triggers {
-               if trigger.zoom {
-                   let line_hit = LineHitTrigger::new(trigger.id, trigger.frames);
-                   let zoom_event = CameraZoomEvent::new(from_lra_zoom(trigger.target));
-                   track
-                       .legacy_camera_zoom_group()
-                       .add_trigger(zoom_event, line_hit);
-               }
-           }
-       }
+    if let Some(line_triggers) = json_track.line_based_triggers {
+        for trigger in line_triggers {
+            if trigger.zoom {}
+        }
+    }
 
-       if let Some(time_triggers) = json_track.time_based_triggers {
-           for trigger in time_triggers {
-               // Closure just avoids moving the value
-               let err = || JsonReadError::InvalidTriggerFormat(format!("{:?}", trigger));
-               match trigger.trigger_type {
-                   0 => {
-                       // Zoom
-                       let target_zoom = from_lra_zoom(trigger.zoom_target);
-                       let start_frame = trigger.start;
-                       let end_frame = trigger.end;
-                       let zoom_event = CameraZoomEvent::new(target_zoom);
-                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                       track
-                           .camera_zoom_group()
-                           .add_trigger(zoom_event, frame_bounds);
-                   }
-                   1 => {
-                       // Background Color
-                       let red = u8::try_from(
-                           Option::<u32>::from(trigger.background_red.ok_or_else(err)?)
-                               .ok_or_else(err)?,
-                       )?;
-                       let green = u8::try_from(
-                           Option::<u32>::from(trigger.background_green.ok_or_else(err)?)
-                               .ok_or_else(err)?,
-                       )?;
-                       let blue = u8::try_from(
-                           Option::<u32>::from(trigger.background_blue.ok_or_else(err)?)
-                               .ok_or_else(err)?,
-                       )?;
-                       let start_frame = trigger.start;
-                       let end_frame = trigger.end;
-                       let bg_color_event = BackgroundColorEvent::new(RGBColor::new(red, green, blue));
-                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                       track
-                           .background_color_group()
-                           .add_trigger(bg_color_event, frame_bounds);
-                   }
-                   2 => {
-                       // Line Color
-                       let red = u8::try_from(
-                           Option::<u32>::from(trigger.line_red.ok_or_else(err)?).ok_or_else(err)?,
-                       )?;
-                       let green = u8::try_from(
-                           Option::<u32>::from(trigger.line_green.ok_or_else(err)?).ok_or_else(err)?,
-                       )?;
-                       let blue = u8::try_from(
-                           Option::<u32>::from(trigger.line_blue.ok_or_else(err)?).ok_or_else(err)?,
-                       )?;
-                       let start_frame = trigger.start;
-                       let end_frame = trigger.end;
-                       let line_color_event = LineColorEvent::new(RGBColor::new(red, green, blue));
-                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                       track
-                           .line_color_group()
-                           .add_trigger(line_color_event, frame_bounds);
-                   }
-                   other => Err(JsonReadError::UnsupportedTriggerType(other.to_string()))?,
-               }
-           }
-       }
-    */
+    if let Some(time_triggers) = json_track.time_based_triggers {
+        for trigger in time_triggers {
+            // Closure just avoids moving the value
+            let err = || JsonReadError::InvalidTriggerFormat(format!("{:?}", trigger));
+            match trigger.trigger_type {
+                0 => {
+                    // Zoom
+                    let _target_zoom = from_lra_zoom(trigger.zoom_target);
+                    let _start_frame = trigger.start;
+                    let _end_frame = trigger.end;
+                }
+                1 => {
+                    // Background Color
+                    let _red = u8::try_from(
+                        Option::<u32>::from(trigger.background_red.ok_or_else(err)?)
+                            .ok_or_else(err)?,
+                    )?;
+                    let _green = u8::try_from(
+                        Option::<u32>::from(trigger.background_green.ok_or_else(err)?)
+                            .ok_or_else(err)?,
+                    )?;
+                    let _blue = u8::try_from(
+                        Option::<u32>::from(trigger.background_blue.ok_or_else(err)?)
+                            .ok_or_else(err)?,
+                    )?;
+                    let _start_frame = trigger.start;
+                    let _end_frame = trigger.end;
+                }
+                2 => {
+                    // Line Color
+                    let _red = u8::try_from(
+                        Option::<u32>::from(trigger.line_red.ok_or_else(err)?).ok_or_else(err)?,
+                    )?;
+                    let _green = u8::try_from(
+                        Option::<u32>::from(trigger.line_green.ok_or_else(err)?).ok_or_else(err)?,
+                    )?;
+                    let _blue = u8::try_from(
+                        Option::<u32>::from(trigger.line_blue.ok_or_else(err)?).ok_or_else(err)?,
+                    )?;
+                    let _start_frame = trigger.start;
+                    let _end_frame = trigger.end;
+                }
+                other => Err(JsonReadError::UnsupportedTriggerType(other.to_string()))?,
+            }
+        }
+    }
 
     Ok(track)
 }

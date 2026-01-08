@@ -9,5 +9,13 @@ pub fn from_lra_scenery_width(width: u8) -> f64 {
 }
 
 pub fn from_lra_gravity(gravity: Vector2Df) -> Vector2Df {
-    Vector2Df::new(gravity.x() * 0.175, gravity.y() * -0.175)
+    gravity.flip_vertical() * 0.175
+}
+
+pub fn from_web_gravity(gravity: Vector2Df) -> Vector2Df {
+    gravity.flip_vertical()
+}
+
+pub fn from_lra_audio_offset(offset: f64) -> f64 {
+    -offset
 }

@@ -165,21 +165,21 @@ struct JsonTrack {
     #[serde(rename = "gameTriggers", skip_serializing_if = "Option::is_none")]
     time_based_triggers: Option<Vec<LRAJsonTrigger>>,
     #[serde(rename = "xGravity", skip_serializing_if = "Option::is_none")]
-    x_gravity: Option<f32>,
+    start_gravity_x: Option<f32>,
     #[serde(rename = "yGravity", skip_serializing_if = "Option::is_none")]
-    y_gravity: Option<f32>,
+    start_gravity_y: Option<f32>,
     #[serde(rename = "gravityWellSize", skip_serializing_if = "Option::is_none")]
     gravity_well_size: Option<f64>,
     #[serde(rename = "bgR", skip_serializing_if = "Option::is_none")]
-    background_color_red: Option<u32>,
+    start_bg_color_red: Option<u32>,
     #[serde(rename = "bgG", skip_serializing_if = "Option::is_none")]
-    background_color_green: Option<u32>,
+    start_bg_color_green: Option<u32>,
     #[serde(rename = "bgB", skip_serializing_if = "Option::is_none")]
-    background_color_blue: Option<u32>,
+    start_bg_color_blue: Option<u32>,
     #[serde(rename = "lineR", skip_serializing_if = "Option::is_none")]
-    line_color_red: Option<u32>,
+    start_line_color_red: Option<u32>,
     #[serde(rename = "lineG", skip_serializing_if = "Option::is_none")]
-    line_color_green: Option<u32>,
+    start_line_color_green: Option<u32>,
     #[serde(rename = "lineB", skip_serializing_if = "Option::is_none")]
-    line_color_blue: Option<u32>,
+    start_line_color_blue: Option<u32>,
 }

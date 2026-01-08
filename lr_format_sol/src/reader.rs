@@ -285,7 +285,7 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
                 .get_number()
                 .ok_or(SolReadError::InvalidLine(format!("{:?}", line_amf)))?;
 
-            let is_standard = match line_type_numeric {
+            let is_standard_line = match line_type_numeric {
                 0.0 | 1.0 => true,
                 2.0 => false,
                 other => Err(SolReadError::UnsupportedLineType(other.to_string()))?,
@@ -295,7 +295,7 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
 
             let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
 
-            if is_standard {
+            if is_standard_line {
                 let mut standard_line = StandardLine::new(endpoints);
                 standard_line.set_flipped(flipped);
                 standard_line.set_left_extension(left_extension);
