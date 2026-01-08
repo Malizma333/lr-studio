@@ -1,11 +1,8 @@
 use crate::TrkReadError;
-use color::RGBColor;
-use lr_types::{
-    track::{
-        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RemountVersion, Track, TrackBuilder,
-    },
-    unit_conversion::{from_lra_gravity, from_lra_scenery_width, from_lra_zoom},
+use geometry::{Line, Point};
+use lr_format_core::{
+    GridVersion, RemountVersion, Rider, SceneryLine, StandardLine, Track,
+    unit_conversion::{from_lra_scenery_width, from_lra_zoom},
 };
 use quick_byte::QuickRead;
 use std::{
@@ -35,8 +32,15 @@ const FEATURE_LINE_COLOR_G: &str = "LINECOLORG";
 const FEATURE_LINE_COLOR_B: &str = "LINECOLORB";
 const FEATURE_TRIGGERS: &str = "TRIGGERS";
 
+#[derive(PartialEq)]
+enum LineType {
+    Standard,
+    Acceleration,
+    Scenery,
+}
+
 pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
-    let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
+    let mut track = Track::new(GridVersion::V6_2);
     let mut cursor = Cursor::new(data);
 
     // Magic number
@@ -72,7 +76,8 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     } else {
         GridVersion::V6_2
     };
-    track_builder.metadata().grid_version(grid_version);
+
+    track.set_grid_version(grid_version);
 
     if included_features.contains(FEATURE_SONG_INFO) {
         let mut song_string_length = 0;
@@ -104,10 +109,8 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
         let name = song_data[0];
         let seconds_offset = song_data[1].parse::<f64>()?;
-        track_builder
-            .metadata()
-            .audio_filename(name.to_string())
-            .audio_offset(-seconds_offset);
+        track.set_audio_filename(name.to_string());
+        track.set_audio_offset_until_start(-seconds_offset);
     }
 
     let start_pos_x = cursor.read_f64_le()?;
@@ -116,7 +119,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
     let line_count = cursor.read_u32_le()?;
 
-    let mut max_id = 0;
+    let mut ordered_standard_lines = Vec::new();
 
     for _ in 0..line_count {
         let mut line_id: u32 = 0;
@@ -132,17 +135,17 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         let flipped = (flags >> 7) != 0;
         let line_ext = (flags >> 5) & 0x3;
 
-        let mut line_multiplier = 1.0;
-        let mut line_scenery_width = 1.0;
+        let mut multiplier = 1.0;
+        let mut width = 1.0;
 
         if line_type == LineType::Acceleration && included_features.contains(FEATURE_RED_MULTIPLIER)
         {
-            line_multiplier = f64::from(cursor.read_u8()?);
+            multiplier = f64::from(cursor.read_u8()?);
         }
 
         if line_type == LineType::Scenery {
             if included_features.contains(FEATURE_SCENERY_WIDTH) {
-                line_scenery_width = from_lra_scenery_width(cursor.read_u8()?);
+                width = from_lra_scenery_width(cursor.read_u8()?);
             }
         } else {
             if included_features.contains(FEATURE_IGNORABLE_TRIGGER) {
@@ -150,16 +153,15 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 if has_zoom_trigger == 1 {
                     let target_zoom = from_lra_zoom(cursor.read_f32_le()?);
                     let length = u32::try_from(cursor.read_i16_le()?)?;
-                    let zoom_event = CameraZoomEvent::new(target_zoom);
-                    let line_hit = LineHitTrigger::new(line_id, length);
-                    track_builder
-                        .legacy_camera_zoom_group()
-                        .add_trigger(zoom_event, line_hit);
+                    // let zoom_event = CameraZoomEvent::new(target_zoom);
+                    // let line_hit = LineHitTrigger::new(line_id, length);
+                    // track_builder
+                    //     .legacy_camera_zoom_group()
+                    //     .add_trigger(zoom_event, line_hit);
                 }
             }
 
             line_id = cursor.read_u32_le()?;
-            max_id = max_id.max(line_id);
 
             if line_ext != 0 {
                 _ = cursor.read_i32_le()?; // Prev line id or -1
@@ -171,42 +173,42 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         let line_y1 = cursor.read_f64_le()?;
         let line_x2 = cursor.read_f64_le()?;
         let line_y2 = cursor.read_f64_le()?;
-        let endpoints = (
-            Vector2Df::new(line_x1, line_y1),
-            Vector2Df::new(line_x2, line_y2),
-        );
+        let endpoints = Line::new(Point::new(line_x1, line_y1), Point::new(line_x2, line_y2));
         let left_extension = line_ext & 0x1 != 0;
         let right_extension = line_ext & 0x2 != 0;
 
         match line_type {
             LineType::Standard => {
-                track_builder
-                    .line_group()
-                    .add_standard_line(line_id, endpoints)
-                    .flipped(flipped)
-                    .left_extension(left_extension)
-                    .right_extension(right_extension);
+                let mut line = StandardLine::new(endpoints);
+                line.set_flipped(flipped);
+                line.set_left_extension(left_extension);
+                line.set_right_extension(right_extension);
+                ordered_standard_lines.push((line_id, line));
             }
             LineType::Acceleration => {
-                track_builder
-                    .line_group()
-                    .add_acceleration_line(line_id, endpoints)
-                    .flipped(flipped)
-                    .left_extension(left_extension)
-                    .right_extension(right_extension)
-                    .multiplier(line_multiplier);
+                let mut line = StandardLine::new(endpoints);
+                line.set_flipped(flipped);
+                line.set_left_extension(left_extension);
+                line.set_right_extension(right_extension);
+                line.set_multiplier(multiplier);
+                ordered_standard_lines.push((line_id, line));
             }
             LineType::Scenery => {
-                track_builder
-                    .line_group()
-                    .add_scenery_line(endpoints)
-                    .width(line_scenery_width);
+                let mut line = SceneryLine::new(endpoints);
+                line.set_width(width);
+                track.scenery_lines_mut().push(line);
             }
         }
     }
 
+    ordered_standard_lines.sort_by_key(|t| t.0);
+
+    for (_id, line) in ordered_standard_lines {
+        track.standard_lines_mut().push(line);
+    }
+
     if included_features.contains(FEATURE_FRICTIONLESS) {
-        // ignore for now
+        // ignore
     }
 
     let remount_version = if included_features.contains(FEATURE_REMOUNT) {
@@ -221,19 +223,17 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         Vector2Df::new(0.4, 0.0)
     };
 
-    track_builder
-        .rider_group()
-        .add_rider(remount_version, 0)
-        .start_angle(0.0)
-        .start_position(start_position)
-        .start_velocity(start_velocity);
+    let mut rider = Rider::new(remount_version);
+    rider.set_start_offset(start_position);
+    rider.set_start_velocity(start_velocity);
+    track.riders_mut().push(rider);
 
     let current = cursor.stream_position()?;
     let end = cursor.seek(SeekFrom::End(0))?;
     cursor.seek(SeekFrom::Start(current))?;
 
     if current == end {
-        return Ok(track_builder.build());
+        return Ok(track);
     }
 
     // Metadata section
@@ -307,56 +307,56 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
                 start_line_color_blue = Some(u8::try_from(value.parse::<i32>()?)?);
             }
             FEATURE_TRIGGERS => {
-                for trigger in value.split('&').filter(|s| !s.is_empty()) {
-                    let values: Vec<&str> = trigger.split(':').filter(|s| !s.is_empty()).collect();
-
-                    if values.is_empty() {
-                        Err(TrkReadError::EmptyTriggerData)?
-                    }
-
-                    match values[0] {
-                        "0" => {
-                            // Zoom
-                            let target_zoom = from_lra_zoom(values[1].parse::<f32>()?);
-                            let start_frame = u32::try_from(values[2].parse::<i32>()?)?;
-                            let end_frame = u32::try_from(values[3].parse::<i32>()?)?;
-                            let zoom_event = CameraZoomEvent::new(target_zoom);
-                            let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                            track_builder
-                                .camera_zoom_group()
-                                .add_trigger(zoom_event, frame_bounds);
-                        }
-                        "1" => {
-                            // Background Color
-                            let red = u8::try_from(values[1].parse::<i32>()?)?;
-                            let green = u8::try_from(values[2].parse::<i32>()?)?;
-                            let blue = u8::try_from(values[3].parse::<i32>()?)?;
-                            let start_frame = u32::try_from(values[4].parse::<i32>()?)?;
-                            let end_frame = u32::try_from(values[5].parse::<i32>()?)?;
-                            let bg_color_event =
-                                BackgroundColorEvent::new(RGBColor::new(red, green, blue));
-                            let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                            track_builder
-                                .background_color_group()
-                                .add_trigger(bg_color_event, frame_bounds);
-                        }
-                        "2" => {
-                            // Line Color
-                            let red = u8::try_from(values[1].parse::<i32>()?)?;
-                            let green = u8::try_from(values[2].parse::<i32>()?)?;
-                            let blue = u8::try_from(values[3].parse::<i32>()?)?;
-                            let start_frame = u32::try_from(values[4].parse::<i32>()?)?;
-                            let end_frame = u32::try_from(values[5].parse::<i32>()?)?;
-                            let line_color_event =
-                                LineColorEvent::new(RGBColor::new(red, green, blue));
-                            let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                            track_builder
-                                .line_color_group()
-                                .add_trigger(line_color_event, frame_bounds);
-                        }
-                        other => Err(TrkReadError::UnsupportedTriggerType(other.to_string()))?,
-                    }
-                }
+                //                 for trigger in value.split('&').filter(|s| !s.is_empty()) {
+                //                     let values: Vec<&str> = trigger.split(':').filter(|s| !s.is_empty()).collect();
+                //
+                //                     if values.is_empty() {
+                //                         Err(TrkReadError::EmptyTriggerData)?
+                //                     }
+                //
+                //                     match values[0] {
+                //                         "0" => {
+                //                             // Zoom
+                //                             let target_zoom = from_lra_zoom(values[1].parse::<f32>()?);
+                //                             let start_frame = u32::try_from(values[2].parse::<i32>()?)?;
+                //                             let end_frame = u32::try_from(values[3].parse::<i32>()?)?;
+                //                             let zoom_event = CameraZoomEvent::new(target_zoom);
+                //                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                //                             track
+                //                                 .camera_zoom_group()
+                //                                 .add_trigger(zoom_event, frame_bounds);
+                //                         }
+                //                         "1" => {
+                //                             // Background Color
+                //                             let red = u8::try_from(values[1].parse::<i32>()?)?;
+                //                             let green = u8::try_from(values[2].parse::<i32>()?)?;
+                //                             let blue = u8::try_from(values[3].parse::<i32>()?)?;
+                //                             let start_frame = u32::try_from(values[4].parse::<i32>()?)?;
+                //                             let end_frame = u32::try_from(values[5].parse::<i32>()?)?;
+                //                             let bg_color_event =
+                //                                 BackgroundColorEvent::new(RGBColor::new(red, green, blue));
+                //                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                //                             track
+                //                                 .background_color_group()
+                //                                 .add_trigger(bg_color_event, frame_bounds);
+                //                         }
+                //                         "2" => {
+                //                             // Line Color
+                //                             let red = u8::try_from(values[1].parse::<i32>()?)?;
+                //                             let green = u8::try_from(values[2].parse::<i32>()?)?;
+                //                             let blue = u8::try_from(values[3].parse::<i32>()?)?;
+                //                             let start_frame = u32::try_from(values[4].parse::<i32>()?)?;
+                //                             let end_frame = u32::try_from(values[5].parse::<i32>()?)?;
+                //                             let line_color_event =
+                //                                 LineColorEvent::new(RGBColor::new(red, green, blue));
+                //                             let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                //                             track
+                //                                 .line_color_group()
+                //                                 .add_trigger(line_color_event, frame_bounds);
+                //                         }
+                //                         other => Err(TrkReadError::UnsupportedTriggerType(other.to_string()))?,
+                //                     }
+                //                }
             }
             _ => {}
         }
@@ -364,34 +364,32 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
     // Default values assigned because LRA:CE and LRO don't write on absent features (eg gravity Y gets written when gravity X may not be)
 
-    track_builder
-        .metadata()
-        .start_zoom(start_zoom.unwrap_or(from_lra_zoom(4.0)));
+    //     track
+    //         .metadata()
+    //         .start_zoom(start_zoom.unwrap_or(from_lra_zoom(4.0)));
+    //
+    //     track
+    //         .metadata()
+    //         .start_gravity(from_lra_gravity(Vector2Df::new(
+    //             start_gravity_x.unwrap_or(0.0),
+    //             start_gravity_y.unwrap_or(1.0),
+    //         )));
+    //
+    //     track.metadata().start_background_color(RGBColor::new(
+    //         start_bg_color_red.unwrap_or(244),
+    //         start_bg_color_green.unwrap_or(245),
+    //         start_bg_color_blue.unwrap_or(249),
+    //     ));
+    //
+    //     track.metadata().start_line_color(RGBColor::new(
+    //         start_line_color_red.unwrap_or(0),
+    //         start_line_color_green.unwrap_or(0),
+    //         start_line_color_blue.unwrap_or(0),
+    //     ));
 
-    track_builder
-        .metadata()
-        .start_gravity(from_lra_gravity(Vector2Df::new(
-            start_gravity_x.unwrap_or(0.0),
-            start_gravity_y.unwrap_or(1.0),
-        )));
+    for line in track.standard_lines_mut() {
+        line.set_height(gravity_well_size.unwrap_or(10.0));
+    }
 
-    track_builder
-        .metadata()
-        .gravity_well_size(gravity_well_size.unwrap_or(10.0));
-
-    track_builder
-        .metadata()
-        .start_background_color(RGBColor::new(
-            start_bg_color_red.unwrap_or(244),
-            start_bg_color_green.unwrap_or(245),
-            start_bg_color_blue.unwrap_or(249),
-        ));
-
-    track_builder.metadata().start_line_color(RGBColor::new(
-        start_line_color_red.unwrap_or(0),
-        start_line_color_green.unwrap_or(0),
-        start_line_color_blue.unwrap_or(0),
-    ));
-
-    Ok(track_builder.build())
+    Ok(track)
 }

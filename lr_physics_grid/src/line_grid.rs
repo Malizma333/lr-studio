@@ -1,6 +1,8 @@
-use crate::grid_cell::{CELL_SIZE, CellKey, GridCell};
+use crate::{
+    GridVersion,
+    grid_cell::{CELL_SIZE, CellKey, GridCell},
+};
 use geometry::{Line, Point};
-use lr_types::track::GridVersion;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use vector2d::Vector2Df;
 
@@ -273,11 +275,10 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Grid,
+        Grid, GridVersion,
         grid_cell::{CELL_SIZE, GridCell},
     };
     use geometry::{Line, Point};
-    use lr_types::track::GridVersion;
     use serde::Deserialize;
     use std::fs;
 

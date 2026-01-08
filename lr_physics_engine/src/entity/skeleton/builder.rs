@@ -6,10 +6,9 @@ use crate::entity::{
         EntityBoneTemplateId, EntityJointTemplateId, EntityPointTemplateId, EntityRegistry,
         EntitySkeletonTemplateId,
     },
-    skeleton::template::EntitySkeletonTemplate,
+    skeleton::{RemountVersion, template::EntitySkeletonTemplate},
 };
 use geometry::Point;
-use lr_types::track::RemountVersion;
 
 pub struct EntitySkeletonBuilder<'a> {
     registry: &'a mut EntityRegistry,

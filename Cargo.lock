@@ -149,7 +149,6 @@ dependencies = [
 name = "amf0"
 version = "0.1.0"
 dependencies = [
- "lr_types",
  "quick_byte",
  "vector2d",
 ]
@@ -1813,11 +1812,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "lr_format_core"
+version = "0.1.0"
+dependencies = [
+ "color",
+ "geometry",
+ "vector2d",
+]
+
+[[package]]
 name = "lr_format_json"
 version = "0.1.0"
 dependencies = [
  "color",
- "lr_types",
+ "geometry",
+ "lr_format_core",
  "pretty_assertions",
  "serde",
  "serde_json",
@@ -1829,7 +1838,8 @@ name = "lr_format_sol"
 version = "0.1.0"
 dependencies = [
  "amf0",
- "lr_types",
+ "geometry",
+ "lr_format_core",
  "pretty_assertions",
  "quick_byte",
  "vector2d",
@@ -1840,7 +1850,8 @@ name = "lr_format_trk"
 version = "0.1.0"
 dependencies = [
  "color",
- "lr_types",
+ "geometry",
+ "lr_format_core",
  "pretty_assertions",
  "quick_byte",
  "vector2d",
@@ -1852,10 +1863,10 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "geometry",
+ "lr_format_core",
  "lr_format_json",
  "lr_physics_grid",
  "lr_physics_line_store",
- "lr_types",
  "serde",
  "serde_json",
  "vector2d",
@@ -1867,7 +1878,6 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "geometry",
- "lr_types",
  "serde",
  "serde_json",
  "vector2d",
@@ -1879,7 +1889,6 @@ version = "0.1.0"
 dependencies = [
  "geometry",
  "lr_physics_grid",
- "lr_types",
  "vector2d",
 ]
 
@@ -1888,14 +1897,6 @@ name = "lr_studio"
 version = "0.1.0"
 dependencies = [
  "eframe",
-]
-
-[[package]]
-name = "lr_types"
-version = "0.1.0"
-dependencies = [
- "color",
- "vector2d",
 ]
 
 [[package]]

@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
     use geometry::{Line, Point};
-    use lr_types::track::GridVersion;
-    use lr_physics_grid::Grid;
+    use lr_physics_grid::{Grid, GridVersion};
 
     fn get_lines() -> Vec<Line> {
         let mut lines = Vec::new();

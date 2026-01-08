@@ -4,6 +4,5 @@ name = "amf0"
 version = "0.1.0"
 
 [dependencies]
-lr_types = {path = "../lr_types"}
 quick_byte = {path = "../quick_byte"}
 vector2d = {path = "../vector2d"}

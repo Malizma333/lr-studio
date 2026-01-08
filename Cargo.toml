@@ -2,7 +2,7 @@
 members = [
   "vector2d",
   "geometry",
-  "lr_types",
+  "lr_format_core",
   "lr_format_json",
   "lr_format_trk",
   "lr_format_sol",

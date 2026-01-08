@@ -1,6 +1,8 @@
-use crate::{Engine, entity::registry::EntitySkeletonTemplateId};
+use crate::{
+    Engine,
+    entity::{registry::EntitySkeletonTemplateId, skeleton::RemountVersion},
+};
 use geometry::Point;
-use lr_types::track::RemountVersion;
 
 // Known bug: Default riders of different remount versions are not able to
 // cross-remount with each other because they come from different templates,

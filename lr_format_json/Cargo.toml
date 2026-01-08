@@ -5,9 +5,10 @@ version = "0.1.0"
 
 [dependencies]
 color = {path = "../color"}
-lr_types = {path = "../lr_types"}
+lr_format_core = {path = "../lr_format_core"}
 serde = {version = "1", features = ["derive"]}
 # Float roundtrip ensures floats get serialized/deserialized with exact precision (however, 2x slower)
+geometry = {path = "../geometry"}
 serde_json = {version = "1", features = ["float_roundtrip"]}
 vector2d = {path = "../vector2d"}
 

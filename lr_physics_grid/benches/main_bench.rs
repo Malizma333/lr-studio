@@ -2,8 +2,7 @@ use criterion::{
     BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main, measurement::WallTime,
 };
 use geometry::{Line, Point};
-use lr_physics_grid::Grid;
-use lr_types::track::GridVersion;
+use lr_physics_grid::{Grid, GridVersion};
 use std::hint::black_box;
 
 struct GridBenchmark {

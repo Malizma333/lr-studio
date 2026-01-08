@@ -1,10 +1,7 @@
 use color::RGBColor;
-use lr_types::{
-    track::{
-        BackgroundColorEvent, CameraZoomEvent, FrameBoundsTrigger, GridVersion, LineColorEvent,
-        LineHitTrigger, LineType, RemountVersion, Track, TrackBuilder,
-    },
-    unit_conversion::from_lra_zoom,
+use geometry::{Line, Point};
+use lr_format_core::{
+    GridVersion, Layer, LayerFolder, RemountVersion, Rider, SceneryLine, StandardLine, Track,
 };
 use vector2d::Vector2Df;
 
@@ -21,23 +18,21 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         other => Err(JsonReadError::UnsupportedGridVersion(other.to_string()))?,
     };
 
-    let track_builder = &mut TrackBuilder::new(grid_version);
+    let mut track = Track::new(grid_version);
+
+    let mut ordered_standard_lines = Vec::new();
 
     if let Some(line_list) = json_track.lines {
         for line in line_list {
-            let line_type = match line.line_type {
-                0 => LineType::Standard,
-                1 => LineType::Acceleration,
-                2 => LineType::Scenery,
+            let is_standard_line = match line.line_type {
+                0 | 1 => true,
+                2 => false,
                 other => Err(JsonReadError::UnsupportedLineType(other.to_string()))?,
             };
 
-            let endpoints = (
-                Vector2Df::new(line.x1, line.y1),
-                Vector2Df::new(line.x2, line.y2),
-            );
+            let endpoints = Line::new(Point::new(line.x1, line.y1), Point::new(line.x2, line.y2));
 
-            let (left_extension, right_extension) = if line_type == LineType::Scenery {
+            let (left_extension, right_extension) = if !is_standard_line {
                 (false, false)
             } else if let Some(ext) = line.extended {
                 (ext & 1 != 0, ext & 2 != 0)
@@ -52,32 +47,37 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                 Some(flipped) => bool::from(flipped),
             };
 
-            match line_type {
-                LineType::Standard => {
-                    track_builder
-                        .line_group()
-                        .add_standard_line(line.id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension);
+            let multiplier = if line.line_type == 1 {
+                if let Some(multiplier) = line.multiplier {
+                    multiplier
+                } else {
+                    1.0
                 }
-                LineType::Acceleration => {
-                    let line_builder = track_builder
-                        .line_group()
-                        .add_acceleration_line(line.id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension);
-                    if let Some(multiplier) = line.multiplier {
-                        line_builder.multiplier(multiplier);
-                    }
+            } else {
+                0.0
+            };
+
+            let width = if line.line_type == 2 {
+                if let Some(width) = line.width {
+                    width
+                } else {
+                    1.0
                 }
-                LineType::Scenery => {
-                    let line_builder = track_builder.line_group().add_scenery_line(endpoints);
-                    if let Some(width) = line.width {
-                        line_builder.width(width);
-                    }
-                }
+            } else {
+                1.0
+            };
+
+            if is_standard_line {
+                let mut standard_line = StandardLine::new(endpoints);
+                standard_line.set_flipped(flipped);
+                standard_line.set_left_extension(left_extension);
+                standard_line.set_right_extension(right_extension);
+                standard_line.set_multiplier(multiplier);
+                ordered_standard_lines.push((line.id, standard_line));
+            } else {
+                let mut scenery_line = SceneryLine::new(endpoints);
+                scenery_line.set_width(width);
+                track.scenery_lines_mut().push(scenery_line);
             }
         }
     }
@@ -87,15 +87,14 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         for line in line_list {
             match line {
                 LRAJsonArrayLine::Standard(id, x1, y1, x2, y2, extended, flipped) => {
-                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
+                    let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
-                    track_builder
-                        .line_group()
-                        .add_standard_line(id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension);
+                    let mut standard_line = StandardLine::new(endpoints);
+                    standard_line.set_flipped(flipped);
+                    standard_line.set_left_extension(left_extension);
+                    standard_line.set_right_extension(right_extension);
+                    ordered_standard_lines.push((id, standard_line));
                 }
                 LRAJsonArrayLine::Acceleration(
                     id,
@@ -109,82 +108,84 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                     _,
                     multiplier,
                 ) => {
-                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
+                    let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
-                    track_builder
-                        .line_group()
-                        .add_acceleration_line(id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension)
-                        .multiplier(f64::from(multiplier));
+                    let mut standard_line = StandardLine::new(endpoints);
+                    standard_line.set_flipped(flipped);
+                    standard_line.set_left_extension(left_extension);
+                    standard_line.set_right_extension(right_extension);
+                    standard_line.set_multiplier(f64::from(multiplier));
+                    ordered_standard_lines.push((id, standard_line));
                 }
                 LRAJsonArrayLine::Scenery(_id, x1, y1, x2, y2) => {
-                    let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
-                    track_builder.line_group().add_scenery_line(endpoints);
+                    let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
+                    let scenery_line = SceneryLine::new(endpoints);
+                    track.scenery_lines_mut().push(scenery_line);
                 }
             }
         }
     }
 
+    ordered_standard_lines.sort_by_key(|t| t.0);
+
+    for (_id, line) in ordered_standard_lines {
+        track.standard_lines_mut().push(line);
+    }
+
     if let Some(layers) = json_track.layers {
-        for (index, layer) in layers.iter().enumerate() {
-            let layer_is_folder = layer.size.is_some();
+        for json_layer in layers {
+            let layer_is_folder = json_layer.size.is_some();
 
             if !layer_is_folder {
-                let (layer_color, layer_name) =
-                    if layer.name.len() < 7 || !layer.name.starts_with('#') {
-                        (None, layer.name.clone())
+                let (color, name) =
+                    if json_layer.name.len() < 7 || !json_layer.name.starts_with('#') {
+                        (None, json_layer.name.clone())
                     } else {
-                        let hex = &layer.name[..7];
+                        let hex = &json_layer.name[..7];
                         let r = u8::from_str_radix(&hex[1..3], 16).ok();
                         let g = u8::from_str_radix(&hex[3..5], 16).ok();
                         let b = u8::from_str_radix(&hex[5..7], 16).ok();
 
                         match (r, g, b) {
-                            (Some(r), Some(g), Some(b)) => {
-                                (Some(RGBColor::new(r, g, b)), layer.name[7..].to_string())
-                            }
-                            _ => (None, layer.name.clone()),
+                            (Some(r), Some(g), Some(b)) => (
+                                Some(RGBColor::new(r, g, b)),
+                                json_layer.name[7..].to_string(),
+                            ),
+                            _ => (None, json_layer.name.clone()),
                         }
                     };
 
-                let layer_builder = track_builder
-                    .layer_group()
-                    .add_layer(layer.id, index)
-                    .name(layer_name)
-                    .visible(layer.visible);
+                let mut layer = Layer::new(json_layer.id);
+                layer.set_name(name);
+                layer.set_visible(json_layer.visible);
 
-                if let Some(color) = layer_color {
-                    layer_builder.color(color);
+                if let Some(color) = color {
+                    layer.set_color(color);
                 }
 
-                if let Some(editable) = layer.editable {
-                    layer_builder.editable(editable);
+                if let Some(editable) = json_layer.editable {
+                    layer.set_editable(editable);
                 }
 
-                if let Some(folder_id) = &layer.folder_id {
+                if let Some(folder_id) = &json_layer.folder_id {
                     let folder_id = Option::<u32>::from(*folder_id);
                     if let Some(folder_id) = folder_id {
-                        layer_builder.folder_id(folder_id);
+                        layer.set_folder_id(folder_id);
                     }
-                    track_builder.layer_group().enable_layer_folders();
                 }
+
+                track.layers_mut().push(layer);
             } else {
-                let layer_folder_builder = track_builder
-                    .layer_group()
-                    .add_layer_folder(layer.id, index, 0)
-                    .name(layer.name.to_string())
-                    .visible(layer.visible);
+                let mut layer_folder = LayerFolder::new(json_layer.id);
+                layer_folder.set_name(json_layer.name.to_string());
+                layer_folder.set_visible(json_layer.visible);
 
-                if let Some(editable) = layer.editable {
-                    layer_folder_builder.editable(editable);
+                if let Some(editable) = json_layer.editable {
+                    layer_folder.set_editable(editable);
                 }
 
-                if let Some(size) = layer.size {
-                    layer_folder_builder.size(size);
-                }
+                track.layer_folders_mut().push(layer_folder);
             }
         }
     }
@@ -199,32 +200,27 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         .zero_start
         .is_some_and(|zero_start: bool| zero_start);
 
-    if let Some(riders) = json_track.riders {
-        for (index, rider) in riders.iter().enumerate() {
-            let start_position = Vector2Df::new(rider.start_pos.x, rider.start_pos.y);
-            let start_velocity = Vector2Df::new(rider.start_vel.x, rider.start_vel.y);
+    if let Some(json_rider) = json_track.riders {
+        for json_rider in json_rider {
+            let start_position = Vector2Df::new(json_rider.start_pos.x, json_rider.start_pos.y);
+            let start_velocity = Vector2Df::new(json_rider.start_vel.x, json_rider.start_vel.y);
 
-            let rider_builder = track_builder
-                .rider_group()
-                .add_rider(RemountVersion::None, index as u32)
-                .start_position(start_position + rider_global_offset)
-                .start_velocity(start_velocity);
+            let mut rider = Rider::new(RemountVersion::None);
+            rider.set_start_offset(start_position + rider_global_offset);
+            rider.set_start_velocity(start_velocity);
 
-            if let Some(angle) = rider.angle {
-                rider_builder.start_angle(angle);
-            }
-
-            if let Some(remount) = &rider.remountable {
+            if let Some(remount) = &json_rider.remountable {
                 let (remount_bool, remount_version) = match remount {
                     FaultyBool::BoolRep(x) => (*x, RemountVersion::ComV1),
                     FaultyBool::IntRep(x) => (*x != 0, RemountVersion::ComV2),
                 };
                 if remount_bool {
-                    rider_builder.remount_version(remount_version);
+                    rider.set_remount_version(remount_version);
                 } else {
-                    rider_builder.remount_version(RemountVersion::None);
+                    rider.set_remount_version(RemountVersion::None);
                 }
             }
+            track.riders_mut().push(rider);
         }
     } else {
         let start_velocity = if zero_start {
@@ -232,147 +228,143 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         } else {
             Vector2Df::new(0.4, 0.0)
         };
-        track_builder
-            .rider_group()
-            .add_rider(RemountVersion::LRA, 0)
-            .start_angle(0.0)
-            .start_position(rider_global_offset)
-            .start_velocity(start_velocity);
+        let mut rider = Rider::new(RemountVersion::LRA);
+        rider.set_start_offset(rider_global_offset);
+        rider.set_start_velocity(start_velocity);
+        track.riders_mut().push(rider);
     }
 
     if let Some(label) = json_track.label {
-        track_builder.metadata().title(label);
+        track.set_title(label);
     }
 
     if let Some(creator) = json_track.creator {
-        track_builder.metadata().artist(creator);
+        track.set_artist(creator);
     }
 
     if let Some(description) = json_track.description {
-        track_builder.metadata().description(description);
+        track.set_description(description);
     }
 
     if let Some(duration) = json_track.duration {
-        track_builder.metadata().duration(duration);
+        track.set_duration(duration);
     }
 
     if let Some(gravity_well_size) = json_track.gravity_well_size {
-        track_builder
-            .metadata()
-            .gravity_well_size(gravity_well_size);
-    }
-
-    if let Some(x_gravity) = json_track.x_gravity
-        && let Some(y_gravity) = json_track.y_gravity
-    {
-        track_builder
-            .metadata()
-            .start_gravity(Vector2Df::new(f64::from(x_gravity), f64::from(y_gravity)));
-    }
-
-    if let Some(start_zoom) = json_track.start_zoom {
-        track_builder
-            .metadata()
-            .start_zoom(from_lra_zoom(start_zoom));
-    }
-
-    if let Some(init_red) = json_track.line_color_red
-        && let Some(init_green) = json_track.line_color_green
-        && let Some(init_blue) = json_track.line_color_blue
-    {
-        track_builder.metadata().start_line_color(RGBColor::new(
-            u8::try_from(init_red)?,
-            u8::try_from(init_green)?,
-            u8::try_from(init_blue)?,
-        ));
-    }
-
-    if let Some(init_red) = json_track.background_color_red
-        && let Some(init_green) = json_track.background_color_green
-        && let Some(init_blue) = json_track.background_color_blue
-    {
-        track_builder
-            .metadata()
-            .start_background_color(RGBColor::new(
-                u8::try_from(init_red)?,
-                u8::try_from(init_green)?,
-                u8::try_from(init_blue)?,
-            ));
-    }
-
-    if let Some(line_triggers) = json_track.line_based_triggers {
-        for trigger in line_triggers {
-            if trigger.zoom {
-                let line_hit = LineHitTrigger::new(trigger.id, trigger.frames);
-                let zoom_event = CameraZoomEvent::new(from_lra_zoom(trigger.target));
-                track_builder
-                    .legacy_camera_zoom_group()
-                    .add_trigger(zoom_event, line_hit);
-            }
+        for line in track.standard_lines_mut() {
+            line.set_height(gravity_well_size);
         }
     }
 
-    if let Some(time_triggers) = json_track.time_based_triggers {
-        for trigger in time_triggers {
-            // Closure just avoids moving the value
-            let err = || JsonReadError::InvalidTriggerFormat(format!("{:?}", trigger));
-            match trigger.trigger_type {
-                0 => {
-                    // Zoom
-                    let target_zoom = from_lra_zoom(trigger.zoom_target);
-                    let start_frame = trigger.start;
-                    let end_frame = trigger.end;
-                    let zoom_event = CameraZoomEvent::new(target_zoom);
-                    let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                    track_builder
-                        .camera_zoom_group()
-                        .add_trigger(zoom_event, frame_bounds);
-                }
-                1 => {
-                    // Background Color
-                    let red = u8::try_from(
-                        Option::<u32>::from(trigger.background_red.ok_or_else(err)?)
-                            .ok_or_else(err)?,
-                    )?;
-                    let green = u8::try_from(
-                        Option::<u32>::from(trigger.background_green.ok_or_else(err)?)
-                            .ok_or_else(err)?,
-                    )?;
-                    let blue = u8::try_from(
-                        Option::<u32>::from(trigger.background_blue.ok_or_else(err)?)
-                            .ok_or_else(err)?,
-                    )?;
-                    let start_frame = trigger.start;
-                    let end_frame = trigger.end;
-                    let bg_color_event = BackgroundColorEvent::new(RGBColor::new(red, green, blue));
-                    let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                    track_builder
-                        .background_color_group()
-                        .add_trigger(bg_color_event, frame_bounds);
-                }
-                2 => {
-                    // Line Color
-                    let red = u8::try_from(
-                        Option::<u32>::from(trigger.line_red.ok_or_else(err)?).ok_or_else(err)?,
-                    )?;
-                    let green = u8::try_from(
-                        Option::<u32>::from(trigger.line_green.ok_or_else(err)?).ok_or_else(err)?,
-                    )?;
-                    let blue = u8::try_from(
-                        Option::<u32>::from(trigger.line_blue.ok_or_else(err)?).ok_or_else(err)?,
-                    )?;
-                    let start_frame = trigger.start;
-                    let end_frame = trigger.end;
-                    let line_color_event = LineColorEvent::new(RGBColor::new(red, green, blue));
-                    let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
-                    track_builder
-                        .line_color_group()
-                        .add_trigger(line_color_event, frame_bounds);
-                }
-                other => Err(JsonReadError::UnsupportedTriggerType(other.to_string()))?,
-            }
-        }
-    }
+    /*
+       if let Some(x_gravity) = json_track.x_gravity
+           && let Some(y_gravity) = json_track.y_gravity
+       {
+           track
+               .metadata()
+               .start_gravity(Vector2Df::new(f64::from(x_gravity), f64::from(y_gravity)));
+       }
 
-    Ok(track_builder.build())
+       if let Some(start_zoom) = json_track.start_zoom {
+           track.metadata().start_zoom(from_lra_zoom(start_zoom));
+       }
+
+       if let Some(init_red) = json_track.line_color_red
+           && let Some(init_green) = json_track.line_color_green
+           && let Some(init_blue) = json_track.line_color_blue
+       {
+           track.metadata().start_line_color(RGBColor::new(
+               u8::try_from(init_red)?,
+               u8::try_from(init_green)?,
+               u8::try_from(init_blue)?,
+           ));
+       }
+
+       if let Some(init_red) = json_track.background_color_red
+           && let Some(init_green) = json_track.background_color_green
+           && let Some(init_blue) = json_track.background_color_blue
+       {
+           track.metadata().start_background_color(RGBColor::new(
+               u8::try_from(init_red)?,
+               u8::try_from(init_green)?,
+               u8::try_from(init_blue)?,
+           ));
+       }
+
+       if let Some(line_triggers) = json_track.line_based_triggers {
+           for trigger in line_triggers {
+               if trigger.zoom {
+                   let line_hit = LineHitTrigger::new(trigger.id, trigger.frames);
+                   let zoom_event = CameraZoomEvent::new(from_lra_zoom(trigger.target));
+                   track
+                       .legacy_camera_zoom_group()
+                       .add_trigger(zoom_event, line_hit);
+               }
+           }
+       }
+
+       if let Some(time_triggers) = json_track.time_based_triggers {
+           for trigger in time_triggers {
+               // Closure just avoids moving the value
+               let err = || JsonReadError::InvalidTriggerFormat(format!("{:?}", trigger));
+               match trigger.trigger_type {
+                   0 => {
+                       // Zoom
+                       let target_zoom = from_lra_zoom(trigger.zoom_target);
+                       let start_frame = trigger.start;
+                       let end_frame = trigger.end;
+                       let zoom_event = CameraZoomEvent::new(target_zoom);
+                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                       track
+                           .camera_zoom_group()
+                           .add_trigger(zoom_event, frame_bounds);
+                   }
+                   1 => {
+                       // Background Color
+                       let red = u8::try_from(
+                           Option::<u32>::from(trigger.background_red.ok_or_else(err)?)
+                               .ok_or_else(err)?,
+                       )?;
+                       let green = u8::try_from(
+                           Option::<u32>::from(trigger.background_green.ok_or_else(err)?)
+                               .ok_or_else(err)?,
+                       )?;
+                       let blue = u8::try_from(
+                           Option::<u32>::from(trigger.background_blue.ok_or_else(err)?)
+                               .ok_or_else(err)?,
+                       )?;
+                       let start_frame = trigger.start;
+                       let end_frame = trigger.end;
+                       let bg_color_event = BackgroundColorEvent::new(RGBColor::new(red, green, blue));
+                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                       track
+                           .background_color_group()
+                           .add_trigger(bg_color_event, frame_bounds);
+                   }
+                   2 => {
+                       // Line Color
+                       let red = u8::try_from(
+                           Option::<u32>::from(trigger.line_red.ok_or_else(err)?).ok_or_else(err)?,
+                       )?;
+                       let green = u8::try_from(
+                           Option::<u32>::from(trigger.line_green.ok_or_else(err)?).ok_or_else(err)?,
+                       )?;
+                       let blue = u8::try_from(
+                           Option::<u32>::from(trigger.line_blue.ok_or_else(err)?).ok_or_else(err)?,
+                       )?;
+                       let start_frame = trigger.start;
+                       let end_frame = trigger.end;
+                       let line_color_event = LineColorEvent::new(RGBColor::new(red, green, blue));
+                       let frame_bounds = FrameBoundsTrigger::new(start_frame, end_frame);
+                       track
+                           .line_color_group()
+                           .add_trigger(line_color_event, frame_bounds);
+                   }
+                   other => Err(JsonReadError::UnsupportedTriggerType(other.to_string()))?,
+               }
+           }
+       }
+    */
+
+    Ok(track)
 }

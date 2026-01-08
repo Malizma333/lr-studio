@@ -1,6 +1,7 @@
 use crate::SolReadError;
 use amf0::deserialize;
-use lr_types::track::{GridVersion, LineType, RemountVersion, Track, TrackBuilder};
+use geometry::{Line, Point};
+use lr_format_core::{GridVersion, RemountVersion, Rider, SceneryLine, StandardLine, Track};
 use quick_byte::QuickRead;
 use std::io::{Cursor, Read, Seek};
 use vector2d::Vector2Df;
@@ -17,7 +18,7 @@ pub fn get_track_count(data: &[u8]) -> u32 {
 }
 
 pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError> {
-    let track_builder = &mut TrackBuilder::new(GridVersion::V6_2);
+    let mut track = Track::new(GridVersion::V6_0);
     let data_size = u64::try_from(data.len())?;
     let mut bytes = Cursor::new(data);
 
@@ -113,7 +114,7 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
             .clone()
             .get_string()
             .ok_or(SolReadError::InvalidLabel(format!("{:?}", val)))?;
-        track_builder.metadata().title(title);
+        track.set_title(title);
     }
 
     if let Some(val) = target_track.get("version") {
@@ -128,9 +129,9 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
             "6.2" => GridVersion::V6_2,
             other => Err(SolReadError::UnsupportedGridVersion(other.to_string()))?,
         };
-        track_builder.metadata().grid_version(grid_version);
+        track.set_grid_version(grid_version);
     } else {
-        track_builder.metadata().grid_version(GridVersion::V6_0);
+        track.set_grid_version(GridVersion::V6_0);
     }
 
     let start_position = if let Some(val) = target_track.get("startLine") {
@@ -180,18 +181,18 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
         Vector2Df::new(0.4, 0.0)
     };
 
-    track_builder
-        .rider_group()
-        .add_rider(RemountVersion::None, 0)
-        .start_angle(0.0)
-        .start_position(start_position)
-        .start_velocity(start_velocity);
+    let mut rider = Rider::new(RemountVersion::None);
+    rider.set_start_offset(start_position);
+    rider.set_start_velocity(start_velocity);
+    track.riders_mut().push(rider);
 
     if let Some(val) = target_track.get("data") {
         let lines_list = val
             .clone()
             .get_object_properties()
             .ok_or(SolReadError::InvalidLinesList(format!("{:?}", val)))?;
+
+        let mut ordered_standard_lines = Vec::new();
 
         for line_amf in lines_list.values() {
             let line = line_amf
@@ -284,38 +285,35 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
                 .get_number()
                 .ok_or(SolReadError::InvalidLine(format!("{:?}", line_amf)))?;
 
-            let line_type = match line_type_numeric {
-                0.0 => LineType::Standard,
-                1.0 => LineType::Acceleration,
-                2.0 => LineType::Scenery,
+            let is_standard = match line_type_numeric {
+                0.0 | 1.0 => true,
+                2.0 => false,
                 other => Err(SolReadError::UnsupportedLineType(other.to_string()))?,
             };
 
-            let endpoints = (Vector2Df::new(x1, y1), Vector2Df::new(x2, y2));
+            let multiplier = if line_type_numeric == 1.0 { 1.0 } else { 0.0 };
 
-            match line_type {
-                LineType::Standard => {
-                    track_builder
-                        .line_group()
-                        .add_standard_line(id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension);
-                }
-                LineType::Acceleration => {
-                    track_builder
-                        .line_group()
-                        .add_acceleration_line(id, endpoints)
-                        .flipped(flipped)
-                        .left_extension(left_extension)
-                        .right_extension(right_extension);
-                }
-                LineType::Scenery => {
-                    track_builder.line_group().add_scenery_line(endpoints);
-                }
+            let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
+
+            if is_standard {
+                let mut standard_line = StandardLine::new(endpoints);
+                standard_line.set_flipped(flipped);
+                standard_line.set_left_extension(left_extension);
+                standard_line.set_right_extension(right_extension);
+                standard_line.set_multiplier(multiplier);
+                ordered_standard_lines.push((id, standard_line));
+            } else {
+                let scenery_line = SceneryLine::new(endpoints);
+                track.scenery_lines_mut().push(scenery_line);
             }
+        }
+
+        ordered_standard_lines.sort_by_key(|t| t.0);
+
+        for (_id, line) in ordered_standard_lines {
+            track.standard_lines_mut().push(line);
         }
     }
 
-    Ok(track_builder.build())
+    Ok(track)
 }

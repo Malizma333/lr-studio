@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use geometry::{Line, Point};
-use lr_physics_grid::{Grid, GridLineId};
-use lr_types::track::GridVersion;
+use lr_physics_grid::{Grid, GridLineId, GridVersion};
 
 use crate::PhysicsLine;
 

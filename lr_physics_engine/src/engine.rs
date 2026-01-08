@@ -1,19 +1,19 @@
 use crate::{
-    InitialProperties, MountPhase, build_default_rider,
+    InitialProperties, MountPhase,
     engine::state::EngineState,
     entity::{
         joint::entity::EntityJoint,
         point::state::EntityPointState,
         registry::{EntityRegistry, EntitySkeletonId, EntitySkeletonTemplateId},
         skeleton::{
-            builder::EntitySkeletonBuilder, entity::EntitySkeleton, state::EntitySkeletonState,
+            RemountVersion, builder::EntitySkeletonBuilder, entity::EntitySkeleton,
+            state::EntitySkeletonState,
         },
     },
 };
-use geometry::{Line, Point};
-use lr_physics_grid::GridLineId;
+use geometry::Line;
+use lr_physics_grid::{GridLineId, GridVersion};
 use lr_physics_line_store::{LineStore, PhysicsLine};
-use lr_types::track::{GridVersion, RemountVersion, Track};
 use vector2d::Vector2Df;
 mod moment;
 mod state;
@@ -53,87 +53,6 @@ impl Engine {
     /// Changes the engine's grid version and reregisters all physics lines
     pub fn set_grid_version(&mut self, grid_version: GridVersion) {
         self.line_store.update_grid_version(grid_version);
-    }
-
-    /// Creates a physics engine from track data
-    pub fn from_track(track: &Track, lra: bool) -> Self {
-        let grid_version = track.metadata().grid_version();
-        let mut engine = Engine::new(grid_version);
-        let mut ordered_lines: Vec<(u32, PhysicsLine)> = Vec::new();
-
-        for line in track.line_group().acceleration_lines() {
-            let p0 = Point::new(line.x1(), line.y1());
-            let p1 = Point::new(line.x2(), line.y2());
-            let mut physics_line = PhysicsLine::new(
-                Line::new(p0, p1),
-                line.flipped(),
-                line.left_extension(),
-                line.right_extension(),
-            );
-            physics_line.set_accel_multiplier(line.multiplier().unwrap_or(1.0));
-
-            ordered_lines.push((line.id(), physics_line));
-        }
-
-        for line in track.line_group().standard_lines() {
-            let p0 = Point::new(line.x1(), line.y1());
-            let p1 = Point::new(line.x2(), line.y2());
-            let physics_line = PhysicsLine::new(
-                Line::new(p0, p1),
-                line.flipped(),
-                line.left_extension(),
-                line.right_extension(),
-            );
-
-            ordered_lines.push((line.id(), physics_line));
-        }
-
-        ordered_lines.sort_by_key(|(key, _)| *key);
-
-        for line in ordered_lines {
-            engine.add_line(line.1);
-        }
-
-        let template_none = build_default_rider(&mut engine, RemountVersion::None);
-        let template_comv1 = build_default_rider(&mut engine, RemountVersion::ComV1);
-        let template_comv2 = build_default_rider(&mut engine, RemountVersion::ComV2);
-        let template_lra = build_default_rider(&mut engine, RemountVersion::LRA);
-
-        if let Some(rider_group) = track.rider_group() {
-            for rider in rider_group.riders() {
-                let mut initial_properties = InitialProperties::new();
-                let target_skeleton_template_id = if lra {
-                    template_lra
-                } else {
-                    match rider.remount_version() {
-                        RemountVersion::None => template_none,
-                        RemountVersion::ComV1 => template_comv1,
-                        RemountVersion::ComV2 => template_comv2,
-                        RemountVersion::LRA => template_lra,
-                    }
-                };
-                let id = engine.add_skeleton(target_skeleton_template_id);
-                if let Some(initial_position) = rider.start_position() {
-                    initial_properties.set_start_offset(initial_position);
-                }
-                if let Some(initial_velocity) = rider.start_velocity() {
-                    initial_properties.set_start_velocity(initial_velocity);
-                }
-                engine.set_skeleton_initial_properties(id, initial_properties);
-            }
-        } else {
-            let mut initial_properties = InitialProperties::new();
-            let id = engine.add_skeleton(template_none);
-            initial_properties.set_start_velocity(Vector2Df::new(0.4, 0.0));
-            engine.set_skeleton_initial_properties(id, initial_properties);
-        }
-
-        engine
-    }
-
-    // TODO make this private/only for tests
-    pub fn clear_frame_cache(&mut self) {
-        self.state_snapshots.truncate(0);
     }
 
     /// View the skeletons of a specific frame by simulating up to that frame
@@ -811,5 +730,86 @@ impl Engine {
         }
 
         true
+    }
+
+    // TODO make these private/only for tests
+
+    pub fn clear_frame_cache(&mut self) {
+        self.state_snapshots.truncate(0);
+    }
+
+    pub fn from_track(track: &Track, lra: bool) -> Self {
+        let grid_version = track.metadata().grid_version();
+        let mut engine = Engine::new(grid_version);
+        let mut ordered_lines: Vec<(u32, PhysicsLine)> = Vec::new();
+
+        for line in track.line_group().acceleration_lines() {
+            let p0 = Point::new(line.x0(), line.y0());
+            let p1 = Point::new(line.x1(), line.y1());
+            let mut physics_line = PhysicsLine::new(
+                Line::new(p0, p1),
+                line.flipped(),
+                line.left_extension(),
+                line.right_extension(),
+            );
+            physics_line.set_accel_multiplier(line.multiplier().unwrap_or(1.0));
+
+            ordered_lines.push((line.id(), physics_line));
+        }
+
+        for line in track.line_group().standard_lines() {
+            let p0 = Point::new(line.x0(), line.y0());
+            let p1 = Point::new(line.x2(), line.y2());
+            let physics_line = PhysicsLine::new(
+                Line::new(p0, p1),
+                line.flipped(),
+                line.left_extension(),
+                line.right_extension(),
+            );
+
+            ordered_lines.push((line.id(), physics_line));
+        }
+
+        ordered_lines.sort_by_key(|(key, _)| *key);
+
+        for line in ordered_lines {
+            engine.add_line(line.1);
+        }
+
+        let template_none = build_default_rider(&mut engine, RemountVersion::None);
+        let template_comv1 = build_default_rider(&mut engine, RemountVersion::ComV1);
+        let template_comv2 = build_default_rider(&mut engine, RemountVersion::ComV2);
+        let template_lra = build_default_rider(&mut engine, RemountVersion::LRA);
+
+        if let Some(rider_group) = track.riders() {
+            for rider in rider_group.riders() {
+                let mut initial_properties = InitialProperties::new();
+                let target_skeleton_template_id = if lra {
+                    template_lra
+                } else {
+                    match rider.remount_version() {
+                        RemountVersion::None => template_none,
+                        RemountVersion::ComV1 => template_comv1,
+                        RemountVersion::ComV2 => template_comv2,
+                        RemountVersion::LRA => template_lra,
+                    }
+                };
+                let id = engine.add_skeleton(target_skeleton_template_id);
+                if let Some(initial_position) = rider.start_offset() {
+                    initial_properties.set_start_offset(initial_position);
+                }
+                if let Some(initial_velocity) = rider.start_velocity() {
+                    initial_properties.set_start_velocity(initial_velocity);
+                }
+                engine.set_skeleton_initial_properties(id, initial_properties);
+            }
+        } else {
+            let mut initial_properties = InitialProperties::new();
+            let id = engine.add_skeleton(template_none);
+            initial_properties.set_start_velocity(Vector2Df::new(0.4, 0.0));
+            engine.set_skeleton_initial_properties(id, initial_properties);
+        }
+
+        engine
     }
 }

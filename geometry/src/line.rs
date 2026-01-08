@@ -27,8 +27,16 @@ impl Line {
         self.0
     }
 
+    pub fn p0_mut(&mut self) -> &mut Point {
+        &mut self.0
+    }
+
     pub fn p1(&self) -> Point {
         self.1
+    }
+
+    pub fn p1_mut(&mut self) -> &mut Point {
+        &mut self.1
     }
 
     pub fn get_vector(&self) -> Vector2Df {

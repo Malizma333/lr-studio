@@ -1,7 +1,7 @@
-use crate::entity::registry::{
-    EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId,
+use crate::entity::{
+    registry::{EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId},
+    skeleton::RemountVersion,
 };
-use lr_types::track::RemountVersion;
 
 pub(crate) struct EntitySkeleton {
     pub(super) points: Vec<EntityPointId>,

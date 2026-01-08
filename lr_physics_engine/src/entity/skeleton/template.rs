@@ -3,9 +3,8 @@ use crate::entity::{
         EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId, EntityPointId,
         EntityPointTemplateId, EntitySkeletonTemplateId,
     },
-    skeleton::entity::EntitySkeleton,
+    skeleton::{RemountVersion, entity::EntitySkeleton},
 };
-use lr_types::track::RemountVersion;
 use std::collections::HashMap;
 
 pub(crate) struct EntitySkeletonTemplate {

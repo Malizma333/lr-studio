@@ -1,0 +1,24 @@
+Notes:
+
+Should one instance of Engine be created during the entire program?
+- No, new engine will be created when loading a track or creating a new track, but will be modified otherwise
+
+Who should be responsible for storing mutable line data and passing it around when it updates?
+- physics lines should be owned by and accessed by the engine, with update methods
+- abstract "line" entities are handled by the application(?)
+  - maybe create a new library interface that works with the canvas overall?
+
+Where should physics types belong for reusability in other crates?
+- respective physics crates, with duplicate types in format for serialization only
+
+Where should builder structs go? Should builders be combined with the entities themselves (getters/setters?)
+- replace builders with getter/setters
+
+How should line triggers interact with frame triggers?
+- 
+
+When should there be defaults?
+- Defaults should be provided by the track being deserialized, unless they are necessary (?)
+
+How can layers be a cleaner type?
+- Enum first, then struct

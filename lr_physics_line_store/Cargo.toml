@@ -6,5 +6,4 @@ version = "0.1.0"
 [dependencies]
 geometry = {path = "../geometry"}
 lr_physics_grid = {path = "../lr_physics_grid"}
-lr_types = {path = "../lr_types"}
 vector2d = {path = "../vector2d"}
