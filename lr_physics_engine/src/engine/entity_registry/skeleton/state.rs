@@ -1,4 +1,4 @@
-use crate::MountPhase;
+use crate::engine::entity_registry::MountPhase;
 
 #[derive(Debug, Clone)]
 pub struct EntitySkeletonState {

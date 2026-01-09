@@ -1,6 +1,6 @@
 use geometry::Point;
 
-use crate::entity::point::entity::EntityPoint;
+use crate::engine::entity_registry::point::entity::EntityPoint;
 
 pub(crate) struct EntityPointTemplate {
     pub(super) initial_position: Point,

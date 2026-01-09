@@ -1,14 +1,16 @@
-use crate::entity::{
-    bone::{builder::EntityBoneBuilder, template::EntityBoneTemplate},
-    joint::{builder::EntityJointBuilder, template::EntityJointTemplate},
-    point::{builder::EntityPointBuilder, template::EntityPointTemplate},
-    registry::{
+use geometry::Point;
+
+use crate::{
+    RemountVersion,
+    engine::entity_registry::{
         EntityBoneTemplateId, EntityJointTemplateId, EntityPointTemplateId, EntityRegistry,
         EntitySkeletonTemplateId,
+        bone::{builder::EntityBoneBuilder, template::EntityBoneTemplate},
+        joint::{builder::EntityJointBuilder, template::EntityJointTemplate},
+        point::{builder::EntityPointBuilder, template::EntityPointTemplate},
+        skeleton::template::EntitySkeletonTemplate,
     },
-    skeleton::{RemountVersion, template::EntitySkeletonTemplate},
 };
-use geometry::Point;
 
 pub struct EntitySkeletonBuilder<'a> {
     registry: &'a mut EntityRegistry,

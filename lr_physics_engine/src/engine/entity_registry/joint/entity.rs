@@ -1,6 +1,6 @@
 use vector2d::Vector2Df;
 
-use crate::entity::registry::EntityBoneId;
+use crate::engine::entity_registry::EntityBoneId;
 
 pub(crate) struct EntityJoint {
     pub(super) bones: (EntityBoneId, EntityBoneId),

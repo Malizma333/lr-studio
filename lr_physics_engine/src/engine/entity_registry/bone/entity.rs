@@ -1,7 +1,7 @@
 use geometry::Point;
 use vector2d::Vector2Df;
 
-use crate::entity::{point::state::EntityPointState, registry::EntityPointId};
+use crate::engine::entity_registry::{EntityPointId, point::state::EntityPointState};
 
 pub(crate) struct EntityBone {
     pub(super) points: (EntityPointId, EntityPointId),

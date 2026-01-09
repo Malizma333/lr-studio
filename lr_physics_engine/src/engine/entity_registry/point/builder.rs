@@ -1,7 +1,7 @@
 use geometry::Point;
 
-use crate::entity::{
-    point::template::EntityPointTemplate, registry::EntityPointTemplateId,
+use crate::engine::entity_registry::{
+    EntityPointTemplateId, point::template::EntityPointTemplate,
     skeleton::builder::EntitySkeletonBuilder,
 };
 

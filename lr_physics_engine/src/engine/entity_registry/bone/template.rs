@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::entity::{
-    bone::entity::EntityBone,
-    registry::{EntityPointId, EntityPointTemplateId, EntityRegistry},
+use crate::engine::entity_registry::{
+    EntityPointId, EntityPointTemplateId, EntityRegistry, bone::entity::EntityBone,
 };
 
 pub(crate) struct EntityBoneTemplate {

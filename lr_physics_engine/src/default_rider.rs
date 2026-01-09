@@ -1,7 +1,4 @@
-use crate::{
-    Engine,
-    entity::{registry::EntitySkeletonTemplateId, skeleton::RemountVersion},
-};
+use crate::{Engine, RemountVersion, engine::entity_registry::EntitySkeletonTemplateId};
 use geometry::Point;
 
 // Known bug: Default riders of different remount versions are not able to

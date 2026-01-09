@@ -1,18 +1,17 @@
 use std::collections::BTreeMap;
 
-use crate::entity::{
-    point::state::EntityPointState,
-    registry::{EntityPointId, EntitySkeletonId},
+use crate::engine::entity_registry::{
+    EntityPointId, EntitySkeletonId, point::state::EntityPointState,
     skeleton::state::EntitySkeletonState,
 };
 
 #[derive(Debug, Clone)]
-pub(super) struct EngineState {
+pub(super) struct EntityState {
     point_states: BTreeMap<EntityPointId, EntityPointState>,
     skeleton_states: BTreeMap<EntitySkeletonId, EntitySkeletonState>,
 }
 
-impl EngineState {
+impl EntityState {
     pub(super) fn new() -> Self {
         Self {
             point_states: BTreeMap::new(),

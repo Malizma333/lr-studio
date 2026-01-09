@@ -1,57 +1,51 @@
+pub(crate) mod entity_registry;
+mod line_registry;
+mod moment;
+mod state;
+mod view;
+
+pub use entity_registry::{InitialProperties, MountPhase, RemountVersion};
+pub use moment::PhysicsMoment;
+pub use view::EngineView;
+
 use crate::{
-    InitialProperties, MountPhase, PhysicsLine, PhysicsLineBuilder, build_default_rider,
-    engine::state::EngineState,
-    entity::{
-        joint::entity::EntityJoint,
-        point::state::EntityPointState,
-        registry::{EntityRegistry, EntitySkeletonId, EntitySkeletonTemplateId},
-        skeleton::{
-            RemountVersion, builder::EntitySkeletonBuilder, entity::EntitySkeleton,
-            state::EntitySkeletonState,
+    PhysicsLine, PhysicsLineBuilder, build_default_rider,
+    engine::{
+        entity_registry::{
+            EntityRegistry, EntitySkeletonId, EntitySkeletonTemplateId,
+            joint::entity::EntityJoint,
+            point::state::EntityPointState,
+            skeleton::{
+                builder::EntitySkeletonBuilder, entity::EntitySkeleton, state::EntitySkeletonState,
+            },
         },
+        line_registry::{LineId, LineRegistry},
+        state::EntityState,
     },
-    line_store::{LineId, LineStore},
 };
 use lr_format_core::Track;
 use lr_physics_grid::GridVersion;
 use vector2d::Vector2Df;
-mod moment;
-mod state;
-mod view;
-pub use moment::PhysicsMoment;
-pub use view::EngineView;
 
 pub struct Engine {
-    line_store: LineStore,
-    registry: EntityRegistry,
-    // The initial state of the engine as a reference point
-    initial_state: EngineState,
-    // A list of cached state snapshots we can jump to
-    state_snapshots: Vec<EngineState>,
-}
-
-impl Default for Engine {
-    fn default() -> Self {
-        Self::new(GridVersion::V6_2)
-    }
+    line_registry: LineRegistry,
+    entity_registry: EntityRegistry,
+    // TODO combine into entity registry
+    initial_state: EntityState,
+    state_snapshots: Vec<EntityState>,
 }
 
 impl Engine {
     pub fn new(grid_version: GridVersion) -> Self {
         Engine {
-            line_store: LineStore::new(grid_version),
+            line_registry: LineRegistry::new(grid_version),
             // TODO adding or removing from the registry should modify state_snapshots and initial_state
             // Changing the initial state should clear the state snapshots
             // So the entity registry should be part of the initial state?
-            registry: EntityRegistry::new(),
+            entity_registry: EntityRegistry::new(),
+            initial_state: EntityState::new(),
             state_snapshots: Vec::new(),
-            initial_state: EngineState::new(),
         }
-    }
-
-    /// Changes the engine's grid version and reregisters all physics lines
-    pub fn set_grid_version(&mut self, grid_version: GridVersion) {
-        self.line_store.set_grid_version(grid_version);
     }
 
     /// Provides a view of entities during a specific frame by simulating up to that frame
@@ -62,58 +56,58 @@ impl Engine {
             .state_snapshots
             .get(index)
             .unwrap_or(&self.initial_state);
-        EngineView::new(&self.registry, state)
+        EngineView::new(&self.entity_registry, state)
     }
 
     /// Provides a view of entities during a specific moment by simulating up to that frame and moment
     pub fn view_moment(&mut self, frame: u32, moment: PhysicsMoment) -> EngineView {
         self.fill_snapshots_up_to_frame(frame);
         let index = (frame as usize).saturating_sub(1);
-        let target_frame_state = self
+        let frame_state = self
             .state_snapshots
             .get(index)
             .unwrap_or(&self.initial_state)
             .clone();
-        let state = self.get_next_state(target_frame_state, frame, Some(moment));
-        EngineView::new(&self.registry, &state)
+        let state = self.get_next_state(frame_state, frame, Some(moment));
+        EngineView::new(&self.entity_registry, &state)
+    }
+
+    /// Changes the engine's grid version and reregisters all physics lines
+    pub fn set_grid_version(&mut self, grid_version: GridVersion) {
+        self.line_registry.set_grid_version(grid_version);
+        self.invalidate_snapshots();
     }
 
     pub fn add_line(&mut self, line: PhysicsLine) -> LineId {
-        let id = self.line_store.add_line(line);
+        let id = self.line_registry.add_line(line);
         self.invalidate_snapshots();
         id
     }
 
     pub fn get_line(&self, id: LineId) -> Option<&PhysicsLine> {
-        self.line_store.get_line(id)
+        self.line_registry.get_line(id)
     }
 
     pub fn replace_line(&mut self, id: LineId, new_line: PhysicsLine) {
-        self.line_store.replace_line(id, new_line);
+        self.line_registry.replace_line(id, new_line);
         self.invalidate_snapshots();
     }
 
     pub fn remove_line(&mut self, id: LineId) {
-        self.line_store.remove_line(id);
+        self.line_registry.remove_line(id);
         self.invalidate_snapshots();
     }
 
-    fn invalidate_snapshots(&mut self) {
-        // the best way to do this is probably track grid cells affected each frame,
-        // then invalidate the first frame that was effected by a grid cell changing
-        self.state_snapshots.truncate(0);
-    }
-
     pub fn build_skeleton(&mut self) -> EntitySkeletonBuilder<'_> {
-        self.registry.skeleton_template_builder()
+        self.entity_registry.skeleton_template_builder()
     }
 
     pub fn add_skeleton(
         &mut self,
         skeleton_template_id: EntitySkeletonTemplateId,
     ) -> EntitySkeletonId {
-        let skeleton_id = self.registry.create_skeleton(skeleton_template_id);
-        let skeleton = self.registry.get_skeleton(skeleton_id);
+        let skeleton_id = self.entity_registry.create_skeleton(skeleton_template_id);
+        let skeleton = self.entity_registry.get_skeleton(skeleton_id);
 
         self.initial_state.skeletons_mut().insert(
             skeleton_id,
@@ -121,7 +115,7 @@ impl Engine {
         );
 
         for point_id in skeleton.points() {
-            let point = self.registry.get_point(*point_id);
+            let point = self.entity_registry.get_point(*point_id);
             let offset = point.initial_position();
             self.initial_state.points_mut().insert(
                 *point_id,
@@ -138,10 +132,10 @@ impl Engine {
         skeleton_id: EntitySkeletonId,
         initial_properties: InitialProperties,
     ) {
-        let skeleton = self.registry.get_skeleton(skeleton_id);
+        let skeleton = self.entity_registry.get_skeleton(skeleton_id);
 
         for point_id in skeleton.points() {
-            let point = self.registry.get_point(*point_id);
+            let point = self.entity_registry.get_point(*point_id);
             let local_offset = point.initial_position();
             let position = local_offset.translated_by(initial_properties.start_offset());
             let velocity = initial_properties.start_velocity();
@@ -160,7 +154,7 @@ impl Engine {
     }
 
     pub fn remove_skeleton(&mut self, skeleton_id: EntitySkeletonId) {
-        let skeleton = self.registry.get_skeleton(skeleton_id);
+        let skeleton = self.entity_registry.get_skeleton(skeleton_id);
 
         self.initial_state.skeletons_mut().remove(&skeleton_id);
 
@@ -168,9 +162,14 @@ impl Engine {
             self.initial_state.points_mut().remove(point_id);
         }
 
-        self.registry.delete_skeleton(skeleton_id);
+        self.entity_registry.delete_skeleton(skeleton_id);
 
         self.invalidate_snapshots();
+    }
+
+    fn invalidate_snapshots(&mut self) {
+        // this should be replaced on a per-invalidation basis (grid cells, per rider, per line)
+        self.state_snapshots.truncate(0);
     }
 
     fn fill_snapshots_up_to_frame(&mut self, target_frame: u32) {
@@ -188,26 +187,34 @@ impl Engine {
         }
     }
 
-    // The main loop of the physics engine
     fn get_next_state(
         &mut self,
-        mut current_state: EngineState,
+        mut current_state: EntityState,
         _frame: u32,
         _moment: Option<PhysicsMoment>,
-    ) -> EngineState {
+    ) -> EntityState {
         let mut dismount_flags = Vec::new();
 
-        // Physics step
-        for (skeleton_id, skeleton) in self.registry.skeletons() {
+        for (skeleton_id, skeleton) in self.entity_registry.skeletons() {
             let mut dismounted_this_frame = false;
 
-            // momentum
             for point_id in skeleton.points() {
-                let point = self.registry.get_point(*point_id);
-                let point_state = current_state.points_mut().get_mut(point_id).unwrap();
                 const GRAVITY_MULTIPLIER: f64 = 0.175;
                 let gravity = Vector2Df::down() * GRAVITY_MULTIPLIER;
-                point.process_initial_step(point_state, gravity.flip_vertical());
+
+                let point = self.entity_registry.get_point(*point_id);
+                let point_state = current_state.points_mut().get_mut(point_id).unwrap();
+                let computed_velocity = point_state
+                    .position()
+                    .vector_from(point_state.external_velocity());
+                let new_velocity =
+                    computed_velocity * (1.0 - point.air_friction()) + gravity.flip_vertical();
+                let new_position = point_state.position().translated_by(new_velocity);
+                point_state.update(
+                    Some(new_position),
+                    Some(new_velocity),
+                    Some(point_state.position()),
+                );
             }
 
             let initial_mount_phase = current_state
@@ -217,9 +224,8 @@ impl Engine {
                 .mount_phase();
 
             for _ in 0..6 {
-                // bones
                 for bone_id in skeleton.bones() {
-                    let bone = self.registry.get_bone(*bone_id);
+                    let bone = self.entity_registry.get_bone(*bone_id);
 
                     if !bone.is_flutter() {
                         let point_states = (
@@ -299,27 +305,27 @@ impl Engine {
                     }
                 }
 
-                // line collisions
                 for point_id in skeleton.points() {
-                    let point = self.registry.get_point(*point_id);
-                    let point_state = current_state.points_mut().get_mut(point_id).unwrap();
-                    for line in self.line_store.lines_near_point(point_state.position()) {
-                        if let Some((new_position, new_external_velocity)) =
-                            line.check_interaction(point, point_state)
-                        {
-                            point_state.update(
-                                Some(new_position),
-                                None,
-                                Some(new_external_velocity),
-                            );
+                    let point = self.entity_registry.get_point(*point_id);
+                    if point.can_collide() {
+                        let point_state = current_state.points_mut().get_mut(point_id).unwrap();
+                        for line in self.line_registry.lines_near_point(point_state.position()) {
+                            if let Some((new_position, new_external_velocity)) =
+                                line.check_interaction(point, point_state)
+                            {
+                                point_state.update(
+                                    Some(new_position),
+                                    None,
+                                    Some(new_external_velocity),
+                                );
+                            }
                         }
                     }
                 }
             }
 
-            // flutter bones
             for bone_id in skeleton.bones() {
-                let bone = self.registry.get_bone(*bone_id);
+                let bone = self.entity_registry.get_bone(*bone_id);
                 if bone.is_flutter() {
                     let point_states = (
                         current_state.points().get(&bone.points().0).unwrap(),
@@ -344,7 +350,6 @@ impl Engine {
                 }
             }
 
-            // check dismount
             let mount_phase = current_state
                 .skeletons()
                 .get(skeleton_id)
@@ -353,7 +358,7 @@ impl Engine {
 
             if mount_phase.mounted() || mount_phase.remounting() {
                 for joint_id in skeleton.joints() {
-                    let joint = self.registry.get_joint(*joint_id);
+                    let joint = self.entity_registry.get_joint(*joint_id);
                     if joint.is_mount()
                         && self.get_joint_should_break(joint, &current_state)
                         && !dismounted_this_frame
@@ -397,7 +402,6 @@ impl Engine {
                 }
             }
 
-            // check skeleton break (like sled break)
             let mount_phase = current_state
                 .skeletons()
                 .get(skeleton_id)
@@ -416,7 +420,7 @@ impl Engine {
 
             if mount_phase.mounted() || mount_phase.remounting() || sled_break_version {
                 for joint_id in skeleton.joints() {
-                    let joint = self.registry.get_joint(*joint_id);
+                    let joint = self.entity_registry.get_joint(*joint_id);
                     if !joint.is_mount()
                         && self.get_joint_should_break(joint, &current_state)
                         && sled_intact
@@ -435,8 +439,7 @@ impl Engine {
 
         let mut dismount_flag_index = 0;
 
-        // Remount step
-        for (skeleton_id, skeleton) in self.registry.skeletons() {
+        for (skeleton_id, skeleton) in self.entity_registry.skeletons() {
             let dismounted_this_frame = dismount_flags[dismount_flag_index];
             dismount_flag_index += 1;
 
@@ -591,10 +594,10 @@ impl Engine {
         current_state
     }
 
-    fn get_joint_should_break(&self, joint: &EntityJoint, current_state: &EngineState) -> bool {
+    fn get_joint_should_break(&self, joint: &EntityJoint, current_state: &EntityState) -> bool {
         let bones = (
-            self.registry.get_bone(joint.bones().0),
-            self.registry.get_bone(joint.bones().1),
+            self.entity_registry.get_bone(joint.bones().0),
+            self.entity_registry.get_bone(joint.bones().1),
         );
         let bone0_p0 = current_state.points().get(&bones.0.points().0).unwrap();
         let bone0_p1 = current_state.points().get(&bones.0.points().1).unwrap();
@@ -609,12 +612,12 @@ impl Engine {
 
     fn swap_skeleton_sleds(
         &self,
-        current_state: &mut EngineState,
+        current_state: &mut EntityState,
         target_skeleton_id: &EntitySkeletonId,
         other_skeleton_id: &EntitySkeletonId,
     ) {
-        let target_skeleton = self.registry.get_skeleton(*target_skeleton_id);
-        let other_skeleton = self.registry.get_skeleton(*other_skeleton_id);
+        let target_skeleton = self.entity_registry.get_skeleton(*target_skeleton_id);
+        let other_skeleton = self.entity_registry.get_skeleton(*other_skeleton_id);
 
         match target_skeleton.remount_version() {
             RemountVersion::ComV2 | RemountVersion::LRA => {
@@ -672,11 +675,11 @@ impl Engine {
 
     fn skeleton_can_swap_sleds(
         &self,
-        current_state: &mut EngineState,
+        current_state: &mut EntityState,
         target_skeleton_id: &EntitySkeletonId,
     ) -> bool {
-        let target_skeleton = self.registry.get_skeleton(*target_skeleton_id);
-        for (other_skeleton_id, skeleton) in self.registry.skeletons() {
+        let target_skeleton = self.entity_registry.get_skeleton(*target_skeleton_id);
+        for (other_skeleton_id, skeleton) in self.entity_registry.skeletons() {
             let skeleton_state = current_state.skeletons().get(other_skeleton_id).unwrap();
             if skeleton_state.sled_intact()
                 && skeleton_state.mount_phase().dismounted()
@@ -699,12 +702,12 @@ impl Engine {
 
     fn skeleton_can_enter_phase(
         &self,
-        current_state: &EngineState,
+        current_state: &EntityState,
         skeleton: &EntitySkeleton,
         target_phase_is_remounting: bool,
     ) -> bool {
         for bone_id in skeleton.bones() {
-            let bone = self.registry.get_bone(*bone_id);
+            let bone = self.entity_registry.get_bone(*bone_id);
             let point_states = (
                 current_state.points().get(&bone.points().0).unwrap(),
                 current_state.points().get(&bone.points().1).unwrap(),
@@ -718,14 +721,14 @@ impl Engine {
         match skeleton.remount_version() {
             RemountVersion::ComV1 | RemountVersion::ComV2 => {
                 for joint_id in skeleton.joints() {
-                    let joint = self.registry.get_joint(*joint_id);
+                    let joint = self.entity_registry.get_joint(*joint_id);
                     if !joint.is_mount() && self.get_joint_should_break(joint, &current_state) {
                         return false;
                     }
                 }
 
                 for joint_id in skeleton.joints() {
-                    let joint = self.registry.get_joint(*joint_id);
+                    let joint = self.entity_registry.get_joint(*joint_id);
                     if joint.is_mount() && self.get_joint_should_break(joint, &current_state) {
                         return false;
                     }

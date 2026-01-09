@@ -1,11 +1,12 @@
-use crate::entity::{
-    registry::{
-        EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId, EntityPointId,
-        EntityPointTemplateId, EntitySkeletonTemplateId,
-    },
-    skeleton::{RemountVersion, entity::EntitySkeleton},
-};
 use std::collections::HashMap;
+
+use crate::{
+    RemountVersion,
+    engine::entity_registry::{
+        EntityBoneId, EntityBoneTemplateId, EntityJointId, EntityJointTemplateId, EntityPointId,
+        EntityPointTemplateId, EntitySkeletonTemplateId, skeleton::entity::EntitySkeleton,
+    },
+};
 
 pub(crate) struct EntitySkeletonTemplate {
     pub(super) points: Vec<EntityPointTemplateId>,

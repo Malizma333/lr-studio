@@ -1,6 +1,7 @@
-use crate::entity::point::{entity::EntityPoint, state::EntityPointState};
 use geometry::{Line, Point};
 use vector2d::Vector2Df;
+
+use crate::engine::entity_registry::point::{entity::EntityPoint, state::EntityPointState};
 
 pub struct PhysicsLine {
     endpoints: Line,
@@ -48,10 +49,6 @@ impl PhysicsLine {
         point: &EntityPoint,
         point_state: &EntityPointState,
     ) -> Option<(Point, Point)> {
-        if !point.can_collide() {
-            return None;
-        }
-
         let offset_from_point = point_state.position().vector_from(self.endpoints.p0());
         let moving_into_line = Vector2Df::dot(self.normal_unit, point_state.velocity()) > 0.0;
         let distance_from_line_top = Vector2Df::dot(self.normal_unit, offset_from_point);

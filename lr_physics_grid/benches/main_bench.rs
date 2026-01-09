@@ -61,7 +61,7 @@ fn get_lines(flags: u8) -> Vec<Line> {
 
 fn bench_add_lines(group: &mut BenchmarkGroup<'_, WallTime>, lines: &[Line]) {
     for version in [GridVersion::V6_0, GridVersion::V6_1, GridVersion::V6_2] {
-        let id = BenchmarkId::from_parameter(version.to_string());
+        let id = BenchmarkId::from_parameter(format!("{:?}", version));
 
         group.bench_function(id, |b| {
             let mut index = 0;

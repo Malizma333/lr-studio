@@ -1,8 +1,7 @@
 use std::f64::INFINITY;
 
-use crate::entity::{
-    bone::template::EntityBoneTemplate,
-    registry::{EntityBoneTemplateId, EntityPointTemplateId},
+use crate::engine::entity_registry::{
+    EntityBoneTemplateId, EntityPointTemplateId, bone::template::EntityBoneTemplate,
     skeleton::builder::EntitySkeletonBuilder,
 };
 

@@ -1,6 +1,5 @@
-use crate::entity::{
-    joint::template::EntityJointTemplate,
-    registry::{EntityBoneTemplateId, EntityJointTemplateId},
+use crate::engine::entity_registry::{
+    EntityBoneTemplateId, EntityJointTemplateId, joint::template::EntityJointTemplate,
     skeleton::builder::EntitySkeletonBuilder,
 };
 

@@ -1,6 +1,8 @@
-use crate::entity::{
-    registry::{EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId},
-    skeleton::RemountVersion,
+use crate::{
+    RemountVersion,
+    engine::entity_registry::{
+        EntityBoneId, EntityJointId, EntityPointId, EntitySkeletonTemplateId,
+    },
 };
 
 pub(crate) struct EntitySkeleton {
@@ -15,15 +17,15 @@ pub(crate) struct EntitySkeleton {
 }
 
 impl EntitySkeleton {
-    pub(crate) fn points(&self) -> &[EntityPointId] {
+    pub(crate) fn points(&self) -> &Vec<EntityPointId> {
         &self.points
     }
 
-    pub(crate) fn bones(&self) -> &[EntityBoneId] {
+    pub(crate) fn bones(&self) -> &Vec<EntityBoneId> {
         &self.bones
     }
 
-    pub(crate) fn joints(&self) -> &[EntityJointId] {
+    pub(crate) fn joints(&self) -> &Vec<EntityJointId> {
         &self.joints
     }
 

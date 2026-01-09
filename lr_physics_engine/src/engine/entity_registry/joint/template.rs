@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::entity::{
-    joint::entity::EntityJoint,
-    registry::{EntityBoneId, EntityBoneTemplateId},
+use crate::engine::entity_registry::{
+    EntityBoneId, EntityBoneTemplateId, joint::entity::EntityJoint,
 };
 
 pub(crate) struct EntityJointTemplate {

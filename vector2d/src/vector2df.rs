@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::Vector2Di;
 
@@ -47,6 +47,14 @@ impl Div<f64> for Vector2Df {
         Vector2Df::new(self.x / rhs, self.y / rhs)
     }
 }
+
+// TODO update where necessary
+// impl Neg for Vector2Df {
+//     type Output = Vector2Df;
+//     fn neg(self) -> Self::Output {
+//         Vector2Df::new(-self.x, -self.y)
+//     }
+// }
 
 impl From<Vector2Di> for Vector2Df {
     fn from(v1: Vector2Di) -> Self {

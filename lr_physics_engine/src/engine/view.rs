@@ -1,7 +1,10 @@
 use geometry::Point;
 use vector2d::Vector2Df;
 
-use crate::{MountPhase, engine::EngineState, entity::registry::EntityRegistry};
+use crate::engine::{
+    EntityState,
+    entity_registry::{EntityRegistry, MountPhase},
+};
 
 pub struct SkeletonView {
     point_positions: Vec<Point>,
@@ -33,7 +36,7 @@ pub struct EngineView {
 }
 
 impl EngineView {
-    pub(super) fn new(registry: &EntityRegistry, state: &EngineState) -> Self {
+    pub(super) fn new(registry: &EntityRegistry, state: &EntityState) -> Self {
         let mut skeleton_views = Vec::new();
 
         let skeletons = registry.skeletons();
