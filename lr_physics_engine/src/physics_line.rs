@@ -63,32 +63,23 @@ impl PhysicsLine {
         {
             let new_position = point_state
                 .position()
-                .translated_by(-1.0 * self.normal_unit * distance_from_line_top);
+                .translated_by(-self.normal_unit * distance_from_line_top);
 
-            let friction_x_flipped = if point_state.external_velocity().x() >= new_position.x() {
-                -1.0
-            } else {
-                1.0
-            };
+            let mut friction_vector =
+                (self.normal_unit.rotated_cw() * point.contact_friction()) * distance_from_line_top;
 
-            let friction_y_flipped = if point_state.external_velocity().y() < new_position.y() {
-                -1.0
-            } else {
-                1.0
-            };
+            if point_state.external_velocity().x() >= new_position.x() {
+                friction_vector = friction_vector.flipped_horizontal()
+            }
 
-            let initial_friction_vector =
-                (self.normal_unit.rotate_cw() * point.contact_friction()) * distance_from_line_top;
-
-            let friction_vector = Vector2Df::new(
-                friction_x_flipped * initial_friction_vector.x(),
-                friction_y_flipped * initial_friction_vector.y(),
-            );
+            if point_state.external_velocity().y() < new_position.y() {
+                friction_vector = friction_vector.flipped_vertical();
+            }
 
             let new_external_velocity = point_state
                 .external_velocity()
                 .translated_by(friction_vector)
-                .translated_by(-1.0 * self.acceleration_vector);
+                .translated_by(-self.acceleration_vector);
 
             Some((new_position, new_external_velocity))
         } else {
@@ -156,9 +147,9 @@ impl PhysicsLineBuilder {
         let unit = vector * (1.0 / length);
 
         let normal_unit = if self.flipped {
-            unit.rotate_cw()
+            unit.rotated_cw()
         } else {
-            unit.rotate_ccw()
+            unit.rotated_ccw()
         };
 
         const MAX_EXTENSION_SIZE: f64 = 0.25;

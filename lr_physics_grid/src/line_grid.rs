@@ -216,7 +216,7 @@ impl Grid {
         let mut current_position_along_line = endpoints.p0();
         let mut current_cell = initial_cell;
         let line_vector = endpoints.get_vector();
-        let line_normal = line_vector.rotate_ccw() * (1.0 / line_vector.length());
+        let line_normal = line_vector.rotated_ccw() * (1.0 / line_vector.length());
 
         if matches!(self.version, GridVersion::V6_0) {
             let line_halfway = 0.5 * Vector2Df::new(line_vector.x().abs(), line_vector.y().abs());

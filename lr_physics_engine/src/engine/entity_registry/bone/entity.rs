@@ -53,7 +53,7 @@ impl EntityBone {
             point_states
                 .0
                 .position()
-                .translated_by(-1.0 * bone_vector * adjustment * (1.0 - self.bias)),
+                .translated_by(-bone_vector * adjustment * (1.0 - self.bias)),
             point_states
                 .1
                 .position()

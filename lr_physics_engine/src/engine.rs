@@ -146,7 +146,7 @@ impl Engine {
                 .update(
                     Some(position),
                     Some(velocity),
-                    Some(position.translated_by(-1.0 * velocity)),
+                    Some(position.translated_by(-velocity)),
                 );
         }
 
@@ -200,7 +200,7 @@ impl Engine {
 
             for point_id in skeleton.points() {
                 const GRAVITY_MULTIPLIER: f64 = 0.175;
-                let gravity = Vector2Df::down() * GRAVITY_MULTIPLIER;
+                let mut gravity = Vector2Df::down() * GRAVITY_MULTIPLIER;
 
                 let point = self.entity_registry.get_point(*point_id);
                 let point_state = current_state.points_mut().get_mut(point_id).unwrap();
@@ -208,7 +208,7 @@ impl Engine {
                     .position()
                     .vector_from(point_state.external_velocity());
                 let new_velocity =
-                    computed_velocity * (1.0 - point.air_friction()) + gravity.flip_vertical();
+                    computed_velocity * (1.0 - point.air_friction()) + gravity.flipped_vertical();
                 let new_position = point_state.position().translated_by(new_velocity);
                 point_state.update(
                     Some(new_position),
