@@ -1,7 +1,10 @@
 use crate::SolReadError;
 use amf0::deserialize;
 use geometry::{Line, Point};
-use lr_format_core::{GridVersion, RemountVersion, Rider, SceneryLine, StandardLine, Track};
+use lr_format_core::{
+    GridVersion, RemountVersion, RiderBuilder, SceneryLineBuilder, StandardLineBuilder, Track,
+    TrackBuilder,
+};
 use quick_byte::QuickRead;
 use std::io::{Cursor, Read, Seek};
 use vector2d::Vector2Df;
@@ -18,7 +21,7 @@ pub fn get_track_count(data: &[u8]) -> u32 {
 }
 
 pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError> {
-    let mut track = Track::new(GridVersion::V6_0);
+    let mut track = TrackBuilder::new(GridVersion::V6_0);
     let data_size = u64::try_from(data.len())?;
     let mut bytes = Cursor::new(data);
 
@@ -114,7 +117,7 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
             .clone()
             .get_string()
             .ok_or(SolReadError::InvalidLabel(format!("{:?}", val)))?;
-        track.set_title(title);
+        track.title(title);
     }
 
     if let Some(val) = target_track.get("version") {
@@ -129,9 +132,9 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
             "6.2" => GridVersion::V6_2,
             other => Err(SolReadError::UnsupportedGridVersion(other.to_string()))?,
         };
-        track.set_grid_version(grid_version);
+        track.grid_version(grid_version);
     } else {
-        track.set_grid_version(GridVersion::V6_0);
+        track.grid_version(GridVersion::V6_0);
     }
 
     let start_position = if let Some(val) = target_track.get("startLine") {
@@ -181,10 +184,10 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
         Vector2Df::new(0.4, 0.0)
     };
 
-    let mut rider = Rider::new(RemountVersion::None);
-    rider.set_start_offset(start_position);
-    rider.set_start_velocity(start_velocity);
-    track.riders_mut().push(rider);
+    let mut rider = RiderBuilder::new(RemountVersion::None);
+    rider.start_offset(start_position);
+    rider.start_velocity(start_velocity);
+    track.riders().push(rider);
 
     if let Some(val) = target_track.get("data") {
         let lines_list = val
@@ -296,24 +299,24 @@ pub fn read(data: &[u8], track_index: Option<u32>) -> Result<Track, SolReadError
             let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
 
             if is_standard_line {
-                let mut standard_line = StandardLine::new(endpoints);
-                standard_line.set_flipped(flipped);
-                standard_line.set_left_extension(left_extension);
-                standard_line.set_right_extension(right_extension);
-                standard_line.set_multiplier(multiplier);
+                let mut standard_line = StandardLineBuilder::new(endpoints);
+                standard_line.flipped(flipped);
+                standard_line.left_extension(left_extension);
+                standard_line.right_extension(right_extension);
+                standard_line.multiplier(multiplier);
                 ordered_standard_lines.push((id, standard_line));
             } else {
-                let scenery_line = SceneryLine::new(endpoints);
-                track.scenery_lines_mut().push(scenery_line);
+                let scenery_line = SceneryLineBuilder::new(endpoints);
+                track.scenery_lines().push(scenery_line);
             }
         }
 
         ordered_standard_lines.sort_by_key(|t| t.0);
 
         for (_id, line) in ordered_standard_lines {
-            track.standard_lines_mut().push(line);
+            track.standard_lines().push(line);
         }
     }
 
-    Ok(track)
+    Ok(track.build())
 }

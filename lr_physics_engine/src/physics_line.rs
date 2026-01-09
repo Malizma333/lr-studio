@@ -152,7 +152,7 @@ impl PhysicsLineBuilder {
         self
     }
 
-    pub fn build(&self) -> PhysicsLine {
+    pub fn build(self) -> PhysicsLine {
         let vector = self.endpoints.get_vector();
         let length = vector.length();
         let inverse_length_squared = 1.0 / vector.length_squared();
@@ -201,11 +201,13 @@ impl PhysicsLineBuilder {
 
 impl From<PhysicsLine> for PhysicsLineBuilder {
     fn from(line: PhysicsLine) -> Self {
-        PhysicsLineBuilder::new(line.endpoints)
-            .flipped(line.flipped)
-            .left_extension(line.left_extension)
-            .right_extension(line.right_extension)
-            .acceleration_multiplier(line.acceleration_multiplier)
-            .height(line.height)
+        PhysicsLineBuilder {
+            endpoints: line.endpoints,
+            flipped: line.flipped,
+            left_extension: line.left_extension,
+            right_extension: line.right_extension,
+            height: line.height,
+            acceleration_multiplier: line.acceleration_multiplier,
+        }
     }
 }

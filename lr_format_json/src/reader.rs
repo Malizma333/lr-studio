@@ -2,7 +2,8 @@ use crate::{FaultyBool, JsonReadError, JsonTrack, json_array_line::LRAJsonArrayL
 use color::RGBColor;
 use geometry::{Line, Point};
 use lr_format_core::{
-    GridVersion, Layer, LayerFolder, RemountVersion, Rider, SceneryLine, StandardLine, Track,
+    GridVersion, LayerBuilder, LayerFolderBuilder, RemountVersion, RiderBuilder,
+    SceneryLineBuilder, StandardLineBuilder, Track, TrackBuilder,
     unit_conversion::{from_lra_gravity, from_lra_zoom},
 };
 use vector2d::Vector2Df;
@@ -25,7 +26,7 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         other => Err(JsonReadError::UnsupportedGridVersion(other.to_string()))?,
     };
 
-    let mut track = Track::new(grid_version);
+    let mut track = TrackBuilder::new(grid_version);
 
     let mut ordered_standard_lines = Vec::new();
 
@@ -76,16 +77,16 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
             };
 
             if line_type != LineType::Scenery {
-                let mut standard_line = StandardLine::new(endpoints);
-                standard_line.set_flipped(flipped);
-                standard_line.set_left_extension(left_extension);
-                standard_line.set_right_extension(right_extension);
-                standard_line.set_multiplier(multiplier);
+                let mut standard_line = StandardLineBuilder::new(endpoints);
+                standard_line.flipped(flipped);
+                standard_line.left_extension(left_extension);
+                standard_line.right_extension(right_extension);
+                standard_line.multiplier(multiplier);
                 ordered_standard_lines.push((line.id, standard_line));
             } else {
-                let mut scenery_line = SceneryLine::new(endpoints);
-                scenery_line.set_width(width);
-                track.scenery_lines_mut().push(scenery_line);
+                let mut scenery_line = SceneryLineBuilder::new(endpoints);
+                scenery_line.width(width);
+                track.scenery_lines().push(scenery_line);
             }
         }
     }
@@ -98,10 +99,10 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                     let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
-                    let mut standard_line = StandardLine::new(endpoints);
-                    standard_line.set_flipped(flipped);
-                    standard_line.set_left_extension(left_extension);
-                    standard_line.set_right_extension(right_extension);
+                    let mut standard_line = StandardLineBuilder::new(endpoints);
+                    standard_line.flipped(flipped);
+                    standard_line.left_extension(left_extension);
+                    standard_line.right_extension(right_extension);
                     ordered_standard_lines.push((id, standard_line));
                 }
                 LRAJsonArrayLine::Acceleration(
@@ -119,17 +120,17 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                     let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
                     let left_extension = extended & 0x1 != 0;
                     let right_extension = extended & 0x2 != 0;
-                    let mut standard_line = StandardLine::new(endpoints);
-                    standard_line.set_flipped(flipped);
-                    standard_line.set_left_extension(left_extension);
-                    standard_line.set_right_extension(right_extension);
-                    standard_line.set_multiplier(f64::from(multiplier));
+                    let mut standard_line = StandardLineBuilder::new(endpoints);
+                    standard_line.flipped(flipped);
+                    standard_line.left_extension(left_extension);
+                    standard_line.right_extension(right_extension);
+                    standard_line.multiplier(f64::from(multiplier));
                     ordered_standard_lines.push((id, standard_line));
                 }
                 LRAJsonArrayLine::Scenery(_id, x1, y1, x2, y2) => {
                     let endpoints = Line::new(Point::new(x1, y1), Point::new(x2, y2));
-                    let scenery_line = SceneryLine::new(endpoints);
-                    track.scenery_lines_mut().push(scenery_line);
+                    let scenery_line = SceneryLineBuilder::new(endpoints);
+                    track.scenery_lines().push(scenery_line);
                 }
             }
         }
@@ -138,7 +139,7 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
     ordered_standard_lines.sort_by_key(|t| t.0);
 
     for (_id, line) in ordered_standard_lines {
-        track.standard_lines_mut().push(line);
+        track.standard_lines().push(line);
     }
 
     if let Some(layers) = json_track.layers {
@@ -164,36 +165,36 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                         }
                     };
 
-                let mut layer = Layer::new(json_layer.id);
-                layer.set_name(name);
-                layer.set_visible(json_layer.visible);
+                let mut layer = LayerBuilder::new(json_layer.id);
+                layer.name(name);
+                layer.visible(json_layer.visible);
 
                 if let Some(color) = color {
-                    layer.set_color(color);
+                    layer.color(color);
                 }
 
                 if let Some(editable) = json_layer.editable {
-                    layer.set_editable(editable);
+                    layer.editable(editable);
                 }
 
                 if let Some(folder_id) = &json_layer.folder_id {
                     let folder_id = Option::<u32>::from(*folder_id);
                     if let Some(folder_id) = folder_id {
-                        layer.set_folder_id(folder_id);
+                        layer.folder_id(folder_id);
                     }
                 }
 
-                track.layers_mut().push(layer);
+                track.layers().push(layer);
             } else {
-                let mut layer_folder = LayerFolder::new(json_layer.id);
-                layer_folder.set_name(json_layer.name.to_string());
-                layer_folder.set_visible(json_layer.visible);
+                let mut layer_folder = LayerFolderBuilder::new(json_layer.id);
+                layer_folder.name(json_layer.name.to_string());
+                layer_folder.visible(json_layer.visible);
 
                 if let Some(editable) = json_layer.editable {
-                    layer_folder.set_editable(editable);
+                    layer_folder.editable(editable);
                 }
 
-                track.layer_folders_mut().push(layer_folder);
+                track.layer_folders().push(layer_folder);
             }
         }
     }
@@ -213,9 +214,9 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
             let start_position = Vector2Df::new(json_rider.start_pos.x, json_rider.start_pos.y);
             let start_velocity = Vector2Df::new(json_rider.start_vel.x, json_rider.start_vel.y);
 
-            let mut rider = Rider::new(RemountVersion::None);
-            rider.set_start_offset(start_position + rider_global_offset);
-            rider.set_start_velocity(start_velocity);
+            let mut rider = RiderBuilder::new(RemountVersion::None);
+            rider.start_offset(start_position + rider_global_offset);
+            rider.start_velocity(start_velocity);
 
             if let Some(remount) = &json_rider.remountable {
                 let (remount_bool, remount_version) = match remount {
@@ -223,12 +224,12 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
                     FaultyBool::IntRep(x) => (*x != 0, RemountVersion::ComV2),
                 };
                 if remount_bool {
-                    rider.set_remount_version(remount_version);
+                    rider.remount_version(remount_version);
                 } else {
-                    rider.set_remount_version(RemountVersion::None);
+                    rider.remount_version(RemountVersion::None);
                 }
             }
-            track.riders_mut().push(rider);
+            track.riders().push(rider);
         }
     } else {
         let start_velocity = if zero_start {
@@ -236,31 +237,31 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         } else {
             Vector2Df::new(0.4, 0.0)
         };
-        let mut rider = Rider::new(RemountVersion::LRA);
-        rider.set_start_offset(rider_global_offset);
-        rider.set_start_velocity(start_velocity);
-        track.riders_mut().push(rider);
+        let mut rider = RiderBuilder::new(RemountVersion::LRA);
+        rider.start_offset(rider_global_offset);
+        rider.start_velocity(start_velocity);
+        track.riders().push(rider);
     }
 
     if let Some(label) = json_track.label {
-        track.set_title(label);
+        track.title(label);
     }
 
     if let Some(creator) = json_track.creator {
-        track.set_artist(creator);
+        track.artist(creator);
     }
 
     if let Some(description) = json_track.description {
-        track.set_description(description);
+        track.description(description);
     }
 
     if let Some(duration) = json_track.duration {
-        track.set_duration(duration);
+        track.duration(duration);
     }
 
     if let Some(gravity_well_size) = json_track.gravity_well_size {
-        for line in track.standard_lines_mut() {
-            line.set_height(gravity_well_size);
+        for line in track.standard_lines() {
+            line.height(gravity_well_size);
         }
     }
 
@@ -339,5 +340,5 @@ pub fn read(bytes: &[u8]) -> Result<Track, JsonReadError> {
         }
     }
 
-    Ok(track)
+    Ok(track.build())
 }

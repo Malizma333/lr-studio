@@ -2,7 +2,8 @@ use crate::TrkReadError;
 use color::RGBColor;
 use geometry::{Line, Point};
 use lr_format_core::{
-    GridVersion, RemountVersion, Rider, SceneryLine, StandardLine, Track,
+    GridVersion, RemountVersion, RiderBuilder, SceneryLineBuilder, StandardLineBuilder, Track,
+    TrackBuilder,
     unit_conversion::{
         from_lra_audio_offset, from_lra_gravity, from_lra_scenery_width, from_lra_zoom,
     },
@@ -22,7 +23,7 @@ const FEATURE_IGNORABLE_TRIGGER: &str = "IGNORABLE_TRIGGER";
 const FEATURE_6_1: &str = "6.1";
 const FEATURE_ZERO_START: &str = "ZEROSTART";
 const FEATURE_REMOUNT: &str = "REMOUNT";
-const FEATURE_FRICTIONLESS: &str = "FRICTIONLESS";
+const _FEATURE_FRICTIONLESS: &str = "FRICTIONLESS";
 const FEATURE_START_ZOOM: &str = "STARTZOOM";
 const FEATURE_X_GRAVITY: &str = "XGRAVITY";
 const FEATURE_Y_GRAVITY: &str = "YGRAVITY";
@@ -43,7 +44,7 @@ enum LineType {
 }
 
 pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
-    let mut track = Track::new(GridVersion::V6_2);
+    let mut track = TrackBuilder::new(GridVersion::V6_2);
     let mut cursor = Cursor::new(data);
 
     // Magic number
@@ -80,7 +81,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         GridVersion::V6_2
     };
 
-    track.set_grid_version(grid_version);
+    track.grid_version(grid_version);
 
     if included_features.contains(FEATURE_SONG_INFO) {
         let mut song_string_length = 0;
@@ -112,8 +113,9 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
         let name = song_data[0];
         let seconds_offset = song_data[1].parse::<f64>()?;
-        track.set_audio_filename(name.to_string());
-        track.set_audio_offset_until_start(from_lra_audio_offset(seconds_offset));
+        track
+            .audio_filename(name.to_string())
+            .audio_offset_until_start(from_lra_audio_offset(seconds_offset));
     }
 
     let start_pos_x = cursor.read_f64_le()?;
@@ -177,24 +179,24 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
 
         match line_type {
             LineType::Standard => {
-                let mut line = StandardLine::new(endpoints);
-                line.set_flipped(flipped);
-                line.set_left_extension(left_extension);
-                line.set_right_extension(right_extension);
+                let mut line = StandardLineBuilder::new(endpoints);
+                line.flipped(flipped);
+                line.left_extension(left_extension);
+                line.right_extension(right_extension);
                 ordered_standard_lines.push((line_id, line));
             }
             LineType::Acceleration => {
-                let mut line = StandardLine::new(endpoints);
-                line.set_flipped(flipped);
-                line.set_left_extension(left_extension);
-                line.set_right_extension(right_extension);
-                line.set_multiplier(multiplier);
+                let mut line = StandardLineBuilder::new(endpoints);
+                line.flipped(flipped);
+                line.left_extension(left_extension);
+                line.right_extension(right_extension);
+                line.multiplier(multiplier);
                 ordered_standard_lines.push((line_id, line));
             }
             LineType::Scenery => {
-                let mut line = SceneryLine::new(endpoints);
-                line.set_width(width);
-                track.scenery_lines_mut().push(line);
+                let mut line = SceneryLineBuilder::new(endpoints);
+                line.width(width);
+                track.scenery_lines().push(line);
             }
         }
     }
@@ -202,11 +204,7 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
     ordered_standard_lines.sort_by_key(|t| t.0);
 
     for (_id, line) in ordered_standard_lines {
-        track.standard_lines_mut().push(line);
-    }
-
-    if included_features.contains(FEATURE_FRICTIONLESS) {
-        // ignore
+        track.standard_lines().push(line);
     }
 
     let remount_version = if included_features.contains(FEATURE_REMOUNT) {
@@ -221,17 +219,17 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         Vector2Df::new(0.4, 0.0)
     };
 
-    let mut rider = Rider::new(remount_version);
-    rider.set_start_offset(start_position);
-    rider.set_start_velocity(start_velocity);
-    track.riders_mut().push(rider);
+    let mut rider = RiderBuilder::new(remount_version);
+    rider.start_offset(start_position);
+    rider.start_velocity(start_velocity);
+    track.riders().push(rider);
 
     let current = cursor.stream_position()?;
     let end = cursor.seek(SeekFrom::End(0))?;
     cursor.seek(SeekFrom::Start(current))?;
 
     if current == end {
-        return Ok(track);
+        return Ok(track.build());
     }
 
     // Metadata section
@@ -364,9 +362,9 @@ pub fn read(data: &Vec<u8>) -> Result<Track, TrkReadError> {
         start_line_color_blue.unwrap_or(0),
     );
 
-    for line in track.standard_lines_mut() {
-        line.set_height(gravity_well_size.unwrap_or(10.0));
+    for line in track.standard_lines() {
+        line.height(gravity_well_size.unwrap_or(10.0));
     }
 
-    Ok(track)
+    Ok(track.build())
 }

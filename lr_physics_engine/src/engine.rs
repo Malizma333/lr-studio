@@ -767,32 +767,25 @@ impl Engine {
         let template_comv2 = build_default_rider(&mut engine, RemountVersion::ComV2);
         let template_lra = build_default_rider(&mut engine, RemountVersion::LRA);
 
-        if let Some(rider_group) = track.riders() {
-            for rider in rider_group {
-                let mut initial_properties = InitialProperties::new();
-                let target_skeleton_template_id = if lra {
-                    template_lra
-                } else {
-                    match rider.remount_version() {
-                        lr_format_core::RemountVersion::None => template_none,
-                        lr_format_core::RemountVersion::ComV1 => template_comv1,
-                        lr_format_core::RemountVersion::ComV2 => template_comv2,
-                        lr_format_core::RemountVersion::LRA => template_lra,
-                    }
-                };
-                let id = engine.add_skeleton(target_skeleton_template_id);
-                if let Some(initial_position) = rider.start_offset() {
-                    initial_properties.set_start_offset(initial_position);
-                }
-                if let Some(initial_velocity) = rider.start_velocity() {
-                    initial_properties.set_start_velocity(initial_velocity);
-                }
-                engine.set_skeleton_initial_properties(id, initial_properties);
-            }
-        } else {
+        for rider in track.riders() {
             let mut initial_properties = InitialProperties::new();
-            let id = engine.add_skeleton(template_none);
-            initial_properties.set_start_velocity(Vector2Df::new(0.4, 0.0));
+            let target_skeleton_template_id = if lra {
+                template_lra
+            } else {
+                match rider.remount_version() {
+                    lr_format_core::RemountVersion::None => template_none,
+                    lr_format_core::RemountVersion::ComV1 => template_comv1,
+                    lr_format_core::RemountVersion::ComV2 => template_comv2,
+                    lr_format_core::RemountVersion::LRA => template_lra,
+                }
+            };
+            let id = engine.add_skeleton(target_skeleton_template_id);
+            if let Some(initial_position) = rider.start_offset() {
+                initial_properties.set_start_offset(initial_position);
+            }
+            if let Some(initial_velocity) = rider.start_velocity() {
+                initial_properties.set_start_velocity(initial_velocity);
+            }
             engine.set_skeleton_initial_properties(id, initial_properties);
         }
 
