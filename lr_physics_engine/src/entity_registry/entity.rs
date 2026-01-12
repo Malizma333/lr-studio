@@ -214,8 +214,7 @@ impl Entity {
 
         if mount_phase.is_mounted() || mount_phase.is_remounting() {
             for joint in template.joints().values() {
-                if joint.is_mount() && template.get_joint_should_break(&state, joint) && !dismounted
-                {
+                if template.get_joint_should_break(&state, joint) && !dismounted {
                     dismounted = true;
 
                     let next_mount_phase = match template.remount_version() {
@@ -237,7 +236,7 @@ impl Entity {
 
                     state.skeleton_state_mut().set_mount_phase(next_mount_phase);
 
-                    if let RemountVersion::LRA = template.remount_version() {
+                    if template.remount_version().is_lra() {
                         state.skeleton_state_mut().set_sled_intact(false)
                     }
                 }

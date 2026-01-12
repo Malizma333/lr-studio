@@ -488,10 +488,8 @@ impl EntityTemplateBuilder {
         skeleton.add_bone(EntityBoneBuilder::new((scarf4, scarf5)).bias(1.0));
         skeleton.add_bone(EntityBoneBuilder::new((scarf5, scarf6)).bias(1.0));
 
-        // TODO remove redundant joint by breaking sled causing dismount
-        skeleton.add_joint(EntityJointBuilder::new(sled_back, sled_front).is_mount(true));
-        skeleton.add_joint(EntityJointBuilder::new(torso, sled_front).is_mount(true));
         skeleton.add_joint(EntityJointBuilder::new(sled_back, sled_front));
+        skeleton.add_joint(EntityJointBuilder::new(torso, sled_front).is_mount(true));
 
         skeleton.build()
     }
