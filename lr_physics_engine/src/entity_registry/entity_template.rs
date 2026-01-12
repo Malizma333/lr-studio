@@ -59,7 +59,7 @@ impl EntityTemplate {
         state: &mut EntityState,
         other_state: &mut EntityState,
     ) -> bool {
-        if other_state.sled_intact() && other_state.mount_phase().dismounted() {
+        if other_state.sled_intact() && other_state.mount_phase().is_dismounted() {
             // Swap sleds to check entity can safely remount
             self.swap_skeleton_sleds(state, other_state);
 
@@ -97,12 +97,12 @@ impl EntityTemplate {
             other_state.point_state_mut(point_id).update(
                 Some(point_state.position()),
                 Some(point_state.velocity()),
-                Some(point_state.external_velocity()),
+                Some(point_state.computed_previous_position()),
             );
             state.point_state_mut(point_id).update(
                 Some(other_point_state.position()),
                 Some(other_point_state.velocity()),
-                Some(other_point_state.external_velocity()),
+                Some(other_point_state.computed_previous_position()),
             );
         }
     }
@@ -176,7 +176,6 @@ pub struct EntityTemplateBuilder {
     remount_version: RemountVersion,
 }
 
-// TODO remove point/bone/joint
 impl EntityTemplateBuilder {
     pub fn new() -> EntityTemplateBuilder {
         EntityTemplateBuilder {
@@ -288,7 +287,7 @@ impl EntityTemplateBuilder {
     // cross-remount with each other because they come from different templates,
     // even though they normally would in linerider.com. This is such a niche case
     // that it's probably not worth fixing.
-    // Maybe we could solve this with computing graph isomorphism?
+    // TODO Maybe we could solve this with computing graph isomorphism?
     /// Builds the original bosh skeleton
     pub fn default_rider(version: RemountVersion) -> EntityTemplate {
         let repel_length_factor = 0.5;

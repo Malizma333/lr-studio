@@ -3,7 +3,7 @@ mod tests {
     use geometry::Point;
     use lr_format_json;
     use lr_physics_engine::{
-        Engine,
+        PhysicsEngine,
         entity_registry::{EntityState, MountPhase},
     };
     use lr_physics_grid::GridVersion;
@@ -40,7 +40,7 @@ mod tests {
             serde_json::from_str(&data).expect("Failed to parse JSON");
 
         let mut last_test_file = String::new();
-        let mut engine = Engine::new(GridVersion::V6_2);
+        let mut engine = PhysicsEngine::new(GridVersion::V6_2);
 
         for (i, test) in test_cases.iter().enumerate() {
             println!("Engine test {}: {}", i, test.test);
@@ -53,7 +53,7 @@ mod tests {
                 let file = fs::read(file_name).expect("Failed to read JSON file");
                 let track = lr_format_json::read(&file).expect("Failed to parse track file");
                 let enable_lra = test.lra.is_some_and(|lra| lra);
-                engine = Engine::from_track(&track, enable_lra);
+                engine = PhysicsEngine::from_track(&track, enable_lra);
                 last_test_file = test.file.clone();
             }
 

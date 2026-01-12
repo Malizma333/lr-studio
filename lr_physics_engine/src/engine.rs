@@ -11,16 +11,16 @@ use crate::{
     line_registry::{LineId, LineRegistry, PhysicsLine, PhysicsLineBuilder},
 };
 
-pub struct Engine {
+pub struct PhysicsEngine {
     line_registry: LineRegistry,
     entity_registry: EntityRegistry,
 }
 
 // Engine holds the public API for the entity and line registries
 // Entity registry does most of the work
-impl Engine {
+impl PhysicsEngine {
     pub fn new(grid_version: GridVersion) -> Self {
-        Engine {
+        PhysicsEngine {
             line_registry: LineRegistry::new(grid_version),
             entity_registry: EntityRegistry::new(),
         }
@@ -109,7 +109,7 @@ impl Engine {
             lr_format_core::GridVersion::V6_2 => GridVersion::V6_2,
         };
 
-        let mut engine = Engine::new(grid_version);
+        let mut engine = PhysicsEngine::new(grid_version);
 
         for line in track.standard_lines() {
             let physics_line = PhysicsLineBuilder::new(line.endpoints())

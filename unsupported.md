@@ -1,5 +1,7 @@
+# Unsupported Features
+
 - .com scarf flutter
-- .com start angle
+- .com start rotation
 
 Not supporting these because they use the web browser's trig implementations, which is different across different web engines (SpiderMonkey vs V8), let alone standard libraries of different languages.
 

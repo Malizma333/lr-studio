@@ -5,16 +5,19 @@ use vector2d::Vector2Df;
 pub(crate) struct EntityPointState {
     position: Point,
     velocity: Vector2Df,
-    // TODO rename this
-    external_velocity: Point,
+    computed_previous_position: Point,
 }
 
 impl EntityPointState {
-    pub(super) fn new(position: Point, velocity: Vector2Df, external_velocity: Point) -> Self {
+    pub(super) fn new(
+        position: Point,
+        velocity: Vector2Df,
+        computed_previous_position: Point,
+    ) -> Self {
         EntityPointState {
             position,
             velocity,
-            external_velocity,
+            computed_previous_position,
         }
     }
 
@@ -22,11 +25,12 @@ impl EntityPointState {
         &mut self,
         new_position: Option<Point>,
         new_velocity: Option<Vector2Df>,
-        external_velocity: Option<Point>,
+        computed_previous_position: Option<Point>,
     ) {
         self.position = new_position.unwrap_or(self.position);
         self.velocity = new_velocity.unwrap_or(self.velocity);
-        self.external_velocity = external_velocity.unwrap_or(self.external_velocity);
+        self.computed_previous_position =
+            computed_previous_position.unwrap_or(self.computed_previous_position);
     }
 
     pub(crate) fn position(&self) -> Point {
@@ -37,7 +41,7 @@ impl EntityPointState {
         self.velocity
     }
 
-    pub(crate) fn external_velocity(&self) -> Point {
-        self.external_velocity
+    pub(crate) fn computed_previous_position(&self) -> Point {
+        self.computed_previous_position
     }
 }

@@ -1,7 +1,7 @@
 use criterion::{
     BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main, measurement::WallTime,
 };
-use lr_physics_engine::Engine;
+use lr_physics_engine::PhysicsEngine;
 use std::{fs, hint::black_box};
 
 struct EngineBenchmark {
@@ -30,7 +30,7 @@ const BENCHMARKS: &[EngineBenchmark] = &[
 
 fn bench_view_frame(
     group: &mut BenchmarkGroup<'_, WallTime>,
-    engine: &mut Engine,
+    engine: &mut PhysicsEngine,
     target_frame: u32,
 ) {
     let id = BenchmarkId::from_parameter("view_frame");
@@ -50,7 +50,7 @@ fn bench_engine_simulation(c: &mut Criterion) {
         );
         let file = fs::read(file_name).expect("Failed to read JSON file");
         let track = lr_format_json::read(&file).expect("Failed to parse track file");
-        let mut engine = Engine::from_track(&track, false);
+        let mut engine = PhysicsEngine::from_track(&track, false);
         let mut group = c.benchmark_group(format!("{}", benchmark.file));
         bench_view_frame(&mut group, &mut engine, benchmark.target_frame);
         group.finish();

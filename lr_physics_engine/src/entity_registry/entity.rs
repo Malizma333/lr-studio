@@ -92,7 +92,7 @@ impl Entity {
             let point_state = state.point_state_mut(point_id);
             let computed_velocity = point_state
                 .position()
-                .vector_from(point_state.external_velocity());
+                .vector_from(point_state.computed_previous_position());
             let new_velocity =
                 computed_velocity * (1.0 - point.air_friction()) + gravity.flipped_vertical();
             let new_position = point_state.position().translated_by(new_velocity);
@@ -120,7 +120,7 @@ impl Entity {
                     };
 
                     if !bone.is_breakable() {
-                        let adjusted = bone.get_adjusted(point_states, mount_phase.remounting());
+                        let adjusted = bone.get_adjusted(point_states, mount_phase.is_remounting());
                         state.point_state_mut(&bone.point_ids().0).update(
                             Some(adjusted.0),
                             None,
@@ -131,10 +131,12 @@ impl Entity {
                             None,
                             None,
                         );
-                    } else if (mount_phase.remounting() || mount_phase.mounted()) && !dismounted {
-                        if bone.get_intact(point_states, mount_phase.remounting()) {
+                    } else if (mount_phase.is_remounting() || mount_phase.is_mounted())
+                        && !dismounted
+                    {
+                        if bone.get_intact(point_states, mount_phase.is_remounting()) {
                             let adjusted =
-                                bone.get_adjusted(point_states, mount_phase.remounting());
+                                bone.get_adjusted(point_states, mount_phase.is_remounting());
                             state.point_state_mut(&bone.point_ids().0).update(
                                 Some(adjusted.0),
                                 None,
@@ -153,11 +155,11 @@ impl Entity {
                                     frames_until_remounting: 0,
                                 },
                                 _ => {
-                                    if mount_phase.mounted() {
+                                    if mount_phase.is_mounted() {
                                         MountPhase::Dismounting {
                                             frames_until_dismounted: template.dismounted_timer(),
                                         }
-                                    } else if mount_phase.remounting() {
+                                    } else if mount_phase.is_remounting() {
                                         MountPhase::Dismounted {
                                             frames_until_remounting: template.remounting_timer(),
                                         }
@@ -177,13 +179,13 @@ impl Entity {
                 if point.is_contact() {
                     let point_state = state.point_state_mut(&point_id);
                     for line in line_registry.lines_near_point(point_state.position()) {
-                        if let Some((new_position, new_external_velocity)) =
+                        if let Some((new_position, new_computed_previous_position)) =
                             line.check_interaction(point, point_state)
                         {
                             point_state.update(
                                 Some(new_position),
                                 None,
-                                Some(new_external_velocity),
+                                Some(new_computed_previous_position),
                             );
                         }
                     }
@@ -198,7 +200,7 @@ impl Entity {
                     state.point_state(&bone.point_ids().1),
                 );
                 let mount_phase = state.skeleton_state().mount_phase();
-                let adjusted = bone.get_adjusted(point_states, mount_phase.remounting());
+                let adjusted = bone.get_adjusted(point_states, mount_phase.is_remounting());
                 state
                     .point_state_mut(&bone.point_ids().0)
                     .update(Some(adjusted.0), None, None);
@@ -210,7 +212,7 @@ impl Entity {
 
         let mount_phase = state.skeleton_state().mount_phase();
 
-        if mount_phase.mounted() || mount_phase.remounting() {
+        if mount_phase.is_mounted() || mount_phase.is_remounting() {
             for joint in template.joints().values() {
                 if joint.is_mount() && template.get_joint_should_break(&state, joint) && !dismounted
                 {
@@ -221,16 +223,14 @@ impl Entity {
                             frames_until_remounting: 0,
                         },
                         _ => {
-                            if mount_phase.mounted() {
+                            if mount_phase.is_mounted() {
                                 MountPhase::Dismounting {
                                     frames_until_dismounted: template.dismounted_timer(),
                                 }
-                            } else if mount_phase.remounting() {
+                            } else {
                                 MountPhase::Dismounted {
                                     frames_until_remounting: template.remounting_timer(),
                                 }
-                            } else {
-                                mount_phase
                             }
                         }
                     };
@@ -252,7 +252,7 @@ impl Entity {
             _ => false,
         };
 
-        if mount_phase.mounted() || mount_phase.remounting() || sled_break_version {
+        if mount_phase.is_mounted() || mount_phase.is_remounting() || sled_break_version {
             for joint in template.joints().values() {
                 if !joint.is_mount()
                     && template.get_joint_should_break(&state, joint)

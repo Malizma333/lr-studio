@@ -92,7 +92,6 @@ impl EntityRegistry {
     }
 
     pub(crate) fn clear_cache(&mut self) {
-        // TODO this should be better modularized on a per-invalidation basis
         self.latest_synced_frame = 0;
         for entity in self.entities.values_mut() {
             entity.truncate_cache(0);
@@ -108,8 +107,6 @@ impl EntityRegistry {
     ) -> Vec<EntityState> {
         let mut entity_states = Vec::new();
 
-        // TODO this is inefficient if we don't need to reset the cache
-        // but checking if we don't need to is hard
         for entity in self.entities.values_mut() {
             entity.truncate_cache(self.latest_synced_frame);
             let state = entity

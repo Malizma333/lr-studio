@@ -68,20 +68,20 @@ impl PhysicsLine {
             let mut friction_vector =
                 (self.normal_unit.rotated_cw() * point.contact_friction()) * distance_from_line_top;
 
-            if point_state.external_velocity().x() >= new_position.x() {
+            if point_state.computed_previous_position().x() >= new_position.x() {
                 friction_vector = friction_vector.flipped_horizontal()
             }
 
-            if point_state.external_velocity().y() < new_position.y() {
+            if point_state.computed_previous_position().y() < new_position.y() {
                 friction_vector = friction_vector.flipped_vertical();
             }
 
-            let new_external_velocity = point_state
-                .external_velocity()
+            let new_computed_previous_position = point_state
+                .computed_previous_position()
                 .translated_by(friction_vector)
                 .translated_by(-self.acceleration_vector);
 
-            Some((new_position, new_external_velocity))
+            Some((new_position, new_computed_previous_position))
         } else {
             None
         }
