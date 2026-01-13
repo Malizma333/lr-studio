@@ -1,7 +1,10 @@
-# Architecture Q/A
+# Architecture Notes
 
+## Resources
+Some notes on [Designing a Good API](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/32713.pdf)
 Helpful video about [Plugin Architecture](https://www.youtube.com/watch?v=sSpULGNHyoI)
 
+## Questions/Answers
 Should one instance of PhysicsEngine be created during the entire program?
 - No, a new engine will be created when loading a track or creating a new track
 - Otherwise the engine will be modified
@@ -36,3 +39,13 @@ Should we use macros?
 
 How should line triggers interact with frame triggers?
 - TODO
+
+How should version specific features (eg LRA Remount/bugfixes or .com Scarf) be plugins?
+  - Enabling feature flags when building engine (eg `.legacy_remount()`)
+
+Should custom scripts be allowed?
+  - Would say no, harder to support across different languages
+  - easier to support serializable, structured data format case-by-case
+
+How to make sprites rendering over skeletons a plugin?
+  - just use skeleton views (allow for rich skeleton views)

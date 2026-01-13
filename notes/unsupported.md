@@ -1,11 +1,11 @@
 # Unsupported Features
 
-- .com scarf flutter
-- .com start rotation
+- .com scarf flutter effect
+- .com initial rider rotation
 
 Not supporting these because they use the web browser's trig implementations, which is different across different web engines (SpiderMonkey vs V8), let alone standard libraries of different languages.
 
-- LRA/OpenLR bone rest lengths
+- LRA/OpenLR bone rest lengths bug
 
 These versions calculate bone rest lengths after start offset is applied to the overall entity. While this seems trivial to support, it would have a ripple effect on how the code is structured (eg rest lengths would need to be cached per entity in some separate field) which I cba to implement.
 
