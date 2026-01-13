@@ -2,9 +2,11 @@
 mod tests {
     #![allow(clippy::unwrap_used)]
     use geometry::Point;
+    use lr_format_core::Track;
     use lr_physics_engine::{
         PhysicsEngine,
-        entity_registry::{EntityState, MountPhase},
+        entity_registry::{EntityState, EntityTemplateBuilder, MountPhase, RemountVersion},
+        line_registry::PhysicsLineBuilder,
     };
     use lr_physics_grid::GridVersion;
     use serde::Deserialize;
@@ -32,6 +34,67 @@ mod tests {
         state: EngineTestCaseState,
     }
 
+    fn from_track(track: &Track, lra: bool) -> PhysicsEngine {
+        let grid_version = match track.grid_version() {
+            lr_format_core::GridVersion::V6_0 => GridVersion::V6_0,
+            lr_format_core::GridVersion::V6_1 => GridVersion::V6_1,
+            lr_format_core::GridVersion::V6_2 => GridVersion::V6_2,
+        };
+
+        let mut engine = PhysicsEngine::new(grid_version);
+
+        for line in track.standard_lines() {
+            let physics_line = PhysicsLineBuilder::new(line.endpoints())
+                .flipped(line.flipped())
+                .left_extension(line.left_extension())
+                .right_extension(line.right_extension())
+                .height(line.height())
+                .acceleration_multiplier(line.multiplier())
+                .build();
+            engine.add_line(physics_line);
+        }
+
+        let template_none_id = engine
+            .register_entity_template(EntityTemplateBuilder::default_rider(RemountVersion::None));
+        let template_comv1_id = engine
+            .register_entity_template(EntityTemplateBuilder::default_rider(RemountVersion::ComV1));
+        let template_comv2_id = engine
+            .register_entity_template(EntityTemplateBuilder::default_rider(RemountVersion::ComV2));
+        let template_lra_id = engine
+            .register_entity_template(EntityTemplateBuilder::default_rider(RemountVersion::LRA));
+
+        for rider in track.riders() {
+            let template_id = if lra {
+                template_lra_id
+            } else {
+                match rider.remount_version() {
+                    lr_format_core::RemountVersion::None => template_none_id,
+                    lr_format_core::RemountVersion::ComV1 => template_comv1_id,
+                    lr_format_core::RemountVersion::ComV2 => template_comv2_id,
+                    lr_format_core::RemountVersion::LRA => template_lra_id,
+                }
+            };
+
+            let entity_id = engine
+                .add_entity(template_id)
+                .expect("Template id should be valid");
+
+            if let Some(offset) = rider.start_offset() {
+                engine
+                    .set_entity_initial_offset(entity_id, offset)
+                    .expect("Entity id should be valid");
+            }
+
+            if let Some(velocity) = rider.start_velocity() {
+                engine
+                    .set_entity_initial_velocity(entity_id, velocity)
+                    .expect("Entity id should be valid");
+            }
+        }
+
+        engine
+    }
+
     #[test]
     fn engine_fixtures() {
         let data = fs::read_to_string("../fixtures/lr_physics_engine/tests/fixture_data.json")
@@ -53,7 +116,7 @@ mod tests {
                 let file = fs::read(file_name).expect("Failed to read JSON file");
                 let track = lr_format_json::read(&file).expect("Failed to parse track file");
                 let enable_lra = test.lra.is_some_and(|lra| lra);
-                engine = PhysicsEngine::from_track(&track, enable_lra);
+                engine = from_track(&track, enable_lra);
                 last_test_file = test.file.clone();
             }
 

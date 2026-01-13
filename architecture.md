@@ -19,9 +19,6 @@ When should builders versus getters/setters be used?
 - For mutable complex objects, builders can still be used with a from cast
 - Setters/getters can be used on simple mutable structs
 
-How should line triggers interact with frame triggers?
-- TODO
-
 When should there be defaults when deserializing tracks?
 - Optional field defaults should be provided by the type of track being deserialized, because they need that context
 - Required field defaults should default at the format struct
@@ -36,3 +33,6 @@ Should we use macros?
 - Avoid at all costs macro by example
   - Usually indicates a refactor is needed anyway
 - Don't define our own macros
+
+How should line triggers interact with frame triggers?
+- TODO
