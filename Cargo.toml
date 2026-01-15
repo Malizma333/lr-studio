@@ -10,7 +10,6 @@ members = [
   "lr_physics_grid",
   "color",
   "amf0",
-  "lr_studio",
   "quick_byte",
 ]
 resolver = "3"
