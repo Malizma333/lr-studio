@@ -2,13 +2,22 @@ use std::collections::BTreeMap;
 
 use vector2d::Vector2Df;
 
-use crate::entity_registry::{EntityPoint, EntityPointId, EntityState};
+use crate::entity_registry::{
+    EntityPoint, EntityPointId, EntityState,
+    entity_template::{MountId, SegmentId},
+};
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum ConnectionType {
+    Segment(SegmentId),
+    Mount(MountId),
+}
 
 /// Computed properties when built
 struct Computed {
     rest_length: f64,
     is_flutter: bool,
-    is_breakable: bool,
+    connection_type: ConnectionType,
 }
 
 /// Constructed bone that holds props after building
@@ -33,8 +42,8 @@ impl EntityBone {
         self.computed.is_flutter
     }
 
-    pub(crate) fn is_breakable(&self) -> bool {
-        self.computed.is_breakable
+    pub(crate) fn connection_type(&self) -> ConnectionType {
+        self.computed.connection_type
     }
 
     pub(crate) fn get_percent_adjustment(&self, bone_vector: Vector2Df) -> f64 {
@@ -133,6 +142,14 @@ impl EntityBoneBuilder {
         }
     }
 
+    pub(crate) fn point_ids(&self) -> (EntityPointId, EntityPointId) {
+        self.point_ids
+    }
+
+    pub(crate) fn breakable(&self) -> bool {
+        self.endurance != f64::INFINITY
+    }
+
     pub fn bias(mut self, bias: f64) -> Self {
         self.bias = bias;
         self
@@ -149,7 +166,7 @@ impl EntityBoneBuilder {
     }
 
     pub fn endurance(mut self, endurance: f64) -> Self {
-        self.endurance = endurance;
+        self.endurance = endurance.max(0.0);
         self
     }
 
@@ -168,7 +185,11 @@ impl EntityBoneBuilder {
         self
     }
 
-    pub fn build(self, point_map: &BTreeMap<EntityPointId, EntityPoint>) -> EntityBone {
+    pub(crate) fn build(
+        self,
+        point_map: &BTreeMap<EntityPointId, EntityPoint>,
+        connection_type: ConnectionType,
+    ) -> EntityBone {
         let points = (
             point_map
                 .get(&self.point_ids.0)
@@ -177,6 +198,14 @@ impl EntityBoneBuilder {
                 .get(&self.point_ids.1)
                 .expect("Building this bone should properly resolve builder points"),
         );
+
+        let is_flutter = !(points.0.is_contact() && points.1.is_contact());
+        let rest_length = points
+            .0
+            .initial_position()
+            .distance_from(points.1.initial_position())
+            * self.initial_length_factor;
+
         EntityBone {
             point_ids: self.point_ids,
             bias: self.bias,
@@ -187,13 +216,9 @@ impl EntityBoneBuilder {
             endurance_remount_factor: self.endurance_remount_factor,
             adjustment_strength_remount_factor: self.adjustment_strength_remount_factor,
             computed: Computed {
-                is_flutter: !(points.0.is_contact() && points.1.is_contact()),
-                rest_length: points
-                    .0
-                    .initial_position()
-                    .distance_from(points.1.initial_position())
-                    * self.initial_length_factor,
-                is_breakable: self.endurance < f64::INFINITY,
+                rest_length,
+                is_flutter,
+                connection_type,
             },
         }
     }

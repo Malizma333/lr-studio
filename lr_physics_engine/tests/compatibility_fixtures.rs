@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn engine_fixtures() {
+    fn compatibility_fixtures() {
         let data = fs::read_to_string("../fixtures/lr_physics_engine/tests/fixture_data.json")
             .expect("Failed to read JSON file");
         let test_cases: Vec<EngineTestCase> =
@@ -133,14 +133,17 @@ mod tests {
             expected_entities.len(),
         );
         for (i, expected_entity) in expected_entities.iter().enumerate() {
-            let result_entity = &result.get(i).unwrap();
+            let result_entity = result.get(i).unwrap();
             if let Some(expected_mount_state) = &expected_entity.mount_state {
-                let result_mount_state = match result_entity.mount_phase() {
-                    MountPhase::Mounted => "MOUNTED",
-                    MountPhase::Dismounted { .. } => "DISMOUNTED",
-                    MountPhase::Dismounting { .. } => "DISMOUNTING",
-                    MountPhase::Remounting { .. } => "REMOUNTING",
-                };
+                let mut result_mount_state = "";
+                for mount_phase in result_entity.mount_phases().values() {
+                    result_mount_state = match *mount_phase {
+                        MountPhase::Mounted => "MOUNTED",
+                        MountPhase::Dismounted { .. } => "DISMOUNTED",
+                        MountPhase::Dismounting { .. } => "DISMOUNTING",
+                        MountPhase::Remounting { .. } => "REMOUNTING",
+                    };
+                }
                 assert_eq!(
                     result_mount_state, expected_mount_state,
                     "rider {i} mount state mismatch",
@@ -148,7 +151,7 @@ mod tests {
             }
 
             if let Some(expected_sled_state) = &expected_entity.sled_state {
-                let result_sled_state = if result_entity.sled_intact() {
+                let result_sled_state = if result_entity.broken_segments().is_empty() {
                     "INTACT"
                 } else {
                     "BROKEN"

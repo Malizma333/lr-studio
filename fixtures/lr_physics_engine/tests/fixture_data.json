@@ -585,7 +585,7 @@
     }
   },
   {
-    "test": "sled does not break after dismount in lra",
+    "test": "sled not broken after dismount in lra",
     "frame": 64,
     "file": "lra_dismount",
     "lra": true,
@@ -630,7 +630,7 @@
             "c02542787c1594ab406174c13f1d759abfd58d57f32158404018f119c7b54853",
             "c023c9986de32fe540619de062665f30bfd280188c7f4000401977212bd28633"
           ],
-          "mount_state": "DISMOUNTED",
+          "mount_state": "DISMOUNTING",
           "sled_state": "BROKEN"
         }
       ]

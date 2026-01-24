@@ -318,6 +318,7 @@ dependencies = [
  "lr_format_core",
  "lr_format_json",
  "lr_physics_grid",
+ "pretty_assertions",
  "serde",
  "serde_json",
  "vector2d",

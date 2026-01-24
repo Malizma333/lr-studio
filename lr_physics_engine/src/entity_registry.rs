@@ -5,10 +5,11 @@ mod entity_template;
 mod joint;
 mod mount_phase;
 mod point;
+mod point_state;
 mod remount_version;
 
 use std::{
-    collections::{BTreeMap, HashMap, VecDeque},
+    collections::{BTreeMap, HashMap},
     error, fmt,
     hash::Hash,
     iter::zip,
@@ -16,7 +17,6 @@ use std::{
 
 pub use bone::{EntityBone, EntityBoneBuilder};
 pub(crate) use entity::Entity;
-pub(crate) use entity_state::EntityPointState;
 pub use entity_state::EntityState;
 pub use entity_template::{
     EntityBoneId, EntityJointId, EntityPointId, EntityTemplate, EntityTemplateBuilder,
@@ -24,6 +24,7 @@ pub use entity_template::{
 pub use joint::{EntityJoint, EntityJointBuilder};
 pub use mount_phase::MountPhase;
 pub use point::{EntityPoint, EntityPointBuilder};
+pub(crate) use point_state::EntityPointState;
 pub use remount_version::RemountVersion;
 use vector2d::Vector2Df;
 
@@ -151,7 +152,7 @@ impl EntityRegistry {
         }
     }
 
-    // This is a pretty delicate function that manages entity states and cache
+    // This is a pretty delicate (lots of expects and unwraps) function that manages entity states and cache
     pub(crate) fn compute_frame(
         &mut self,
         frame: u32,
@@ -171,7 +172,7 @@ impl EntityRegistry {
         }
 
         while self.latest_synced_frame < frame {
-            let mut dismounts = VecDeque::new();
+            let mut dismounts = Vec::new();
 
             for (entity, state) in zip(self.entities.values(), &mut entity_states) {
                 let template = self
@@ -181,29 +182,27 @@ impl EntityRegistry {
 
                 let dismounted = state.process_frame(template, line_registry);
 
-                dismounts.push_back(dismounted);
+                dismounts.push(dismounted);
             }
 
-            for (state_index, entity) in self.entities.values().enumerate() {
+            for ((entity_index, entity), dismounted) in
+                zip(self.entities.values().enumerate(), dismounts)
+            {
                 let template = self
                     .entity_templates
                     .get(&entity.template_id())
                     .expect(EXPECT_TEMPLATE_MSG);
 
                 let mut state = entity_states
-                    .get(state_index)
+                    .get(entity_index)
                     .expect("Index should be within bounds of entity state array")
                     .clone();
 
-                let dismounted = dismounts.pop_front().is_some_and(|d| d);
-
-                // TODO entity_states is all skeletons and may not match template
-                if !dismounted {
-                    state.process_mount_phase(template, &mut entity_states);
-                }
+                // TODO this doesn't check same template
+                state.process_mount_phase(template, &mut entity_states, &dismounted);
 
                 *entity_states
-                    .get_mut(state_index)
+                    .get_mut(entity_index)
                     .expect("Index should be within bounds of entity state array") = state;
             }
 

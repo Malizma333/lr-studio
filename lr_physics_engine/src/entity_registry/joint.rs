@@ -1,36 +1,46 @@
+use std::collections::BTreeMap;
+
 use vector2d::Vector2Df;
 
-use crate::entity_registry::{EntityBoneId, EntityState, EntityTemplate};
+use crate::entity_registry::{
+    EntityBone, EntityBoneId, EntityState, EntityTemplate, bone,
+    entity_template::{MountId, SegmentId},
+};
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum ConnectionType {
+    Segments(SegmentId, SegmentId),
+    Mounts(MountId, MountId),
+    Hybrid(SegmentId, MountId),
+}
 
 /// Computed properties when built
+#[derive(Debug)]
 struct Computed {
-    is_mount: bool,
+    connection_type: ConnectionType,
 }
 
 /// Constructed joint that holds props after building
+#[derive(Debug)]
 pub struct EntityJoint {
-    bones: (EntityBoneId, EntityBoneId),
+    bone_ids: (EntityBoneId, EntityBoneId),
     computed: Computed,
 }
 
 impl EntityJoint {
-    pub(crate) fn bones(&self) -> (EntityBoneId, EntityBoneId) {
-        self.bones
-    }
-
-    pub(crate) fn is_mount(&self) -> bool {
-        self.computed.is_mount
+    pub(crate) fn connection_type(&self) -> ConnectionType {
+        self.computed.connection_type
     }
 
     pub(crate) fn should_break(&self, state: &EntityState, template: &EntityTemplate) -> bool {
         let bones = (
             template
                 .bones()
-                .get(&self.bones().0)
+                .get(&self.bone_ids.0)
                 .expect("Template should have bones needed for this joint"),
             template
                 .bones()
-                .get(&self.bones().1)
+                .get(&self.bone_ids.1)
                 .expect("Template should have bones needed for this joint"),
         );
         let bone0_p0 = state.point_state(&bones.0.point_ids().0);
@@ -47,30 +57,46 @@ impl EntityJoint {
 
 /// Joint builder for custom skeletons
 pub struct EntityJointBuilder {
-    bones: (EntityBoneId, EntityBoneId),
-    is_mount: bool,
+    bone_ids: (EntityBoneId, EntityBoneId),
 }
 
 impl EntityJointBuilder {
     pub fn new(b1: EntityBoneId, b2: EntityBoneId) -> EntityJointBuilder {
-        Self {
-            bones: (b1, b2),
-            is_mount: false,
-        }
+        Self { bone_ids: (b1, b2) }
     }
 
-    // TODO remove this by using computed graph
-    pub fn is_mount(mut self, is_mount: bool) -> Self {
-        self.is_mount = is_mount;
-        self
-    }
+    pub(crate) fn build(self, bone_map: &BTreeMap<EntityBoneId, EntityBone>) -> EntityJoint {
+        let bones = (
+            bone_map
+                .get(&self.bone_ids.0)
+                .expect("Building this joint should properly resolve builder bones"),
+            bone_map
+                .get(&self.bone_ids.1)
+                .expect("Building this joint should properly resolve builder bones"),
+        );
 
-    pub fn build(self) -> EntityJoint {
-        EntityJoint {
-            bones: self.bones,
-            computed: Computed {
-                is_mount: self.is_mount,
+        let connection_type = match bones.0.connection_type() {
+            bone::ConnectionType::Mount(mount_id) => match bones.1.connection_type() {
+                bone::ConnectionType::Mount(other_mount_id) => {
+                    ConnectionType::Mounts(mount_id, other_mount_id)
+                }
+                bone::ConnectionType::Segment(segment_id) => {
+                    ConnectionType::Hybrid(segment_id, mount_id)
+                }
             },
+            bone::ConnectionType::Segment(segment_id) => match bones.1.connection_type() {
+                bone::ConnectionType::Mount(mount_id) => {
+                    ConnectionType::Hybrid(segment_id, mount_id)
+                }
+                bone::ConnectionType::Segment(other_segment_id) => {
+                    ConnectionType::Segments(segment_id, other_segment_id)
+                }
+            },
+        };
+
+        EntityJoint {
+            bone_ids: self.bone_ids,
+            computed: Computed { connection_type },
         }
     }
 }
@@ -78,8 +104,7 @@ impl EntityJointBuilder {
 impl From<EntityJoint> for EntityJointBuilder {
     fn from(joint: EntityJoint) -> Self {
         Self {
-            bones: joint.bones,
-            is_mount: joint.computed.is_mount,
+            bone_ids: joint.bone_ids,
         }
     }
 }
